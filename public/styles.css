@@ -390,3 +390,8 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
   .abtn{min-height:42px;padding:4px 6px}
   .abtn small{font-size:.68rem}
 }
+
+/* ---- #15: pregunta de asistencia sin bloquear ---- */
+.assistbar{border:1px solid var(--good);background:var(--good-soft);border-radius:10px;padding:8px;display:grid;gap:6px}
+.pcard.mini{min-height:52px;padding:4px}
+.pcard.mini .pnum{font-size:1.2rem}

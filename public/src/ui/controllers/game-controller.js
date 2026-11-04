@@ -44,8 +44,8 @@ function askAssistOrReset(scorer, moment) {
   const others = currentGame().onCourt.filter((id) => id !== scorer);
   resetPlayFlow();
   if (!others.length) return;
+  // La pregunta queda arriba del paso Ubicación: no bloquea la jugada siguiente.
   ui.assistFor = { scorer, moment: { ...moment, x: null, y: null } };
-  ui.step = 'assist';
 }
 
 function recordAssist(playerId) {
@@ -64,6 +64,7 @@ function goToStep(step) {
 }
 
 function startPlayAt(x, y, step) {
+  ui.assistFor = null;
   ui.pending = captureMoment(currentGame(), x, y);
   ui.step = step;
   renderPanel();
@@ -114,7 +115,7 @@ function record(action) {
   autoStartClock(action, result.event);
   resetPlayFlow();
   if (isFieldGoalMade(action.type)) askAssistOrReset(who, moment);
-  else if (action.type === 'FT' && afterFoulAssist) { ui.assistFor = afterFoulAssist; ui.step = 'assist'; }
+  else if (action.type === 'FT' && afterFoulAssist) ui.assistFor = afterFoulAssist;
   if (result.forced) {
     ui.forced = result.forced;
     ui.overlay = 'forced';
@@ -363,7 +364,7 @@ const handlers = {
   'cancel': () => {
     const pendingAssist = ui.step === 'ft' && ui.ft.afterFoul ? ui.assistFor : null;
     resetPlayFlow();
-    if (pendingAssist) { ui.assistFor = pendingAssist; ui.step = 'assist'; }
+    if (pendingAssist) ui.assistFor = pendingAssist;
     renderPanel(); renderDots();
   },
   'pick': ({ id }) => {
@@ -380,7 +381,7 @@ const handlers = {
   'foul-drawn': () => goToStep('fdrawn'),
   'fd-kind': ({ data }) => recordFoulDrawn(data.s),
   'assist-pick': ({ id }) => recordAssist(id),
-  'assist-none': () => { resetPlayFlow(); renderPanel(); },
+  'assist-none': () => { ui.assistFor = null; renderPanel(); },
   'attack-flip': () => {
     const G = currentGame();
     flipAttackingSide(G);
@@ -469,7 +470,7 @@ function onCourtClick(event) {
   const q = pt.matrixTransform(ctm.inverse());
   const spot = clampToCourt(q.x, q.y);
   if (!spot) return true;
-  if (ui.step === 'assist') resetPlayFlow();
+  if (ui.step === 'loc') ui.assistFor = null; // tocar la cancha descarta la pregunta de asistencia
   if (ui.pending && ui.step !== 'loc' && ui.step !== 'staff') { ui.pending.x = spot.x; ui.pending.y = spot.y; }
   else { ui.pending = captureMoment(currentGame(), spot.x, spot.y); ui.step = 'player'; }
   renderPanel();

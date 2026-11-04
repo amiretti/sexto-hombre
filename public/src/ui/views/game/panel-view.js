@@ -10,16 +10,17 @@ import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
 
 const STEP_NAMES = ['Ubicación', 'Jugador', 'Acción'];
-const STEP_NUMBER = { loc: 1, player: 2, bench: 2, action: 3, foul: 3, fdrawn: 3, tov: 3, ft: 3, staff: 3, assist: 3 };
+const STEP_NUMBER = { loc: 1, player: 2, bench: 2, action: 3, foul: 3, fdrawn: 3, tov: 3, ft: 3, staff: 3 };
 let announcedStep = null;
 
 /** Lectores de pantalla: anuncia solo el cambio de paso (no todo el panel). */
 function announceStep() {
   const n = STEP_NUMBER[ui.step];
   const el = $('#sr-status');
-  if (!el || !n || ui.step === announcedStep) return;
-  announcedStep = ui.step;
-  el.textContent = ui.step === 'assist' ? '¿Hubo asistencia?' : 'Paso ' + n + ' de 3: ' + STEP_NAMES[n - 1];
+  const key = ui.step + (ui.assistFor ? '+asistencia' : '');
+  if (!el || !n || key === announcedStep) return;
+  announcedStep = key;
+  el.textContent = ui.assistFor ? '¿Hubo asistencia? Paso 1 de 3: Ubicación' : 'Paso ' + n + ' de 3: ' + STEP_NAMES[n - 1];
 }
 
 function stepsBar(n) {
@@ -84,9 +85,22 @@ function stoppageButtons(G) {
     '<button class="abtn stop" data-a="stoppage" data-t="REV">Pedido de revisión<small>video / árbitros</small></button></div>';
 }
 
+/** Tras un gol: fila «¿Asistió?» sobre el paso Ubicación. Cualquier otra acción la descarta. */
+function assistBar(G) {
+  const a = ui.assistFor;
+  if (!a) return '';
+  const mates = G.onCourt.filter((id) => id !== a.scorer);
+  const card = (id) => {
+    const p = findPlayer(G, id);
+    return '<button class="pcard mini" data-a="assist-pick" data-id="' + esc(id) + '" aria-label="' + esc('Asistencia de #' + p.num + ' ' + (p.name || '')) + '"><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span></button>';
+  };
+  return '<div class="assistbar" role="group" aria-label="Asistencia"><div class="ptitle"><span class="when">¿Asistió? <small>gol de ' + esc(whoLabel(G, a.scorer)) + '</small></span>' +
+    '<button class="btn" data-a="assist-none">Sin asistencia</button></div><div class="pgrid five">' + mates.map(card).join('') + '</div></div>';
+}
+
 function locationStep(G) {
   const rec = G.events.slice(-5).reverse();
-  return stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
+  return assistBar(G) + stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
     '<div class="quick"><button class="abtn" data-a="noloc">Sin ubicación<small>libres, técnicas</small></button><button class="abtn tech" data-a="staff">Técnica DT / banca<small>' + staffSummary(G) + '</small></button></div>' +
     stoppageButtons(G) +
     '<div class="ptitle"><h3>Últimas jugadas</h3>' + (rec.length ? '<button class="btn ghost" data-a="undo">Deshacer última</button>' : '') + '</div>' +
@@ -197,19 +211,6 @@ function staffStep(G) {
     '<button class="abtn tech wide" data-a="act-staff" data-w="bench" data-t="DF">Descalificante a la banca</button></div>';
 }
 
-/** Tras un gol: ¿hubo asistencia? Muestra a los compañeros en cancha. */
-function assistStep(G) {
-  const a = ui.assistFor;
-  const mates = G.onCourt.filter((id) => id !== a.scorer);
-  const card = (id) => {
-    const p = findPlayer(G, id);
-    return '<button class="pcard" data-a="assist-pick" data-id="' + esc(id) + '"><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span></button>';
-  };
-  return stepsBar(3) + titleBar('Gol de ' + esc(whoLabel(G, a.scorer)) + ' · ¿Hubo asistencia?', 'assist-none', 'Sin asistencia') +
-    '<div class="pgrid">' + mates.map(card).join('') + '</div>' +
-    '<p class="lead" style="font-size:.82rem">Tocá la cancha para seguir con la próxima jugada.</p>';
-}
-
 /** Se eligió un jugador de la banca: ¿faltó cargar el cambio? */
 function benchStep(G) {
   const inId = ui.benchPick, p = findPlayer(G, inId);
@@ -227,7 +228,6 @@ function benchStep(G) {
 
 const STEPS = {
   bench: benchStep,
-  assist: assistStep,
   loc: locationStep,
   player: playerStep,
   action: actionStep,
