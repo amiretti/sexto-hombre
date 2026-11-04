@@ -14,6 +14,7 @@ import { historyCsv, boxScoreCsv } from '../../application/csv-export.js';
 import { buildPdf } from '../../infrastructure/pdf/pdf-renderer.js';
 import { sharePdf } from '../../infrastructure/pdf/share.js';
 import { copyToClipboard, keepScreenOn } from '../../infrastructure/platform/device.js';
+import { playBuzzer, unlockAudio, isBuzzerEnabled, setBuzzerEnabled } from '../../infrastructure/platform/buzzer.js';
 import { app, state, ui, currentGame, isDemo } from '../state.js';
 import { $ } from '../dom.js';
 import { toast, hideToast } from '../toast.js';
@@ -177,6 +178,7 @@ function onTick() {
     enteredLastTwo = last;
     return;
   }
+  playBuzzer(); // fin de período o de partido
   if (what === 'final') {
     if (!ui.overlay) ui.overlay = 'final';
     session().persistNow();
@@ -424,6 +426,11 @@ const handlers = {
   'save-edit': () => saveEdit(),
   'del': ({ id }) => deleteWithConfirm(id),
   'share': ({ data }) => sharePlanilla(data.close === '1'),
+  'buzzer-toggle': () => {
+    setBuzzerEnabled(!isBuzzerEnabled());
+    if (isBuzzerEnabled()) { unlockAudio(); playBuzzer(); }
+    renderOverlay();
+  },
   'finish': () => {
     if (ui.confirm !== 'finish') { ui.confirm = 'finish'; renderOverlay(); return; }
     finishGame(currentGame());
@@ -479,6 +486,8 @@ function onGameKey(event) {
 }
 
 export function registerGameHandlers() {
+  // El audio solo se habilita dentro de un toque: lo dejamos listo con el primero.
+  onClickBefore(() => { unlockAudio(); return false; });
   onClickBefore(onCourtClick);
   onChange(onDraftChange);
   onKeydown(onGameKey);
