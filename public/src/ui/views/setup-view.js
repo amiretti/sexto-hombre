@@ -23,6 +23,11 @@ function venueFieldHTML(venue) {
     '<button role="radio" data-a="venue" data-v="home" aria-checked="' + (venue === 'home') + '">Local</button><button role="radio" data-a="venue" data-v="away" aria-checked="' + (venue === 'away') + '">Visitante</button></div></div>';
 }
 
+function attackFieldHTML(attack) {
+  return '<div class="field"><span class="flabel" id="attack-l">En el 1er tiempo atacamos hacia</span><div class="seg" role="radiogroup" aria-labelledby="attack-l">' +
+    '<button role="radio" data-a="attack" data-v="left" aria-checked="' + (attack === 'left') + '">← Izquierda</button><button role="radio" data-a="attack" data-v="right" aria-checked="' + (attack === 'right') + '">Derecha →</button></div></div>';
+}
+
 function matchCardHTML(s, t) {
   const teams = state.teams || [];
   const venue = s.venue === 'away' ? 'away' : 'home';
@@ -30,7 +35,7 @@ function matchCardHTML(s, t) {
   return '<section class="card"><div class="roster-head"><h2>Partido</h2>' + (clash ? '<span class="chip warn">Los colores de los equipos son muy parecidos</span>' : '') + '</div><div class="setup-grid">' +
     colorField('f-team', 'Mi equipo', null, t.name, 'teamColor', s.teamColor || DEFAULT_TEAM_COLOR, 'de mi equipo', teams.length > 1 ? '<button class="linkback small" data-a="change-team">Cambiar plantel</button>' : '') +
     colorField('f-opp', 'Rival', 'opponent', s.opponent, 'oppColor', s.oppColor || DEFAULT_OPPONENT_COLOR, 'del rival') +
-    venueFieldHTML(venue) +
+    venueFieldHTML(venue) + attackFieldHTML(s.attack === 'left' ? 'left' : 'right') +
     textField('f-coach', 'Entrenador (DT)', 'coach', s.coach) + competitionField(s.competition) +
     '<div class="field"><label for="f-date">Fecha</label><input id="f-date" type="date" data-f="date" value="' + esc(s.date) + '"></div>' + periodLengthField(s.periodMin) +
     '</div></section>';

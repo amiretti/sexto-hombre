@@ -1,8 +1,8 @@
 // Controlador de la pantalla del partido: traduce toques y teclas en casos de uso y redibuja.
 
-import { EVENT_LABELS } from '../../domain/catalog.js';
+import { EVENT_LABELS, FREE_THROWS_FOR } from '../../domain/catalog.js';
 import { periodLengthSec, periodLong, toggleClock, adjustClock } from '../../domain/clock.js';
-import { clampToCourt } from '../../domain/court.js';
+import { clampToCourt, flipAttackingSide, attackingSide } from '../../domain/court.js';
 import { ourScore, opponentScore, requiredOnCourt } from '../../domain/stats.js';
 import { whoLabel } from '../../domain/describe.js';
 import {
@@ -58,6 +58,29 @@ function record(action) {
   }
   renderGame();
   toast(result.message, result.warn, result.event.id);
+}
+
+/**
+ * Falta recibida. kind: none | shot2 | shot3 | and1-2 | and1-3.
+ * Con tiro abre la carga de libres con la cantidad que corresponde; and-one registra además el gol.
+ */
+function recordFoulDrawn(kind) {
+  const moment = ui.pending, who = ui.player;
+  const and1 = kind.startsWith('and1');
+  const sub = and1 ? 'and1' : kind;
+  if (and1) {
+    const basket = session().recordPlay(moment, { type: kind === 'and1-3' ? '3M' : '2M', who });
+    if (basket.error) { toast(basket.error, true); return; }
+  }
+  const r = session().recordPlay(moment, { type: 'FD', sub, who });
+  if (r.error) { toast(r.error, true); return; }
+  const shots = FREE_THROWS_FOR[sub] || 0;
+  if (!shots) { resetPlayFlow(); renderGame(); toast(r.message, r.warn, r.event.id); return; }
+  ui.pending = { ...moment, x: null, y: null };
+  ui.ft = { att: shots, res: Array(shots).fill(null), afterFoul: true };
+  ui.step = 'ft';
+  renderGame();
+  toast(r.message + '. Cargá ' + (shots === 1 ? 'el libre' : 'los libres') + '.', false, r.event.id);
 }
 
 /* ---------- reloj ---------- */
@@ -230,6 +253,14 @@ const handlers = {
   'act': ({ data }) => record({ type: data.t, sub: data.s }),
   'act-staff': ({ data }) => record({ type: data.t, who: data.w }),
   'foul': () => goToStep('foul'),
+  'foul-drawn': () => goToStep('fdrawn'),
+  'fd-kind': ({ data }) => recordFoulDrawn(data.s),
+  'attack-flip': () => {
+    const G = currentGame();
+    flipAttackingSide(G);
+    persistView(); renderPanel(); renderDots();
+    toast('Atacamos hacia la ' + (attackingSide(G) === 'right' ? 'derecha →' : '← izquierda'));
+  },
   'tov': () => goToStep('tov'),
   'ft': () => { ui.ft = { att: 2, res: [null, null] }; goToStep('ft'); },
   'ft-att': ({ data }) => {

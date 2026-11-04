@@ -3,7 +3,7 @@
 import { esc } from '../../../shared/html.js';
 import { EVENT_LABELS, TURNOVER_KINDS } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds } from '../../../domain/clock.js';
-import { isThreePointer, zoneName } from '../../../domain/court.js';
+import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
 import { playerStats, playerFoulTypes, staffFouls, eventPoints } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
@@ -74,25 +74,63 @@ function playerStep(G) {
     '<p class="lead" style="font-size:.82rem">¿Ubicación equivocada? Tocá de nuevo la cancha para moverla.</p>';
 }
 
-function actionStep(G) {
-  const p = ui.pending, three = p.x != null ? isThreePointer(p.x, p.y) : null;
-  const shot = (t, label, cls, isThree) => {
-    const hint = three === null ? '' : (isThree === three ? ' sugg' : ' dim');
-    return '<button class="abtn ' + cls + hint + '" data-a="act" data-t="' + t + '">' + label + '</button>';
-  };
-  return stepsBar(3) + titleBar(esc(whoLabel(G, ui.player)) + ' <small>· ' + whenText() + '</small>', 'back', '‹ Jugador') +
-    '<div class="agroup"><h3>Lanzamientos</h3><div class="agrid">' +
+/** ¿La ubicación tocada sugiere un tiro de 3? null si no hay ubicación. Usa el aro que atacamos si se sabe. */
+function suggestsThree(G, p) {
+  if (!p || p.x == null) return null;
+  return isThreePointer(p.x, p.y, attackingSide(G, p.period) || undefined);
+}
+
+/** Clase para resaltar la opción sugerida (` sugg`) o atenuar la otra (` dim`). */
+function hintClass(three, isThreeOption) {
+  return three === null ? '' : (isThreeOption === three ? ' sugg' : ' dim');
+}
+
+function attackGroup(three) {
+  const shot = (t, label, cls, isThree) => '<button class="abtn ' + cls + hintClass(three, isThree) + '" data-a="act" data-t="' + t + '">' + label + '</button>';
+  return '<div class="agroup"><h3>Ataque</h3><div class="agrid">' +
       shot('2M', 'Doble<small>convertido</small>', 'make', false) + shot('2X', 'Doble<small>errado</small>', 'miss', false) +
       shot('3M', 'Triple<small>convertido</small>', 'make', true) + shot('3X', 'Triple<small>errado</small>', 'miss', true) +
-      '<button class="abtn wide" data-a="ft">Tiros libres</button></div></div>' +
-    '<div class="agroup"><h3>Juego</h3><div class="agrid three">' +
-      actionButton('RO', 'Rebote<small>ofensivo</small>') + actionButton('RD', 'Rebote<small>defensivo</small>') + actionButton('AST', 'Asistencia') +
-      actionButton('STL', 'Robo') + actionButton('BLK', 'Tapón') + '<button class="abtn" data-a="act" data-t="TOV" data-s="pasos">Pasos<small>caminata</small></button>' +
-      '<button class="abtn wide" data-a="tov">Pérdida…<small>mal pase, doble, 3 seg, 24 seg, campo atrás</small></button></div></div>' +
-    '<div class="agroup"><h3>Faltas</h3><div class="agrid">' +
-      '<button class="abtn foul" data-a="foul">Falta personal<small>cometida</small></button>' + actionButton('FD', 'Falta recibida') +
-      '<button class="abtn tech" data-a="act" data-t="TF">Técnica</button><button class="abtn tech" data-a="act" data-t="UF">Antideportiva</button>' +
-      '<button class="abtn tech wide" data-a="act" data-t="DF">Descalificante</button></div></div>';
+      '<button class="abtn wide" data-a="ft">Tiros libres</button></div>' +
+    '<div class="agrid three">' +
+      actionButton('RO', 'Rebote<small>ofensivo</small>') + actionButton('AST', 'Asistencia') +
+      '<button class="abtn" data-a="foul-drawn">Falta recibida<small>¿en tiro?</small></button>' +
+      '<button class="abtn" data-a="act" data-t="TOV" data-s="pasos">Pasos<small>caminata</small></button>' +
+      '<button class="abtn span2" data-a="tov">Pérdida…<small>mal pase, doble, 3 seg, 24 seg, campo atrás</small></button></div></div>';
+}
+
+function defenseGroup() {
+  return '<div class="agroup"><h3>Defensa</h3><div class="agrid">' +
+    actionButton('RD', 'Rebote<small>defensivo</small>') +
+    '<button class="abtn foul" data-a="foul">Falta personal<small>cometida</small></button>' +
+    actionButton('STL', 'Robo') + actionButton('BLK', 'Tapón') + '</div></div>';
+}
+
+function technicalGroup() {
+  return '<div class="agroup"><h3>Técnicas y otras faltas</h3><div class="agrid">' +
+    '<button class="abtn tech" data-a="act" data-t="TF">Técnica</button><button class="abtn tech" data-a="act" data-t="UF">Antideportiva</button>' +
+    '<button class="abtn tech wide" data-a="act" data-t="DF">Descalificante</button></div></div>';
+}
+
+/** Acciones ordenadas según dónde fue la jugada: en campo propio primero las defensivas. */
+function actionStep(G) {
+  const p = ui.pending, three = suggestsThree(G, p);
+  const half = courtHalf(G, p.x, p.period);
+  const groups = half === 'def' ? defenseGroup() + attackGroup(three) : attackGroup(three) + defenseGroup();
+  return stepsBar(3) + titleBar(esc(whoLabel(G, ui.player)) + ' <small>· ' + whenText() + '</small>', 'back', '‹ Jugador') +
+    groups + technicalGroup();
+}
+
+/** Falta recibida: ¿fue en tiro? Sugiere 2 o 3 libres según la ubicación. */
+function foulDrawnStep(G) {
+  const three = suggestsThree(G, ui.pending);
+  const opt = (kind, label, sub, isThree, cls = '') =>
+    '<button class="abtn' + cls + (isThree === undefined ? '' : hintClass(three, isThree)) + '" data-a="fd-kind" data-s="' + kind + '">' + label + '<small>' + sub + '</small></button>';
+  return stepsBar(3) + titleBar(esc(whoLabel(G, ui.player)) + ' · Falta recibida', 'back-action', '‹ Acciones') +
+    '<p class="lead">¿Fue en situación de tiro?</p><div class="agroup"><div class="agrid">' +
+    '<button class="abtn wide" data-a="fd-kind" data-s="none">No, sin tiro</button>' +
+    opt('shot2', 'En tiro de 2', '2 libres', false) + opt('shot3', 'En tiro de 3', '3 libres', true) +
+    opt('and1-2', 'Encestó el doble', 'doble + 1 libre', false, ' make') + opt('and1-3', 'Encestó el triple', 'triple + 1 libre', true, ' make') +
+    '</div></div>';
 }
 
 function foulStep(G) {
@@ -112,7 +150,9 @@ function turnoverStep(G) {
 
 function freeThrowStep(G) {
   const f = ui.ft;
-  return stepsBar(3) + titleBar(esc(whoLabel(G, ui.player)) + ' · Tiros libres', 'back-action', '‹ Acciones') +
+  const back = f.afterFoul ? titleBar(esc(whoLabel(G, ui.player)) + ' · Tiros libres <small>· falta registrada</small>', 'cancel', 'Sin libres')
+    : titleBar(esc(whoLabel(G, ui.player)) + ' · Tiros libres', 'back-action', '‹ Acciones');
+  return stepsBar(3) + back +
     '<h3>Cantidad</h3><div class="agrid three">' + [1, 2, 3].map((n) => '<button class="abtn' + (f.att === n ? ' sel' : '') + '" data-a="ft-att" data-n="' + n + '">' + n + ' libre' + (n > 1 ? 's' : '') + '</button>').join('') + '</div>' +
     '<h3>Resultado</h3>' + f.res.map((r, i) => '<div class="ftrow"><b>' + (i + 1) + '°</b><button class="abtn make' + (r === 'm' ? ' sel' : '') + '" data-a="ft-res" data-i="' + i + '" data-v="m">Convertido</button><button class="abtn miss' + (r === 'x' ? ' sel' : '') + '" data-a="ft-res" data-i="' + i + '" data-v="x">Errado</button></div>').join('') +
     '<button class="btn primary big" data-a="ft-save"' + (f.res.includes(null) ? ' disabled' : '') + '>Registrar libres</button>';
@@ -133,6 +173,7 @@ const STEPS = {
   player: playerStep,
   action: actionStep,
   foul: foulStep,
+  fdrawn: foulDrawnStep,
   tov: turnoverStep,
   ft: freeThrowStep,
   staff: staffStep

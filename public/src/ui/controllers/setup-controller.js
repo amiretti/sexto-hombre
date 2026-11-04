@@ -64,6 +64,7 @@ export const setupActions = {
   },
   'change-team': update((s) => { s.teamId = null; }),
   'venue': update((s, { data }) => { s.venue = data.v; }),
+  'attack': update((s, { data }) => { s.attack = data.v === 'left' ? 'left' : 'right'; }),
   'call': update((s, { id }) => toggleCalled(s, id)),
   'starter': ({ id }) => {
     if (toggleStarter(state.setup, id)) { persistView(); render(); }

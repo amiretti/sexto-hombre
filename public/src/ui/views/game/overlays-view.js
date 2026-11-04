@@ -1,7 +1,7 @@
 // Hojas superpuestas del partido: historial, planilla, cambios, reloj, menú, final y cambio obligatorio.
 
 import { esc } from '../../../shared/html.js';
-import { EVENT_LABELS, TURNOVER_KINDS, PERSONAL_FOUL_KINDS, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
+import { EVENT_LABELS, hasSubtype, subtypeKinds, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
 import { periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../../../domain/clock.js';
 import { zoneName } from '../../../domain/court.js';
 import {
@@ -34,8 +34,8 @@ function editForm(G, d) {
     h += '<label>Quién<select id="e-who">' + G.roster.map((p) => '<option value="' + esc(p.id) + '"' + (d.who === p.id ? ' selected' : '') + '>#' + esc(p.num) + ' ' + esc(p.name) + '</option>').join('') +
       '<option value="coach"' + (d.who === 'coach' ? ' selected' : '') + '>DT</option><option value="bench"' + (d.who === 'bench' ? ' selected' : '') + '>Banca</option></select></label>';
     h += '<label>Acción<select id="e-type">' + options(isStaff(d.who) ? STAFF_EVENT_TYPES : EDITABLE_EVENT_TYPES, d.type, (t) => EVENT_LABELS[t], (t) => t) + '</select></label>';
-    if (d.type === 'TOV' || d.type === 'PF') {
-      const src = d.type === 'TOV' ? TURNOVER_KINDS : PERSONAL_FOUL_KINDS;
+    if (hasSubtype(d.type)) {
+      const src = subtypeKinds(d.type);
       h += '<label>Detalle<select id="e-sub">' + options(Object.keys(src), d.sub, (k) => src[k], (k) => k) + '</select></label>';
     }
     if (d.type === 'FT') {

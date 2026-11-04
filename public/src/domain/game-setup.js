@@ -8,7 +8,7 @@ import { newClock } from './clock.js';
 export const SETUP_VERSION = 2;
 
 export function blankSetup() {
-  return { v: SETUP_VERSION, teamId: null, opponent: '', oppColor: DEFAULT_OPPONENT_COLOR, venue: 'home', date: todayISO(), sel: {} };
+  return { v: SETUP_VERSION, teamId: null, opponent: '', oppColor: DEFAULT_OPPONENT_COLOR, venue: 'home', attack: 'right', date: todayISO(), sel: {} };
 }
 
 /** Toma los datos por defecto del plantel y convoca a todos sus activos. Muta `setup`. */
@@ -75,6 +75,7 @@ export function createGame(setup, team, now = Date.now()) {
   const periodMin = +setup.periodMin || 10;
   const game = {
     id: newId(), status: 'live', teamId: team.id, venue: setup.venue === 'away' ? 'away' : 'home',
+    attackFirstHalf: setup.attack === 'left' ? 'left' : 'right',
     competition: String(setup.competition || '').trim(), createdAt: now, oppP: {},
     teamColor: setup.teamColor || team.color || DEFAULT_TEAM_COLOR, oppColor: setup.oppColor || DEFAULT_OPPONENT_COLOR,
     team: team.name, opponent: String(setup.opponent).trim(), coach: String(setup.coach || '').trim(), date: setup.date, periodMin,

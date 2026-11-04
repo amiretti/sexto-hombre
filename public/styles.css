@@ -345,3 +345,6 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .crow .callb[aria-pressed="true"]{background:var(--good-soft);border-color:var(--good);color:var(--ink)}
 .crow .starter[disabled]{opacity:.35;cursor:not-allowed}
 @media (max-width:520px){.crow{grid-template-columns:40px minmax(0,1fr) auto auto;gap:6px}.crow .starter{padding:0 .6em;font-size:.85rem}}
+
+.abtn.span2{grid-column:span 2}
+.attack-ind{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:var(--accent);color:var(--accent-ink);border:0;border-radius:999px;padding:.35em 1em;font:inherit;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.18);white-space:nowrap}

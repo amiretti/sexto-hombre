@@ -1,6 +1,6 @@
 // Reglas del partido en curso. Las funciones que cambian el partido lo mutan y lo dicen en su nombre/doc.
 
-import { isFoul, isStaff, COACH, STAFF_EVENT_TYPES, normalizeSubtype } from './catalog.js';
+import { isFoul, isStaff, COACH, STAFF_EVENT_TYPES, normalizeSubtype, hasSubtype } from './catalog.js';
 import {
   REGULAR_PERIODS, periodLengthSec, remainingMs, clockStamp, newClock, pauseClock, parseClockTime, formatSeconds
 } from './clock.js';
@@ -193,7 +193,7 @@ export function newEditDraft(event) {
 /** Corrige combinaciones inválidas del borrador. Muta `draft`. */
 export function normalizeEditDraft(draft) {
   if (isStaff(draft.who) && !STAFF_EVENT_TYPES.includes(draft.type)) draft.type = 'TF';
-  if (draft.type === 'TOV' || draft.type === 'PF') draft.sub = normalizeSubtype(draft.type, draft.sub);
+  if (hasSubtype(draft.type)) draft.sub = normalizeSubtype(draft.type, draft.sub);
   if (draft.type === 'FT') { draft.att = draft.att || 1; draft.made = Math.min(draft.made || 0, draft.att); }
 }
 
@@ -210,7 +210,7 @@ export function applyEditDraft(game, event, draft) {
     event.who = draft.who;
     event.type = draft.type;
     delete event.sub; delete event.att; delete event.made;
-    if (draft.type === 'TOV' || draft.type === 'PF') event.sub = draft.sub;
+    if (hasSubtype(draft.type)) event.sub = draft.sub;
     if (draft.type === 'FT') { event.att = draft.att; event.made = Math.min(draft.made, draft.att); }
   }
   return '';

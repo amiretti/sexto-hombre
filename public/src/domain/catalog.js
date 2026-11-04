@@ -17,6 +17,36 @@ export const PERSONAL_FOUL_KINDS = {
   and1: 'Encestó igual · gol + 1 libre', off: 'Falta ofensiva'
 };
 
+export const FOUL_DRAWN_KINDS = {
+  none: 'Sin tiro', shot2: 'En tiro de 2 · 2 libres', shot3: 'En tiro de 3 · 3 libres', and1: 'Encestó igual · gol + 1 libre'
+};
+
+/** Subtipos por tipo de jugada y el valor por defecto de cada uno. */
+const SUBTYPES = {
+  TOV: { kinds: TURNOVER_KINDS, fallback: 'otra' },
+  PF: { kinds: PERSONAL_FOUL_KINDS, fallback: 'none' },
+  FD: { kinds: FOUL_DRAWN_KINDS, fallback: 'none' }
+};
+
+/** true si el tipo de jugada lleva detalle (subtipo). */
+export function hasSubtype(type) {
+  return !!SUBTYPES[type];
+}
+
+/** {código: texto} de los subtipos de `type`, o null. */
+export function subtypeKinds(type) {
+  return SUBTYPES[type] ? SUBTYPES[type].kinds : null;
+}
+
+/** Texto del subtipo, '' si no tiene. */
+export function subtypeLabel(type, sub) {
+  const kinds = subtypeKinds(type);
+  return (kinds && kinds[sub]) || '';
+}
+
+/** Libres que corresponden a una falta en situación de tiro ('none' = 0). */
+export const FREE_THROWS_FOR = { none: 0, shot2: 2, shot3: 3, and1: 1 };
+
 /** Tipos que se pueden elegir al editar una jugada de un jugador. */
 export const EDITABLE_EVENT_TYPES = ['2M', '2X', '3M', '3X', 'FT', 'RO', 'RD', 'AST', 'STL', 'BLK', 'TOV', 'PF', 'FD', 'TF', 'UF', 'DF'];
 
@@ -39,7 +69,7 @@ export function isStaff(who) {
 
 /** Normaliza el subtipo según el tipo (usado al editar). */
 export function normalizeSubtype(type, sub) {
-  if (type === 'TOV' && !TURNOVER_KINDS[sub]) return 'otra';
-  if (type === 'PF' && !PERSONAL_FOUL_KINDS[sub]) return 'none';
+  const s = SUBTYPES[type];
+  if (s && !s.kinds[sub]) return s.fallback;
   return sub;
 }

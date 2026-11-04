@@ -1,6 +1,6 @@
 // Cómo se nombra cada cosa del partido (jugadores, jugadas). Texto plano, sin HTML.
 
-import { TURNOVER_KINDS, PERSONAL_FOUL_KINDS, COACH, BENCH } from './catalog.js';
+import { hasSubtype, subtypeLabel, COACH, BENCH } from './catalog.js';
 
 export function findPlayer(game, id) {
   return game.roster.find((p) => p.id === id);
@@ -25,8 +25,7 @@ export function whoLabel(game, who, long = false) {
 
 /** Detalle secundario de una jugada ("Mal pase", "2 de 3", "Entra … · Sale …"). */
 export function eventDetail(game, e) {
-  if (e.type === 'TOV') return TURNOVER_KINDS[e.sub] || '';
-  if (e.type === 'PF') return PERSONAL_FOUL_KINDS[e.sub] || '';
+  if (hasSubtype(e.type)) return subtypeLabel(e.type, e.sub);
   if (e.type === 'FT') return e.made + ' de ' + e.att;
   if (e.type === 'SUB') {
     const inn = (e.inn || []).map((i) => whoLabel(game, i)).join(', ');

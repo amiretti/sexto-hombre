@@ -2,6 +2,7 @@
 
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
+import { attackingSide } from '../../../domain/court.js';
 
 /** Coordenada numérica segura para insertar en el SVG (los datos vienen del store). */
 const n = (v) => Number(v) || 0;
@@ -48,6 +49,8 @@ export function renderDots() {
   if (!el) return;
   el.innerHTML = shotMarks(currentGame());
   $('#pend').innerHTML = pendingMark(ui.pending);
+  const atk = $('#attack-ind'), side = attackingSide(currentGame());
+  if (atk) atk.textContent = side === 'right' ? 'Atacamos →' : side === 'left' ? '← Atacamos' : '¿Hacia dónde atacamos? Tocá';
   const tip = $('#court-tip');
   if (tip) tip.hidden = ui.step !== 'loc' || !!ui.overlay;
 }
