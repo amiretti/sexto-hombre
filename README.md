@@ -6,6 +6,8 @@ _La planilla del cuerpo técnico._
 
 > Estado: **Fase 0 (MVP)**, en construcción.
 
+![Pantalla del partido: cancha con los tiros marcados, tanteador, reloj y últimas jugadas](docs/screenshots/partido.png)
+
 ---
 
 ## Qué hace
@@ -21,6 +23,21 @@ _La planilla del cuerpo técnico._
 - **Planteles guardados:** cargás a tus jugadores una vez. En cada partido elegís el rival, los convocados y el quinteto.
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
 - **Login con Google** y acceso restringido por lista blanca de correos.
+
+## Capturas
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/accion.png" alt="Elegir la acción: la app sugiere triple según la zona tocada"><br><sub><b>Cargar una jugada.</b> Ubicación, jugador y acción. Sugiere doble o triple según dónde tocaste.</sub></td>
+    <td width="50%"><img src="docs/screenshots/planilla.png" alt="Planilla por jugador con puntos, tiros, rebotes y faltas"><br><sub><b>Planilla en vivo</b> por jugador, con faltas de equipo y del cuerpo técnico.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/historial.png" alt="Historial de jugadas con opciones para editar y borrar"><br><sub><b>Historial editable.</b> Se corrige o se borra cualquier jugada.</sub></td>
+    <td width="50%"><img src="docs/screenshots/previa.png" alt="Previa del partido: rival, colores, convocados y quinteto titular"><br><sub><b>Previa del partido.</b> Rival, colores, convocados y quinteto.</sub></td>
+  </tr>
+</table>
+
+Ejemplo de la planilla que se comparte: [`docs/planilla-ejemplo.pdf`](docs/planilla-ejemplo.pdf).
 
 ## Probarla en 1 minuto (modo demo)
 
