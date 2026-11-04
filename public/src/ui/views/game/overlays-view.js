@@ -1,6 +1,7 @@
 // Hojas superpuestas del partido: historial, planilla, cambios, reloj, menú, final y cambio obligatorio.
 
 import { esc } from '../../../shared/html.js';
+import { focusKey, focusQuiet } from '../../focus.js';
 import { isBuzzerEnabled } from '../../../infrastructure/platform/buzzer.js';
 import { EVENT_LABELS, hasSubtype, subtypeKinds, isTeamEvent, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
 import { periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../../../domain/clock.js';
@@ -8,7 +9,7 @@ import { zoneName } from '../../../domain/court.js';
 import {
   playerStats, ourScore, opponentScore, teamFouls, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
 } from '../../../domain/stats.js';
-import { findPlayer, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
+import { findPlayer, shortName, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
 import { benchCandidates } from '../../../domain/game.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame, isDemo } from '../../state.js';
@@ -76,7 +77,7 @@ function foulsCell(s) {
 
 function boxRow(G, p) {
   const s = playerStats(G, p.id);
-  return '<tr class="' + (s.out ? 'out' : '') + '"><td class="n">' + esc(p.num) + '</td><td class="l">' + esc(p.name || '—') + (G.onCourt.includes(p.id) ? ' <span class="chip">en cancha</span>' : '') + (s.out ? ' <span class="chip bad">' + s.outWhy + '</span>' : '') + '</td>' +
+  return '<tr class="' + (s.out ? 'out' : '') + '"><td class="n">' + esc(p.num) + '</td><td class="l">' + esc(p.name || '—') + (G.onCourt.includes(p.id) ? ' <span class="oncourt" title="En cancha"><span class="visually-hidden">en cancha</span></span>' : '') + (s.out ? ' <span class="chip bad">' + s.outWhy + '</span>' : '') + '</td>' +
     '<td class="p">' + s.pts + '</td><td>' + s.m2 + '/' + s.a2 + '</td><td>' + s.m3 + '/' + s.a3 + '</td><td>' + s.ftm + '/' + s.fta + '</td><td>' + s.ro + '</td><td>' + s.rd + '</td><td>' + (s.ro + s.rd) + '</td>' +
     '<td>' + s.ast + '</td><td>' + s.stl + '</td><td>' + s.blk + '</td><td>' + s.tov + '</td><td>' + foulsCell(s) + '</td><td>' + s.fd + '</td></tr>';
 }
@@ -89,7 +90,7 @@ function boxFooter(T) {
 function boxSheet(G) {
   const tf = [1, 2, 3, 4].map((p) => periodShort(p) + ': ' + teamFouls(G, p)).join(' · ');
   return sheet('Planilla · ' + esc(G.team) + ' ' + ourScore(G) + ' – ' + opponentScore(G) + ' ' + esc(G.opponent), '<button class="btn share" data-a="share">Compartir PDF</button><button class="btn" data-a="csv-box">Copiar CSV</button>',
-    '<div class="tablewrap"><table class="box"><thead><tr><th>Nº</th><th class="l">Jugador</th><th>PTS</th><th>T2</th><th>T3</th><th>TL</th><th>RO</th><th>RD</th><th>RT</th><th>AS</th><th>RB</th><th>TP</th><th>PE</th><th>FC</th><th>FR</th></tr></thead><tbody>' +
+    '<p class="swipe-hint">Deslizá la tabla para ver todas las columnas →</p><div class="tablewrap" tabindex="0" role="region" aria-label="Planilla por jugador"><table class="box"><caption class="visually-hidden">Planilla por jugador</caption><thead><tr><th scope="col"><abbr title="Número">Nº</abbr></th><th scope="col" class="l">Jugador</th><th scope="col"><abbr title="Puntos">PTS</abbr></th><th scope="col"><abbr title="Dobles convertidos/intentados">T2</abbr></th><th scope="col"><abbr title="Triples convertidos/intentados">T3</abbr></th><th scope="col"><abbr title="Tiros libres convertidos/intentados">TL</abbr></th><th scope="col"><abbr title="Rebotes ofensivos">RO</abbr></th><th scope="col"><abbr title="Rebotes defensivos">RD</abbr></th><th scope="col"><abbr title="Rebotes totales">RT</abbr></th><th scope="col"><abbr title="Asistencias">AS</abbr></th><th scope="col"><abbr title="Robos">RB</abbr></th><th scope="col"><abbr title="Tapones">TP</abbr></th><th scope="col"><abbr title="Pérdidas">PE</abbr></th><th scope="col"><abbr title="Faltas cometidas">FC</abbr></th><th scope="col"><abbr title="Faltas recibidas">FR</abbr></th></tr></thead><tbody>' +
     G.roster.map((p) => boxRow(G, p)).join('') + '</tbody>' + boxFooter(teamTotals(G)) + '</table></div>' +
     '<div class="staffline"><span class="chip">Faltas de equipo · ' + tf + '</span><span class="chip' + (staffFouls(G).out ? ' bad' : '') + '">' + staffSummary(G) + '</span></div>' +
     '<p class="lead" style="font-size:.8rem">T2/T3/TL: convertidos/intentos · RO/RD/RT: rebotes · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas.</p>');
@@ -97,15 +98,28 @@ function boxSheet(G) {
 
 /* ---------- cambios, reloj, menú ---------- */
 
+/** Cambios en dos columnas: los que están en cancha (tocar = sale) y la banca (tocar = entra). */
 function subsSheet(G) {
   const sel = ui.subSel, need = requiredOnCourt(G);
-  const toggle = (p) => {
+  const onCourt = G.onCourt.map((id) => findPlayer(G, id)).filter(Boolean);
+  const bench = G.roster.filter((p) => !G.onCourt.includes(p.id)).sort((a, b) => (+a.num || 0) - (+b.num || 0));
+  const card = (p, side) => {
     const s = playerStats(G, p.id), on = sel.includes(p.id);
-    return '<button class="stog" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '"' + (s.out && !on ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + (s.fouls === 1 ? ' falta' : ' faltas') + (s.out ? ' · ' + s.outWhy : '') + '</small></span></button>';
+    const state = side === 'court' ? (on ? 'Sigue' : 'Sale') : (on ? 'Entra' : '');
+    const label = (side === 'court' ? (on ? 'Sacar a ' : 'Dejar en cancha a ') : (on ? 'No hacer entrar a ' : 'Hacer entrar a ')) + '#' + p.num + ' ' + (p.name || '');
+    return '<button class="stog ' + side + (state ? ' ' + state.toLowerCase() : '') + '" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '" aria-label="' + esc(label) + '"' + (s.out && !on ? ' disabled' : '') + '>' +
+      '<span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + (s.fouls === 1 ? ' falta' : ' faltas') + (s.out ? ' · ' + s.outWhy : '') + '</small></span>' +
+      (state ? '<span class="stag">' + state + '</span>' : '') + '</button>';
   };
+  const outs = onCourt.filter((p) => !sel.includes(p.id)), ins = bench.filter((p) => sel.includes(p.id));
+  const who = (list) => list.map((p) => '#' + p.num + ' ' + shortName(p.name)).join(', ');
+  const summary = outs.length || ins.length
+    ? '<p class="subsum" role="status">' + (outs.length ? '<b>Sale</b> ' + esc(who(outs)) : '') + (outs.length && ins.length ? ' · ' : '') + (ins.length ? '<b>Entra</b> ' + esc(who(ins)) : '') + '</p>'
+    : '<p class="lead">Tocá quién sale y quién entra. El cambio se registra con el tiempo actual del reloj.</p>';
   return sheet('Cambios · ' + periodShort(G.period) + ' ' + clockNow(G), '<span class="chip ' + (sel.length === need ? 'ok' : 'bad') + '">' + sel.length + ' de ' + need + ' en cancha</span>',
-    '<p class="lead">Marcá quiénes quedan en cancha. El cambio se registra con el tiempo actual del reloj.</p><div class="slist">' + G.roster.map(toggle).join('') +
-    '</div><div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="sub-save"' + (sel.length !== need ? ' disabled' : '') + '>Confirmar cambio</button></div>', true);
+    summary + '<div class="subcols"><div><h3>En cancha</h3><div class="slist">' + onCourt.map((p) => card(p, 'court')).join('') + '</div></div>' +
+    '<div><h3>Banca</h3><div class="slist">' + bench.map((p) => card(p, 'bench')).join('') + '</div></div></div>' +
+    '<div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="sub-save"' + (sel.length !== need ? ' disabled' : '') + '>Confirmar cambio</button></div>', true);
 }
 
 function clockSheet(G) {
@@ -155,7 +169,7 @@ const foulsText = (n) => n + (n === 1 ? ' falta' : ' faltas');
 function forcedDialog(G) {
   const F = ui.forced, fp = findPlayer(G, F.out), cands = benchCandidates(G);
   const candidate = (p) => '<button class="stog" data-a="forced-pick" data-id="' + esc(p.id) + '"><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + foulsText(playerStats(G, p.id).fouls) + '</small></span></button>';
-  return '<section class="sheet small" role="dialog" aria-label="Cambio obligatorio"><div class="sheet-head"><div class="forced-head"><span class="eyebrow">Reloj detenido · ' + periodShort(G.period) + ' ' + clockNow(G) + '</span>' +
+  return '<section class="sheet small" role="alertdialog" aria-label="Cambio obligatorio"><div class="sheet-head"><div class="forced-head"><span class="eyebrow">Reloj detenido · ' + periodShort(G.period) + ' ' + clockNow(G) + '</span>' +
     '<strong>#' + esc(fp.num) + ' ' + esc(fp.name || '') + ' · ' + esc(F.why) + '</strong></div></div><div class="sheet-body">' +
     (cands.length ? '<p class="lead">Tiene que salir. Elegí quién entra:</p><div class="slist">' + cands.map(candidate).join('') + '</div>'
       : '<p class="lead">No quedan jugadores habilitados en la banca. El equipo sigue con uno menos en cancha.</p><div class="row end"><button class="btn primary big" data-a="forced-none">Seguir con uno menos</button></div>') +
@@ -176,10 +190,47 @@ const OVERLAYS = {
   forced: { html: forcedDialog, scrim: '<div class="scrim"></div>' }
 };
 
+/* ---------- foco y modalidad ---------- */
+
+let openOverlay = null;   // overlay abierto en el render anterior
+let openerKey = null;     // control que lo abrió (para devolverle el foco)
+let editingId = null;     // jugada en edición en el render anterior
+
+/** Con un diálogo abierto, el fondo no se puede tocar ni recorrer con Tab. */
+function setBackgroundInert(on) {
+  document.querySelectorAll('.game > .board, .game > .stage').forEach((n) => { n.inert = on; });
+}
+
+function afterOverlayRender(el, prev, cur, prevFocusKey) {
+  const dialog = el.querySelector('[role="dialog"], [role="alertdialog"]');
+  if (dialog) { dialog.setAttribute('aria-modal', 'true'); dialog.tabIndex = -1; }
+  setBackgroundInert(!!cur);
+  if (cur && !prev) { focusQuiet(dialog); return; }                  // se abrió: foco al diálogo
+  if (!cur && prev) {                                                 // se cerró: foco a quien lo abrió
+    const back = openerKey && document.querySelector(openerKey);
+    focusQuiet(back || document.querySelector('#clock'));
+    return;
+  }
+  if (!cur) return;
+  // Mismo diálogo redibujado: edición de jugada → primer campo; al cerrar la edición → su botón «Editar».
+  if (ui.draft && ui.draft.id !== editingId) { focusQuiet(el.querySelector('.edit select, .edit input')); return; }
+  if (!ui.draft && editingId) { focusQuiet(el.querySelector('[data-a="edit"][data-id="' + CSS.escape(editingId) + '"]') || dialog); return; }
+  const same = prevFocusKey && el.querySelector(prevFocusKey);
+  if (same) focusQuiet(same);
+  else if (!el.contains(document.activeElement)) focusQuiet(dialog);
+}
+
 export function renderOverlay() {
   const el = $('#overlay');
   if (!el) return;
+  const prev = openOverlay, cur = ui.overlay || null;
+  const active = document.activeElement;
+  if (cur && !prev) openerKey = focusKey(active);
+  const prevFocusKey = el.contains(active) ? focusKey(active) : null;
   const o = OVERLAYS[ui.overlay];
   el.innerHTML = o ? o.scrim + o.html(currentGame()) : (ui.overlay ? CLOSABLE_SCRIM : '');
+  afterOverlayRender(el, prev, cur, prevFocusKey);
+  openOverlay = cur;
+  editingId = ui.draft ? ui.draft.id : null;
   renderDots();
 }

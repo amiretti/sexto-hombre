@@ -1,25 +1,27 @@
 // Panel lateral: los pasos para cargar una jugada (ubicación → jugador → acción).
 
 import { esc } from '../../../shared/html.js';
+import { rerenderKeepingFocus, firstFocusable } from '../../focus.js';
 import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds, remainingMs } from '../../../domain/clock.js';
-import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
+import { isThreePointer, zoneName, attackingSide, courtHalf, SHOT_ZONES } from '../../../domain/court.js';
 import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsLeft, inLastTwoMinutes } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail, eventActor } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
 
 const STEP_NAMES = ['Ubicación', 'Jugador', 'Acción'];
-const STEP_NUMBER = { loc: 1, player: 2, bench: 2, action: 3, foul: 3, fdrawn: 3, tov: 3, ft: 3, staff: 3, assist: 3 };
+const STEP_NUMBER = { loc: 1, player: 2, bench: 2, action: 3, foul: 3, fdrawn: 3, tov: 3, ft: 3, staff: 3 };
 let announcedStep = null;
 
 /** Lectores de pantalla: anuncia solo el cambio de paso (no todo el panel). */
 function announceStep() {
   const n = STEP_NUMBER[ui.step];
   const el = $('#sr-status');
-  if (!el || !n || ui.step === announcedStep) return;
-  announcedStep = ui.step;
-  el.textContent = ui.step === 'assist' ? '¿Hubo asistencia?' : 'Paso ' + n + ' de 3: ' + STEP_NAMES[n - 1];
+  const key = ui.step + (ui.assistFor ? '+asistencia' : '');
+  if (!el || !n || key === announcedStep) return;
+  announcedStep = key;
+  el.textContent = ui.assistFor ? '¿Hubo asistencia? Paso 1 de 3: Ubicación' : 'Paso ' + n + ' de 3: ' + STEP_NAMES[n - 1];
 }
 
 function stepsBar(n) {
@@ -84,10 +86,30 @@ function stoppageButtons(G) {
     '<button class="abtn stop" data-a="stoppage" data-t="REV">Pedido de revisión<small>video / árbitros</small></button></div>';
 }
 
+/** Tras un gol: fila «¿Asistió?» sobre el paso Ubicación. Cualquier otra acción la descarta. */
+function assistBar(G) {
+  const a = ui.assistFor;
+  if (!a) return '';
+  const mates = G.onCourt.filter((id) => id !== a.scorer);
+  const card = (id) => {
+    const p = findPlayer(G, id);
+    return '<button class="pcard mini" data-a="assist-pick" data-id="' + esc(id) + '" aria-label="' + esc('Asistencia de #' + p.num + ' ' + (p.name || '')) + '"><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span></button>';
+  };
+  return '<div class="assistbar" role="group" aria-label="Asistencia"><div class="ptitle"><span class="when">¿Asistió? <small>gol de ' + esc(whoLabel(G, a.scorer)) + '</small></span>' +
+    '<button class="btn" data-a="assist-none">Sin asistencia</button></div><div class="pgrid five">' + mates.map(card).join('') + '</div></div>';
+}
+
+/** Alternativa a tocar la cancha: zonas como botones (teclado y lector de pantalla). */
+function zonePicker() {
+  return '<details class="zones"><summary>Elegir la zona sin tocar la cancha</summary><div class="agrid">' +
+    SHOT_ZONES.map((z) => '<button class="abtn" data-a="zone" data-z="' + z.id + '">' + esc(z.label) + '</button>').join('') + '</div></details>';
+}
+
 function locationStep(G) {
   const rec = G.events.slice(-5).reverse();
-  return stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
+  return assistBar(G) + stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
     '<div class="quick"><button class="abtn" data-a="noloc">Sin ubicación<small>libres, técnicas</small></button><button class="abtn tech" data-a="staff">Técnica DT / banca<small>' + staffSummary(G) + '</small></button></div>' +
+    zonePicker() +
     stoppageButtons(G) +
     '<div class="ptitle"><h3>Últimas jugadas</h3>' + (rec.length ? '<button class="btn ghost" data-a="undo">Deshacer última</button>' : '') + '</div>' +
     (rec.length ? '<ul class="recent">' + rec.map((e) => recentRow(G, e)).join('') + '</ul>' : '<p class="empty">Todavía no hay jugadas. Arrancá el reloj tocándolo y marcá la primera en la cancha.</p>');
@@ -132,10 +154,11 @@ function defenseGroup() {
     actionButton('STL', 'Robo') + actionButton('BLK', 'Tapón') + '</div></div>';
 }
 
+/** Faltas poco frecuentes, plegadas para que las acciones habituales entren sin scroll. */
 function technicalGroup() {
-  return '<div class="agroup"><h3>Técnicas y otras faltas</h3><div class="agrid">' +
+  return '<details class="agroup more"><summary>Técnica, antideportiva o descalificante</summary><div class="agrid">' +
     '<button class="abtn tech" data-a="act" data-t="TF">Técnica</button><button class="abtn tech" data-a="act" data-t="UF">Antideportiva</button>' +
-    '<button class="abtn tech wide" data-a="act" data-t="DF">Descalificante</button></div></div>';
+    '<button class="abtn tech wide" data-a="act" data-t="DF">Descalificante</button></div></details>';
 }
 
 /** Acciones ordenadas según dónde fue la jugada: en campo propio primero las defensivas. */
@@ -196,19 +219,6 @@ function staffStep(G) {
     '<button class="abtn tech wide" data-a="act-staff" data-w="bench" data-t="DF">Descalificante a la banca</button></div>';
 }
 
-/** Tras un gol: ¿hubo asistencia? Muestra a los compañeros en cancha. */
-function assistStep(G) {
-  const a = ui.assistFor;
-  const mates = G.onCourt.filter((id) => id !== a.scorer);
-  const card = (id) => {
-    const p = findPlayer(G, id);
-    return '<button class="pcard" data-a="assist-pick" data-id="' + esc(id) + '"><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span></button>';
-  };
-  return stepsBar(3) + titleBar('Gol de ' + esc(whoLabel(G, a.scorer)) + ' · ¿Hubo asistencia?', 'assist-none', 'Sin asistencia') +
-    '<div class="pgrid">' + mates.map(card).join('') + '</div>' +
-    '<p class="lead" style="font-size:.82rem">Tocá la cancha para seguir con la próxima jugada.</p>';
-}
-
 /** Se eligió un jugador de la banca: ¿faltó cargar el cambio? */
 function benchStep(G) {
   const inId = ui.benchPick, p = findPlayer(G, inId);
@@ -226,7 +236,6 @@ function benchStep(G) {
 
 const STEPS = {
   bench: benchStep,
-  assist: assistStep,
   loc: locationStep,
   player: playerStep,
   action: actionStep,
@@ -239,6 +248,9 @@ const STEPS = {
 
 export function renderPanel() {
   const step = STEPS[ui.step];
-  $('#panel').innerHTML = step ? step(currentGame()) : '';
+  const panel = $('#panel');
+  // Si el foco estaba en el panel, queda en el mismo control o pasa al primero del paso nuevo.
+  rerenderKeepingFocus(panel, () => { panel.innerHTML = step ? step(currentGame()) : ''; },
+    () => firstFocusable(panel.querySelector('.agroup, .pgrid, .assistbar, .quick, .agrid') || panel));
   announceStep();
 }

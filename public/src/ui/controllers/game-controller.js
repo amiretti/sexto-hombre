@@ -2,7 +2,7 @@
 
 import { EVENT_LABELS, FREE_THROWS_FOR, isLiveBallAction } from '../../domain/catalog.js';
 import { periodLengthSec, periodLong, toggleClock, adjustClock, remainingMs, runClockFrom, formatSeconds } from '../../domain/clock.js';
-import { clampToCourt, flipAttackingSide, attackingSide } from '../../domain/court.js';
+import { clampToCourt, flipAttackingSide, attackingSide, SHOT_ZONES, zonePoint } from '../../domain/court.js';
 import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes } from '../../domain/stats.js';
 import { whoLabel } from '../../domain/describe.js';
 import {
@@ -44,8 +44,8 @@ function askAssistOrReset(scorer, moment) {
   const others = currentGame().onCourt.filter((id) => id !== scorer);
   resetPlayFlow();
   if (!others.length) return;
+  // La pregunta queda arriba del paso Ubicación: no bloquea la jugada siguiente.
   ui.assistFor = { scorer, moment: { ...moment, x: null, y: null } };
-  ui.step = 'assist';
 }
 
 function recordAssist(playerId) {
@@ -64,6 +64,7 @@ function goToStep(step) {
 }
 
 function startPlayAt(x, y, step) {
+  ui.assistFor = null;
   ui.pending = captureMoment(currentGame(), x, y);
   ui.step = step;
   renderPanel();
@@ -114,7 +115,7 @@ function record(action) {
   autoStartClock(action, result.event);
   resetPlayFlow();
   if (isFieldGoalMade(action.type)) askAssistOrReset(who, moment);
-  else if (action.type === 'FT' && afterFoulAssist) { ui.assistFor = afterFoulAssist; ui.step = 'assist'; }
+  else if (action.type === 'FT' && afterFoulAssist) ui.assistFor = afterFoulAssist;
   if (result.forced) {
     ui.forced = result.forced;
     ui.overlay = 'forced';
@@ -344,6 +345,12 @@ const handlers = {
   },
   'opp': ({ data }) => { adjustOpponentScore(currentGame(), +data.d); persistView(); renderBoard(); },
   'noloc': () => startPlayAt(null, null, 'player'),
+  'zone': ({ data }) => {
+    const zone = SHOT_ZONES.find((z) => z.id === data.z);
+    if (!zone) return;
+    const p = zonePoint(zone, attackingSide(currentGame()));
+    setLocation(p.x, p.y);
+  },
   'sync-open': () => { ui.overlay = 'sync'; ui.csv = null; hideToast(); renderOverlay(); },
   'sync-save': () => syncClock(),
   'sync-dismiss': () => { ui.clockNotice = null; renderBoard(); },
@@ -357,13 +364,14 @@ const handlers = {
     const r = session().recordStoppage(data.t, data.team);
     resetPlayFlow();
     renderGame();
-    toast(r.message, r.warn, r.event.id);
+    // Durante un tiempo muerto es el momento típico de hacer cambios.
+    toast(r.message, r.warn, r.event.id, data.t === 'TO' ? { label: 'Hacer cambios', a: 'ov', o: 'subs' } : null);
   },
   'staff': () => startPlayAt(null, null, 'staff'),
   'cancel': () => {
     const pendingAssist = ui.step === 'ft' && ui.ft.afterFoul ? ui.assistFor : null;
     resetPlayFlow();
-    if (pendingAssist) { ui.assistFor = pendingAssist; ui.step = 'assist'; }
+    if (pendingAssist) ui.assistFor = pendingAssist;
     renderPanel(); renderDots();
   },
   'pick': ({ id }) => {
@@ -380,7 +388,7 @@ const handlers = {
   'foul-drawn': () => goToStep('fdrawn'),
   'fd-kind': ({ data }) => recordFoulDrawn(data.s),
   'assist-pick': ({ id }) => recordAssist(id),
-  'assist-none': () => { resetPlayFlow(); renderPanel(); },
+  'assist-none': () => { ui.assistFor = null; renderPanel(); },
   'attack-flip': () => {
     const G = currentGame();
     flipAttackingSide(G);
@@ -406,6 +414,7 @@ const handlers = {
   'undo': () => undoLast(),
   'undo-id': ({ id }) => { session().deleteEvent(id); hideToast(); renderGame(); },
   'ov': ({ data }) => {
+    if (data.o === 'subs') hideToast();
     ui.overlay = data.o; ui.confirm = null; ui.draft = null; ui.csv = null;
     if (ui.overlay === 'subs') ui.subSel = currentGame().onCourt.slice();
     renderOverlay();
@@ -469,12 +478,17 @@ function onCourtClick(event) {
   const q = pt.matrixTransform(ctm.inverse());
   const spot = clampToCourt(q.x, q.y);
   if (!spot) return true;
-  if (ui.step === 'assist') resetPlayFlow();
-  if (ui.pending && ui.step !== 'loc' && ui.step !== 'staff') { ui.pending.x = spot.x; ui.pending.y = spot.y; }
-  else { ui.pending = captureMoment(currentGame(), spot.x, spot.y); ui.step = 'player'; }
+  setLocation(spot.x, spot.y);
+  return true;
+}
+
+/** Marca la ubicación (tocando la cancha o eligiendo una zona). */
+function setLocation(x, y) {
+  if (ui.step === 'loc') ui.assistFor = null; // marcar ubicación descarta la pregunta de asistencia
+  if (ui.pending && ui.step !== 'loc' && ui.step !== 'staff') { ui.pending.x = x; ui.pending.y = y; }
+  else { ui.pending = captureMoment(currentGame(), x, y); ui.step = 'player'; }
   renderPanel();
   renderDots();
-  return true;
 }
 
 function onDraftChange(event) {

@@ -61,6 +61,27 @@ export function courtHalf(game, x, period = game.period) {
   return (side === 'right') === inRightHalf ? 'off' : 'def';
 }
 
+/**
+ * Zonas para marcar la ubicación sin tocar la cancha (teclado / lector de pantalla).
+ * `d` = distancia desde la línea de fondo del aro que atacamos; `y` = posición a lo ancho (0 arriba, 1500 abajo).
+ */
+export const SHOT_ZONES = [
+  { id: 'paint', label: 'Pintura', d: 300, y: 750 },
+  { id: 'mid-top', label: 'Media distancia · lado de arriba', d: 450, y: 380 },
+  { id: 'mid-center', label: 'Media distancia · frente al aro', d: 700, y: 750 },
+  { id: 'mid-bottom', label: 'Media distancia · lado de abajo', d: 450, y: 1120 },
+  { id: 'corner-top', label: 'Triple · esquina de arriba', d: 100, y: 50 },
+  { id: 'three-center', label: 'Triple · de frente', d: 900, y: 750 },
+  { id: 'corner-bottom', label: 'Triple · esquina de abajo', d: 100, y: 1450 },
+  { id: 'own-half', label: 'Campo propio', d: 2100, y: 750 }
+];
+
+/** Punto de la zona en coordenadas de cancha, según el aro que atacamos (derecha si no se sabe). */
+export function zonePoint(zone, attackSide) {
+  const x = attackSide === 'left' ? zone.d : COURT_WIDTH - zone.d;
+  return { x, y: zone.y };
+}
+
 /** Punto en coordenadas de cancha (con margen) → punto dentro de la cancha, o null si quedó afuera. */
 export function clampToCourt(x, y) {
   if (x < -COURT_MARGIN || x > COURT_WIDTH + COURT_MARGIN || y < -COURT_MARGIN || y > COURT_HEIGHT + COURT_MARGIN) return null;

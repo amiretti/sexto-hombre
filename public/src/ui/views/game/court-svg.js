@@ -12,7 +12,7 @@ const HALF = '<rect class="c-key" x="0" y="505" width="580" height="490"/>' +
   '<path d="M0 90 L299 90 A675 675 0 0 1 299 1410 L0 1410"/><path d="M157.5 625 A125 125 0 0 1 157.5 875"/></g>' +
   '<line class="c-board" x1="120" y1="660" x2="120" y2="840"/><circle class="c-hoop" cx="157.5" cy="750" r="22.5"/>';
 
-export const COURT_SVG = '<svg id="court" viewBox="-60 -60 2920 1620" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cancha. Tocá donde ocurrió la jugada.">' +
+export const COURT_SVG = '<svg id="court" viewBox="-60 -60 2920 1620" preserveAspectRatio="xMidYMin meet" role="img" aria-label="Cancha. Tocá donde ocurrió la jugada.">' +
   '<rect class="c-out" x="-60" y="-60" width="2920" height="1620"/><rect class="c-floor" x="0" y="0" width="2800" height="1500"/>' +
   '<g>' + HALF + '</g><g transform="matrix(-1 0 0 1 2800 0)">' + HALF + '</g>' +
   '<g class="c-lines"><rect x="0" y="0" width="2800" height="1500"/><line x1="1400" y1="0" x2="1400" y2="1500"/><circle cx="1400" cy="750" r="180"/></g>' +
