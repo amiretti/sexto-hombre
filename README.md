@@ -1,105 +1,150 @@
-# Sexto Hombre · Fase 0
+# Sexto Hombre
 
 _La planilla del cuerpo técnico._
 
-App web (PWA) para que el asistente del entrenador cargue jugada por jugada desde una tablet: cancha, reloj, faltas, cambios obligatorios, historial editable y planilla en PDF para compartir por WhatsApp. Login con Google y datos en Firestore.
+**Sexto Hombre** es una app web (PWA) para que el asistente del entrenador cargue un partido de básquet **jugada por jugada desde una tablet**, en el banco y sin depender de la señal. Al final del partido genera la planilla en PDF y la comparte por WhatsApp.
 
-La arquitectura y las decisiones (ADRs) están en el documento «Sexto Hombre — Arquitectura».
+> Estado: **Fase 0 (MVP)**, en construcción.
 
-## Estructura
+---
+
+## Qué hace
+
+- **Cancha interactiva.** Tocás dónde ocurrió la jugada, elegís el jugador y la acción. El tiempo de reloj se toma al tocar. La app sugiere doble o triple según la zona.
+- **Reloj de juego** con cuartos configurables (6, 8, 10 o 12 minutos), suplementarios de 5 minutos, ajuste manual y pase de período.
+- **Todas las acciones de la planilla:** dobles, triples, libres, rebotes, asistencias, robos, tapones, pérdidas (con tipo), faltas personales (con situación de tiro), técnicas, antideportivas y descalificantes, también para el DT y la banca.
+- **Reglas FIBA de exclusión:** 5 faltas, 2 técnicas, 2 antideportivas, técnica más antideportiva o descalificante. Si el jugador está en cancha, el reloj se detiene y se pide el **cambio obligatorio**. También avisa la 4ª falta de equipo (penalización).
+- **Cambios** con registro de quién entra y quién sale.
+- **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
+- **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
+- **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico. Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
+- **Planteles guardados:** cargás a tus jugadores una vez. En cada partido elegís el rival, los convocados y el quinteto.
+- **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
+- **Login con Google** y acceso restringido por lista blanca de correos.
+
+## Probarla en 1 minuto (modo demo)
+
+No hace falta Firebase ni instalar nada. En modo demo los datos quedan en el navegador y se carga un plantel de ejemplo.
+
+```bash
+git clone https://github.com/amiretti/sexto-hombre.git
+cd sexto-hombre
+python3 -m http.server 8080 -d public
+```
+
+Abrí **http://localhost:8080/?demo=1**. Funciona mejor en una tablet o con la ventana en horizontal.
+
+Cualquier servidor estático sirve; por ejemplo, `npx serve public`.
+
+## Stack
+
+- **JavaScript sin framework ni build.** Son ES modules nativos y Firebase Hosting sirve `public/` tal cual.
+- **Firebase**: Authentication (Google) y Firestore con caché persistente offline. El SDK 10.12.2 se carga desde gstatic.
+- **jsPDF 2.5.1 + jsPDF-AutoTable 3.8.2** para la planilla. Están incluidos en `public/vendor/`.
+- **Service worker** propio para abrir la app sin señal.
+- **Tests** con el runner nativo de Node (`node:test`), sin dependencias.
+
+## Arquitectura
+
+El código sigue una **arquitectura limpia en capas**. Las dependencias apuntan hacia adentro: las reglas del juego no saben nada de la pantalla ni de dónde se guardan los datos.
+
+```mermaid
+flowchart LR
+  UI["ui<br/>vistas y controladores"] --> APP["application<br/>casos de uso"]
+  UI --> DOMAIN
+  APP --> DOMAIN["domain<br/>reglas del básquet"]
+  APP -. puerto store .-> INFRA["infrastructure<br/>Firebase · demo · PDF · dispositivo"]
+  ROOT["app.js<br/>composition root"] --> UI
+  ROOT --> INFRA
+```
+
+| Capa | Qué contiene | Depende de |
+|---|---|---|
+| `shared/` | ids y fechas, escape de HTML, colores | nada |
+| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, estadísticas y exclusiones, plantel, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
+| `application/` | sesión del partido (registrar jugadas, consecuencias, guardado con debounce), reporte para el PDF, exportación CSV | `domain` y el **puerto** `store` |
+| `infrastructure/` | `store/` (Firebase o demo con la misma interfaz), `pdf/` (render y Web Share), `platform/` (wake lock, portapapeles, service worker, borrador local) | `shared` |
+| `ui/` | estado, router de pantallas, despachador único de eventos, vistas (HTML) y controladores (acciones `data-a`) | todo lo anterior |
 
 ```
 public/
   index.html             carga la app
   app.js                 punto de entrada: arma las dependencias y registra los controladores
-  firebase-config.js     configuración del proyecto (vacía = modo demo)
-  sw.js                  service worker: la app abre sin señal (lista de módulos en MODULES)
-  src/                   código en capas (arquitectura limpia; las dependencias apuntan hacia adentro)
-    shared/              utilidades sin dependencias: ids y fechas, escape de HTML, colores
-    domain/              reglas del básquet, puras y testeables: catálogo de jugadas, reloj y períodos,
-                         cancha, estadísticas y exclusiones, plantel, previa y partido
-    application/         casos de uso: sesión del partido (registrar jugadas y guardar), reporte para el PDF, CSV
-    infrastructure/      adaptadores
-      store/             puerto de datos: Firebase (Auth + Firestore) o modo demo (localStorage)
-      pdf/               planilla en PDF (jsPDF + AutoTable), logo y Web Share
-      platform/          pantalla encendida, portapapeles, service worker, borrador de la previa
-    ui/                  interfaz
-      state.js           estado de la interfaz
-      render.js          router de pantallas
-      events.js          despachador único de eventos del DOM (acciones data-a)
-      navigation.js      navegación y sesión del usuario
-      views/             HTML de cada pantalla (game/ = pantalla del partido)
-      controllers/       acciones de cada pantalla
-      components/        piezas de HTML reutilizables
-  brand/                 logo de Sexto Hombre (SVG): logo.svg y logo-small.svg (sin costuras, para tamaños chicos)
-  fonts/ + fonts.css     Saira Condensed e IBM Plex Sans servidas por la app (OFL), así funcionan sin señal
-  vendor/                jsPDF 2.5.1 y jsPDF-AutoTable 3.8.2 (MIT)
-tests/                   pruebas unitarias de domain, application y el store demo (node:test)
+  firebase-config.js     configuración web del proyecto de Firebase
+  sw.js                  service worker (lista de módulos en MODULES)
+  src/
+    shared/  domain/  application/  infrastructure/  ui/
+  brand/  fonts/  icons/  vendor/
+tests/                   pruebas unitarias de domain, application y el store demo
 firestore.rules          reglas de seguridad
 firebase.json            Hosting + Firestore
 ```
 
-Reglas de dependencia: `domain` no conoce el DOM ni el store; `application` usa `domain` y el puerto `store`; `infrastructure` implementa los puertos; `ui` usa todo lo anterior. Al agregar un módulo en `src/`, sumarlo a `MODULES` en `sw.js` y subir `VERSION`.
+**Algunas decisiones:**
 
-No hay paso de build: Firebase Hosting sirve `public/` tal cual. El SDK de Firebase (10.12.2) se carga desde gstatic.
+- **El store es un puerto.** `createStore()` devuelve la implementación de Firebase o la demo (localStorage) según la configuración o `?demo=1`. El resto de la app no sabe cuál está usando.
+- **Las vistas devuelven HTML como string.** Un despachador central escucha `document` y deriva cada clic a la acción registrada por su `data-a`. Cada pantalla registra sus propias acciones.
+- **Nada se borra físicamente.** Borrar una jugada, un partido o un plantel lo marca con `deleted: true`.
+- **El PDF se genera de forma sincrónica**, porque `navigator.share` tiene que llamarse dentro del mismo toque del usuario.
 
-## Pruebas
-
-```bash
-npm test     # Node 20 o más nuevo, sin dependencias
-```
-
-## Probar sin Firebase (modo demo)
+## Desarrollo
 
 ```bash
-python3 -m http.server 8080 -d public
-# abrir http://localhost:8080/?demo=1
+npm test          # Node 22 o más nuevo, sin npm install
 ```
 
-Con `firebase-config.js` vacío la app también arranca en modo demo. Los datos quedan en el navegador.
+Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas de equipo, cambios, edición de jugadas, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el reporte, el CSV y el store demo.
 
-## Poner en marcha con Firebase
+**Al agregar un módulo en `src/`**, sumalo a `MODULES` en `public/sw.js` y subí `VERSION`. Si no, la app instalada no lo va a tener sin señal.
 
-1. **Crear el proyecto** en https://console.firebase.google.com (plan Spark, gratis).
-2. **Authentication → Método de acceso → Google:** habilitarlo y elegir el correo de soporte.
-3. **Firestore Database → Crear base de datos:** modo producción, región `southamerica-east1` (São Paulo), la más cercana a Santa Fe.
-4. **Configuración del proyecto → Tus apps → Web (</>):** registrar la app y copiar el objeto de configuración en `public/firebase-config.js`.
-   - En `authDomain` poné el dominio desde el que vas a servir la app: `TU-PROYECTO.web.app`. Así el login por redirección (el que usa la app instalada en la tablet) funciona en Safari y en navegadores que bloquean cookies de terceros.
-   - En Google Cloud Console → APIs y servicios → Credenciales → el cliente OAuth «Web client (auto created by Google Service)», agregá en «URI de redireccionamiento autorizados»: `https://TU-PROYECTO.web.app/__/auth/handler`.
-5. **Desplegar:**
+## Desplegar tu propia instancia con Firebase
+
+1. **Creá un proyecto** en la [consola de Firebase](https://console.firebase.google.com). Alcanza el plan Spark, que es gratis.
+2. **Authentication → Método de acceso → Google:** habilitalo y elegí el correo de soporte.
+3. **Firestore Database → Crear base de datos:** en modo producción, en la región más cercana. Para Argentina conviene `southamerica-east1` (São Paulo).
+4. **Configuración del proyecto → Tus apps → Web (`</>`):** registrá la app y reemplazá el objeto de `public/firebase-config.js` con el tuyo.
+   - En `authDomain` poné el dominio desde el que vas a servir la app, `TU-PROYECTO.web.app`. Así el login por redirección, que es el que usa la app instalada, funciona en Safari y en navegadores que bloquean cookies de terceros.
+   - En Google Cloud Console → APIs y servicios → Credenciales, abrí el cliente OAuth «Web client (auto created by Google Service)». En «URI de redireccionamiento autorizados» agregá `https://TU-PROYECTO.web.app/__/auth/handler`.
+5. **Desplegá:**
    ```bash
    npm i -g firebase-tools
    firebase login
-   # en .firebaserc reemplazá TU-PROYECTO por el ID del proyecto
+   firebase use --add          # elegí tu proyecto (o editá .firebaserc)
    firebase deploy --only firestore:rules,hosting
    ```
-6. **Habilitar a los asistentes (lista blanca):** en Firestore creá la colección `allowlist` y, por cada persona, un documento cuyo ID es su correo **en minúsculas** (por ejemplo `andresmiretti@gmail.com`). El contenido puede quedar vacío o llevar un campo `nombre`. Quien entra con una cuenta que no está en la lista ve «Tu cuenta no está habilitada».
-7. **En la tablet:** abrir `https://TU-PROYECTO.web.app` en Chrome (Android) o Safari (iPad) y elegir «Agregar a la pantalla de inicio». Instalada, abre a pantalla completa y sin señal.
+6. **Habilitá a los usuarios (lista blanca):** en Firestore creá la colección `allowlist`. Por cada persona, agregá un documento cuyo ID sea su correo **en minúsculas**, por ejemplo `asistente@ejemplo.com`. El contenido puede quedar vacío. Quien entre con una cuenta que no está en la lista va a ver «Tu cuenta no está habilitada».
+7. **En la tablet:** abrí `https://TU-PROYECTO.web.app` en Chrome (Android) o Safari (iPad) y elegí «Agregar a la pantalla de inicio». Instalada, abre en pantalla completa y sin señal.
 
-## Datos en Firestore
+> Los valores de `firebase-config.js` no son secretos: identifican al proyecto. La seguridad la dan `firestore.rules`, la lista blanca y los dominios autorizados de Authentication.
+
+### Datos en Firestore
 
 | Ruta | Contenido |
 |---|---|
 | `allowlist/{correo}` | Correos habilitados (se cargan a mano) |
-| `users/{uid}` | Perfil. `lastSetup` (versiones anteriores) solo se usa para precargar el primer plantel |
-| `teams/{id}` | Plantel: nombre, color, DT, competición y duración por defecto, jugadores (`id`, `num`, `name`, `active`) y último quinteto. El `id` de cada jugador se mantiene entre partidos |
-| `games/{id}` | Partido: plantel de origen (`teamId`), local o visitante (`venue`), equipos, colores, competición, convocados (`roster`, copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado, resumen del tanteador |
-| `games/{id}/events/{id}` | Una jugada por documento. ID generado en el dispositivo, `seq`, `rev`, `deleted` |
-
-Nada se borra físicamente: borrar una jugada o un partido lo marca con `deleted: true`.
+| `users/{uid}` | Perfil del usuario |
+| `teams/{id}` | Plantel: nombre, color, DT, competición, duración por defecto, jugadores (`id`, `num`, `name`, `active`) y último quinteto |
+| `games/{id}` | Partido: plantel de origen, local o visitante, equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado y resumen del tanteador |
+| `games/{id}/events/{id}` | Una jugada por documento, con ID generado en el dispositivo, `seq`, `rev` y `deleted` |
 
 ## Sin señal
 
-Firestore usa caché persistente en el dispositivo: cada jugada se guarda al instante y se envía sola cuando vuelve la conexión. La barra de herramientas muestra «Guardado» o «N sin enviar». El service worker guarda la app para que abra aunque no haya señal (después de haberla abierto una vez con conexión).
+Firestore usa caché persistente: cada jugada se guarda al instante en el dispositivo y se envía sola cuando vuelve la conexión. La barra muestra «Guardado» o «N sin enviar». El service worker guarda la app, que abre sin señal después de haberse abierto una vez con conexión.
 
-## Compartir la planilla por WhatsApp
+## Compartir por WhatsApp
 
-«Compartir PDF» (en la barra, en la planilla y en el menú del partido) genera el PDF en el dispositivo y abre el menú de compartir del sistema, donde se elige WhatsApp. Al finalizar el partido la app pregunta si se quiere compartir. WhatsApp no deja que una web le envíe un archivo directo, por eso pasa por ese menú. En una computadora sin menú de compartir, el PDF se descarga.
+«Compartir PDF» genera la planilla en el dispositivo y abre el menú de compartir del sistema, donde se elige WhatsApp. Una web no puede mandarle un archivo directo a WhatsApp, por eso pasa por ese menú. En una computadora sin menú de compartir, el PDF se descarga. Al finalizar el partido, la app ofrece compartirlo.
 
-El PDF trae: clubes con sus colores, fecha, competición, estado y tiempo (o «Final»), tanteador, parciales por cuarto y la planilla por jugador con totales, faltas de equipo y técnicas del cuerpo técnico.
+## Límites conocidos (Fase 0)
 
-## Límites conocidos de la Fase 0
+- **Un dispositivo por partido.** Si se abre el mismo partido en dos tablets a la vez, una puede pisar el reloj y los jugadores en cancha de la otra.
+- **El tanteador del rival es manual.** El pase a suplementario depende de que esté bien cargado.
+- **Las reglas de Firestore no se probaron contra el emulador.** Antes de un uso real conviene verificar que un correo fuera de la lista no ve nada y que un usuario habilitado no puede leer los partidos de otro.
+- La interfaz está solo en español (Argentina).
 
-- Un dispositivo por partido. Abrir el mismo partido en dos tablets a la vez puede pisar el reloj y los jugadores en cancha.
-- El tanteador del rival es manual; el pase a suplementario depende de que esté cargado.
-- Las reglas de Firestore no se probaron contra el emulador. Antes de usarla en un partido real, conviene verificar: (a) un correo fuera de la lista no ve nada, (b) un usuario habilitado no puede leer los partidos de otro.
+## Créditos
+
+- Tipografías [Saira Condensed](https://fonts.google.com/specimen/Saira+Condensed) e [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), bajo licencia SIL Open Font License (ver `public/fonts/`).
+- [jsPDF](https://github.com/parallax/jsPDF) y [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable), bajo licencia MIT (ver `public/vendor/`).
+
+Hecho por [Andrés Miretti](https://github.com/amiretti).
