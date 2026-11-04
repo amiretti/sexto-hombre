@@ -430,3 +430,10 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 /* ---- #20: ubicación por zonas ---- */
 .zones summary{cursor:pointer;color:var(--muted);font-size:.85rem;font-weight:600;padding:6px 0;min-height:32px}
 .zones[open] summary{margin-bottom:6px}
+
+/* ---- #21: inicio con «Continuar» y «Borrar» apartado ---- */
+.gstate{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.gcta{font-weight:700;color:var(--accent);font-size:.95rem;white-space:nowrap}
+.gdel{border:1px solid transparent;background:none;color:var(--muted);border-radius:8px;min-width:44px;min-height:44px;font-size:1rem;cursor:pointer;margin-left:6px}
+.gdel:hover{border-color:var(--rule)}
+.gdel.armed{border-color:var(--bad);color:var(--bad-ink);font-size:.8rem;font-weight:700;padding:0 10px}

@@ -27,8 +27,9 @@ function gameItemHTML(game) {
   return '<li class="gitem"><button class="gopen" data-a="open-game" data-id="' + esc(game.id) + '">' +
     '<span class="gmeta">' + esc(formatDate(game.date)) + (game.competition ? ' · ' + esc(game.competition) : '') + '</span>' +
     '<span class="gteams">' + sideHTML(...left, false) + '<span class="gsep">–</span>' + sideHTML(...right, true) + '</span>' +
-    '<span class="gstate">' + statusChip(game) + '</span></button>' +
-    '<button class="btn ghost gdel' + (armed ? ' armed' : '') + '" data-a="del-game" data-id="' + esc(game.id) + '">' + (armed ? '¿Borrar?' : 'Borrar') + '</button></li>';
+    '<span class="gstate">' + statusChip(game) + '<span class="gcta">' + (game.status === 'final' ? 'Ver ›' : 'Continuar ›') + '</span></span></button>' +
+    // Borrar queda chico y apartado, y pide confirmación (segundo toque).
+    '<button class="gdel' + (armed ? ' armed' : '') + '" data-a="del-game" data-id="' + esc(game.id) + '" aria-label="' + esc((armed ? 'Confirmar: borrar el partido ' : 'Borrar el partido ') + game.team + ' vs ' + game.opponent) + '">' + (armed ? '¿Borrar? Tocá de nuevo' : '🗑') + '</button></li>';
 }
 
 function gamesListHTML() {
