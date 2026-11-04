@@ -426,3 +426,7 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 @media (max-width:760px){.swipe-hint{display:block}}
 .tablewrap:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .sheet-body{grid-auto-rows:max-content}
+
+/* ---- #20: ubicación por zonas ---- */
+.zones summary{cursor:pointer;color:var(--muted);font-size:.85rem;font-weight:600;padding:6px 0;min-height:32px}
+.zones[open] summary{margin-bottom:6px}

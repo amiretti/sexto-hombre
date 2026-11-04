@@ -62,3 +62,16 @@ test('la previa guarda hacia dónde atacamos en el 1er tiempo', () => {
   assert.equal(createGame(setup, team).game.attackFirstHalf, 'left');
   assert.equal(createGame({ ...setup, attack: undefined }, team).game.attackFirstHalf, 'right');
 });
+
+test('las zonas sin tocar la cancha caen en la zona que dicen', async () => {
+  const { SHOT_ZONES, zonePoint, zoneName } = await import('../public/src/domain/court.js');
+  const expected = { paint: 'pintura', 'mid-top': 'media distancia', 'mid-center': 'media distancia', 'mid-bottom': 'media distancia', 'corner-top': 'triple esquina', 'three-center': 'zona de triple', 'corner-bottom': 'triple esquina' };
+  for (const side of ['left', 'right']) {
+    for (const z of SHOT_ZONES) {
+      const p = zonePoint(z, side);
+      if (expected[z.id]) assert.equal(zoneName(p.x, p.y), expected[z.id], side + ' ' + z.id);
+    }
+    const own = zonePoint(SHOT_ZONES.find((z) => z.id === 'own-half'), side);
+    assert.equal(side === 'right' ? own.x < 1400 : own.x > 1400, true, 'campo propio del lado contrario');
+  }
+});

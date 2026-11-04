@@ -4,7 +4,7 @@ import { esc } from '../../../shared/html.js';
 import { rerenderKeepingFocus, firstFocusable } from '../../focus.js';
 import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds, remainingMs } from '../../../domain/clock.js';
-import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
+import { isThreePointer, zoneName, attackingSide, courtHalf, SHOT_ZONES } from '../../../domain/court.js';
 import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsLeft, inLastTwoMinutes } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail, eventActor } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
@@ -99,10 +99,17 @@ function assistBar(G) {
     '<button class="btn" data-a="assist-none">Sin asistencia</button></div><div class="pgrid five">' + mates.map(card).join('') + '</div></div>';
 }
 
+/** Alternativa a tocar la cancha: zonas como botones (teclado y lector de pantalla). */
+function zonePicker() {
+  return '<details class="zones"><summary>Elegir la zona sin tocar la cancha</summary><div class="agrid">' +
+    SHOT_ZONES.map((z) => '<button class="abtn" data-a="zone" data-z="' + z.id + '">' + esc(z.label) + '</button>').join('') + '</div></details>';
+}
+
 function locationStep(G) {
   const rec = G.events.slice(-5).reverse();
   return assistBar(G) + stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
     '<div class="quick"><button class="abtn" data-a="noloc">Sin ubicación<small>libres, técnicas</small></button><button class="abtn tech" data-a="staff">Técnica DT / banca<small>' + staffSummary(G) + '</small></button></div>' +
+    zonePicker() +
     stoppageButtons(G) +
     '<div class="ptitle"><h3>Últimas jugadas</h3>' + (rec.length ? '<button class="btn ghost" data-a="undo">Deshacer última</button>' : '') + '</div>' +
     (rec.length ? '<ul class="recent">' + rec.map((e) => recentRow(G, e)).join('') + '</ul>' : '<p class="empty">Todavía no hay jugadas. Arrancá el reloj tocándolo y marcá la primera en la cancha.</p>');

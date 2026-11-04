@@ -2,7 +2,7 @@
 
 import { EVENT_LABELS, FREE_THROWS_FOR, isLiveBallAction } from '../../domain/catalog.js';
 import { periodLengthSec, periodLong, toggleClock, adjustClock, remainingMs, runClockFrom, formatSeconds } from '../../domain/clock.js';
-import { clampToCourt, flipAttackingSide, attackingSide } from '../../domain/court.js';
+import { clampToCourt, flipAttackingSide, attackingSide, SHOT_ZONES, zonePoint } from '../../domain/court.js';
 import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes } from '../../domain/stats.js';
 import { whoLabel } from '../../domain/describe.js';
 import {
@@ -345,6 +345,12 @@ const handlers = {
   },
   'opp': ({ data }) => { adjustOpponentScore(currentGame(), +data.d); persistView(); renderBoard(); },
   'noloc': () => startPlayAt(null, null, 'player'),
+  'zone': ({ data }) => {
+    const zone = SHOT_ZONES.find((z) => z.id === data.z);
+    if (!zone) return;
+    const p = zonePoint(zone, attackingSide(currentGame()));
+    setLocation(p.x, p.y);
+  },
   'sync-open': () => { ui.overlay = 'sync'; ui.csv = null; hideToast(); renderOverlay(); },
   'sync-save': () => syncClock(),
   'sync-dismiss': () => { ui.clockNotice = null; renderBoard(); },
@@ -472,12 +478,17 @@ function onCourtClick(event) {
   const q = pt.matrixTransform(ctm.inverse());
   const spot = clampToCourt(q.x, q.y);
   if (!spot) return true;
-  if (ui.step === 'loc') ui.assistFor = null; // tocar la cancha descarta la pregunta de asistencia
-  if (ui.pending && ui.step !== 'loc' && ui.step !== 'staff') { ui.pending.x = spot.x; ui.pending.y = spot.y; }
-  else { ui.pending = captureMoment(currentGame(), spot.x, spot.y); ui.step = 'player'; }
+  setLocation(spot.x, spot.y);
+  return true;
+}
+
+/** Marca la ubicación (tocando la cancha o eligiendo una zona). */
+function setLocation(x, y) {
+  if (ui.step === 'loc') ui.assistFor = null; // marcar ubicación descarta la pregunta de asistencia
+  if (ui.pending && ui.step !== 'loc' && ui.step !== 'staff') { ui.pending.x = x; ui.pending.y = y; }
+  else { ui.pending = captureMoment(currentGame(), x, y); ui.step = 'player'; }
   renderPanel();
   renderDots();
-  return true;
 }
 
 function onDraftChange(event) {

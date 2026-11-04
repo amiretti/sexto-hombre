@@ -1,7 +1,7 @@
 // Manejo del foco cuando la interfaz se redibuja (las vistas reemplazan innerHTML).
 // Sin esto, cada re-render deja el foco en <body> y el teclado / lector de pantalla se pierde.
 
-const KEY_ATTRS = ['id', 'o', 't', 's', 'd', 'team', 'n', 'm', 'i', 'v', 'w', 'f', 'c'];
+const KEY_ATTRS = ['id', 'o', 't', 's', 'd', 'team', 'n', 'm', 'i', 'v', 'w', 'f', 'c', 'z'];
 
 /** Selector que vuelve a encontrar "el mismo" control después de redibujar. */
 export function focusKey(el) {
