@@ -9,7 +9,7 @@ import { zoneName } from '../../../domain/court.js';
 import {
   playerStats, ourScore, opponentScore, teamFouls, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
 } from '../../../domain/stats.js';
-import { findPlayer, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
+import { findPlayer, shortName, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
 import { benchCandidates } from '../../../domain/game.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame, isDemo } from '../../state.js';
@@ -98,15 +98,28 @@ function boxSheet(G) {
 
 /* ---------- cambios, reloj, menú ---------- */
 
+/** Cambios en dos columnas: los que están en cancha (tocar = sale) y la banca (tocar = entra). */
 function subsSheet(G) {
   const sel = ui.subSel, need = requiredOnCourt(G);
-  const toggle = (p) => {
+  const onCourt = G.onCourt.map((id) => findPlayer(G, id)).filter(Boolean);
+  const bench = G.roster.filter((p) => !G.onCourt.includes(p.id)).sort((a, b) => (+a.num || 0) - (+b.num || 0));
+  const card = (p, side) => {
     const s = playerStats(G, p.id), on = sel.includes(p.id);
-    return '<button class="stog" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '"' + (s.out && !on ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + (s.fouls === 1 ? ' falta' : ' faltas') + (s.out ? ' · ' + s.outWhy : '') + '</small></span></button>';
+    const state = side === 'court' ? (on ? 'Sigue' : 'Sale') : (on ? 'Entra' : '');
+    const label = (side === 'court' ? (on ? 'Sacar a ' : 'Dejar en cancha a ') : (on ? 'No hacer entrar a ' : 'Hacer entrar a ')) + '#' + p.num + ' ' + (p.name || '');
+    return '<button class="stog ' + side + (state ? ' ' + state.toLowerCase() : '') + '" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '" aria-label="' + esc(label) + '"' + (s.out && !on ? ' disabled' : '') + '>' +
+      '<span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + (s.fouls === 1 ? ' falta' : ' faltas') + (s.out ? ' · ' + s.outWhy : '') + '</small></span>' +
+      (state ? '<span class="stag">' + state + '</span>' : '') + '</button>';
   };
+  const outs = onCourt.filter((p) => !sel.includes(p.id)), ins = bench.filter((p) => sel.includes(p.id));
+  const who = (list) => list.map((p) => '#' + p.num + ' ' + shortName(p.name)).join(', ');
+  const summary = outs.length || ins.length
+    ? '<p class="subsum" role="status">' + (outs.length ? '<b>Sale</b> ' + esc(who(outs)) : '') + (outs.length && ins.length ? ' · ' : '') + (ins.length ? '<b>Entra</b> ' + esc(who(ins)) : '') + '</p>'
+    : '<p class="lead">Tocá quién sale y quién entra. El cambio se registra con el tiempo actual del reloj.</p>';
   return sheet('Cambios · ' + periodShort(G.period) + ' ' + clockNow(G), '<span class="chip ' + (sel.length === need ? 'ok' : 'bad') + '">' + sel.length + ' de ' + need + ' en cancha</span>',
-    '<p class="lead">Marcá quiénes quedan en cancha. El cambio se registra con el tiempo actual del reloj.</p><div class="slist">' + G.roster.map(toggle).join('') +
-    '</div><div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="sub-save"' + (sel.length !== need ? ' disabled' : '') + '>Confirmar cambio</button></div>', true);
+    summary + '<div class="subcols"><div><h3>En cancha</h3><div class="slist">' + onCourt.map((p) => card(p, 'court')).join('') + '</div></div>' +
+    '<div><h3>Banca</h3><div class="slist">' + bench.map((p) => card(p, 'bench')).join('') + '</div></div></div>' +
+    '<div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="sub-save"' + (sel.length !== need ? ' disabled' : '') + '>Confirmar cambio</button></div>', true);
 }
 
 function clockSheet(G) {

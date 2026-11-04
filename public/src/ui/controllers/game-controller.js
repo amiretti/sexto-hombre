@@ -358,7 +358,8 @@ const handlers = {
     const r = session().recordStoppage(data.t, data.team);
     resetPlayFlow();
     renderGame();
-    toast(r.message, r.warn, r.event.id);
+    // Durante un tiempo muerto es el momento típico de hacer cambios.
+    toast(r.message, r.warn, r.event.id, data.t === 'TO' ? { label: 'Hacer cambios', a: 'ov', o: 'subs' } : null);
   },
   'staff': () => startPlayAt(null, null, 'staff'),
   'cancel': () => {
@@ -407,6 +408,7 @@ const handlers = {
   'undo': () => undoLast(),
   'undo-id': ({ id }) => { session().deleteEvent(id); hideToast(); renderGame(); },
   'ov': ({ data }) => {
+    if (data.o === 'subs') hideToast();
     ui.overlay = data.o; ui.confirm = null; ui.draft = null; ui.csv = null;
     if (ui.overlay === 'subs') ui.subSel = currentGame().onCourt.slice();
     renderOverlay();

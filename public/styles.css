@@ -395,3 +395,18 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .assistbar{border:1px solid var(--good);background:var(--good-soft);border-radius:10px;padding:8px;display:grid;gap:6px}
 .pcard.mini{min-height:52px;padding:4px}
 .pcard.mini .pnum{font-size:1.2rem}
+
+/* ---- #17: cambios en dos columnas ---- */
+.subcols{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.subcols .slist{grid-template-columns:1fr}
+.stog{position:relative}
+.stog .stag{margin-left:auto;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:999px}
+.stog.sale{border-color:var(--bad);background:var(--bad-soft)}
+.stog.sale .stag{background:var(--bad);color:#fff}
+.stog.entra{border-color:var(--good);background:var(--good-soft)}
+.stog.entra .stag{background:var(--good);color:#fff}
+.stog.sigue .stag{color:var(--muted)}
+.subsum{margin:0;font-size:.95rem}
+@media (max-width:520px){.subcols{grid-template-columns:1fr}}
+.stog.court[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--rule)}
+.stog.entra[aria-pressed="true"]{color:var(--ink)}

@@ -14,12 +14,17 @@ let timer = null;
  * @param {boolean} [warn] aviso destacado (dura más)
  * @param {string} [undoEventId] muestra «Deshacer» para esa jugada
  */
-export function toast(text, warn = false, undoEventId = null) {
+/**
+ * @param {{label: string, a: string, o?: string}} [action] botón extra (por ejemplo «Hacer cambios»)
+ */
+export function toast(text, warn = false, undoEventId = null, action = null) {
   const el = $('#toast');
   if (!el) return;
   el.className = 'toast' + (warn ? ' warn' : '');
   el.setAttribute('aria-live', warn ? 'assertive' : 'polite');
-  el.innerHTML = '<span>' + esc(text) + '</span>' + (undoEventId ? '<button data-a="undo-id" data-id="' + esc(undoEventId) + '">Deshacer</button>' : '');
+  el.innerHTML = '<span>' + esc(text) + '</span>' +
+    (action ? '<button data-a="' + esc(action.a) + '"' + (action.o ? ' data-o="' + esc(action.o) + '"' : '') + '>' + esc(action.label) + '</button>' : '') +
+    (undoEventId ? '<button data-a="undo-id" data-id="' + esc(undoEventId) + '">Deshacer</button>' : '');
   // En el partido va justo debajo del tablero (no tapa reloj ni barra de herramientas).
   const board = document.querySelector('.board');
   el.style.top = board && innerWidth > 760 ? Math.round(board.getBoundingClientRect().bottom + 8) + 'px' : '';
@@ -27,7 +32,7 @@ export function toast(text, warn = false, undoEventId = null) {
   const col = document.querySelector('.court-col');
   if (col && innerWidth > 760) { const r = col.getBoundingClientRect(); el.style.left = Math.round(r.left + r.width / 2) + 'px'; } else el.style.left = '';
   el.hidden = false;
-  const ms = undoEventId ? UNDO_MS : warn ? LONG_MS : SHORT_MS;
+  const ms = undoEventId || action ? UNDO_MS : warn ? LONG_MS : SHORT_MS;
   const hide = () => { el.hidden = true; };
   clearTimeout(timer);
   timer = setTimeout(hide, ms);
