@@ -16,7 +16,7 @@ export { renderBoard, tickClockDisplay, renderPanel, renderOverlay, renderDots, 
 export function gameShellHTML() {
   return '<div class="game"><header class="board" id="board"></header><main class="stage">' +
     '<section class="court-col"><p class="rotate">Girá la tablet o el celular para ver la cancha más grande.</p><div class="court-wrap">' + COURT_SVG + '<button class="attack-ind" id="attack-ind" data-a="attack-flip" title="Tocá para invertir la dirección"></button><div class="court-tip" id="court-tip">Tocá dónde ocurrió la jugada</div></div><div class="tools" id="tools"></div></section>' +
-    '<aside class="panel" id="panel" aria-live="polite"></aside></main><div id="overlay"></div>' + TOAST_HTML + '</div>';
+    '<aside class="panel" id="panel" aria-label="Carga de jugadas"></aside><div id="sr-status" class="visually-hidden" role="status" aria-live="polite"></div></main><div id="overlay"></div>' + TOAST_HTML + '</div>';
 }
 
 /** Si un jugador en cancha quedó excluido (p. ej. al editar el historial), abre el cambio obligatorio. */

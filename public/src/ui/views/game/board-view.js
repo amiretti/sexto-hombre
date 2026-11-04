@@ -5,7 +5,7 @@ import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, safeColor } from '../../../
 import { remainingMs, formatSeconds, periodShort, periodLong } from '../../../domain/clock.js';
 import { ourScore, opponentScore, teamFouls, isEnded } from '../../../domain/stats.js';
 import { $ } from '../../dom.js';
-import { currentGame } from '../../state.js';
+import { currentGame, ui } from '../../state.js';
 
 function foulDots(tf) {
   let dots = '';
@@ -28,18 +28,29 @@ function clockControls(G, r, ended) {
 function ourSide(G, pos) {
   const tf = teamFouls(G, G.period);
   return '<div class="side ' + pos + '"><span class="score">' + ourScore(G) + '</span><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.teamColor, DEFAULT_TEAM_COLOR)) + '"></span>' + esc(G.team) + '</span>' +
-    '<span class="sub">Faltas eq. <span class="tfdots' + (tf >= 4 ? ' pen' : '') + '">' + foulDots(tf) + '</span>' + penaltyTag(tf) + '</span></div>';
+    '<span class="sub">Faltas eq. <span class="tfdots' + (tf >= 4 ? ' pen' : '') + '" role="img" aria-label="' + tf + (tf === 1 ? ' falta' : ' faltas') + ' de equipo">' + foulDots(tf) + '</span>' + penaltyTag(tf) + '</span></div>';
 }
 
 function theirSide(G, pos) {
   return '<div class="side ' + pos + '"><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.oppColor, DEFAULT_OPPONENT_COLOR)) + '"></span>' + esc(G.opponent) + '</span><span class="score">' + opponentScore(G) + '</span>' +
-    '<span class="sub"><button class="oppb" data-a="opp" data-d="1">+1</button><button class="oppb" data-a="opp" data-d="2">+2</button><button class="oppb" data-a="opp" data-d="3">+3</button><button class="oppb" data-a="opp" data-d="-1" aria-label="Restar un punto al rival">−</button></span></div>';
+    '<span class="sub oppctl">' + [1, 2, 3].map((n) => '<button class="oppb" data-a="opp" data-d="' + n + '" aria-label="Sumar ' + n + ' punto' + (n > 1 ? 's' : '') + ' al rival">+' + n + '</button>').join('') +
+    '<button class="oppb minus" data-a="opp" data-d="-1" aria-label="Restar un punto al rival">−</button></span></div>';
+}
+
+/** Chip «el reloj estaba detenido»: se ofrece sincronizar con el tablero; se cierra solo. */
+function syncChip() {
+  if (!ui.clockNotice) return '';
+  return '<div class="sync-chip" role="status"><span>Reloj estaba detenido</span><button data-a="sync-open">Sincronizar</button>' +
+    '<button data-a="sync-dismiss" aria-label="Descartar aviso del reloj">×</button></div>';
 }
 
 function middle(G, r, ended) {
   const cls = ended ? 'ended' : G.clock.running ? 'running' : 'stopped';
-  return '<div class="mid"><div class="per">' + (ended ? 'Final del partido' : periodLong(G.period)) + '</div><button id="clock" class="clock ' + cls + '" data-a="clock" aria-label="Iniciar o pausar el reloj">' + formatSeconds(r / 1000) + '</button>' +
-    '<div class="clock-ctl">' + clockControls(G, r, ended) + '</div></div>';
+  const state = ended ? 'partido terminado' : G.clock.running ? 'corriendo, tocá para pausar' : 'detenido, tocá para iniciar';
+  const icon = ended ? '' : '<span class="clock-ico" aria-hidden="true">' + (G.clock.running ? '❚❚' : '▶') + '</span>';
+  return '<div class="mid"><div class="per">' + (ended ? 'Final del partido' : periodLong(G.period)) + '</div><button id="clock" class="clock ' + cls + '" data-a="clock">' +
+    icon + '<span class="clock-time">' + formatSeconds(r / 1000) + '</span><span class="visually-hidden"> · reloj ' + state + '</span></button>' +
+    '<div class="clock-ctl">' + clockControls(G, r, ended) + '</div>' + syncChip() + '</div>';
 }
 
 export function renderBoard() {
@@ -53,5 +64,6 @@ export function tickClockDisplay() {
   const el = $('#clock');
   const G = currentGame();
   if (!el || !G) return;
-  el.textContent = formatSeconds(remainingMs(G.clock) / 1000);
+  const t = el.querySelector('.clock-time');
+  if (t) t.textContent = formatSeconds(remainingMs(G.clock) / 1000);
 }

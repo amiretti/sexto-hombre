@@ -23,6 +23,8 @@ import { persistView } from '../navigation.js';
 import { renderGame, renderBoard, renderPanel, renderOverlay, renderDots, tickClockDisplay } from '../views/game/game-view.js';
 
 const TICK_MS = 100;
+/** Cuánto queda visible el chip «Reloj estaba detenido». */
+const CLOCK_NOTICE_MS = 20 * 1000;
 const session = () => app.session;
 
 /* ---------- pasos de carga ---------- */
@@ -78,7 +80,8 @@ function autoStartClock(action, event) {
   if (note && c.running) { note.eventIds.push(event.id); return; }
   if (c.running || c.rem <= 0 || !isLiveBallAction(action.type, action.sub)) return;
   toggleClock(c);
-  ui.clockNotice = { stoppedAt: c.rem / 1000, eventIds: [event.id] };
+  ui.clockNotice = { stoppedAt: c.rem / 1000, eventIds: [event.id], expires: Date.now() + CLOCK_NOTICE_MS };
+  renderBoard();
   persistView();
 }
 
@@ -152,7 +155,7 @@ function recordFoulDrawn(kind) {
 
 function toggleGameClock() {
   if (!toggleClock(currentGame().clock)) return;
-  if (ui.clockNotice) { ui.clockNotice = null; renderPanel(); }
+  if (ui.clockNotice) ui.clockNotice = null;
   persistView();
   renderBoard();
 }
@@ -170,6 +173,7 @@ function onTick() {
   const G = currentGame();
   if (state.view !== 'game' || !G || !G.clock.running) return;
   const what = tickClock(G);
+  if (ui.clockNotice && Date.now() > ui.clockNotice.expires && ui.overlay !== 'sync') { ui.clockNotice = null; renderBoard(); }
   if (what === 'running') {
     tickClockDisplay();
     // Al entrar en los últimos 2 minutos del 4° cuarto cambian los tiempos muertos disponibles.
@@ -286,7 +290,12 @@ function saveEdit() {
   const G = currentGame(), d = ui.draft;
   const event = G.events.find((x) => x.id === d.id);
   const err = applyEditDraft(G, event, d);
-  if (err) { d.err = err; renderOverlay(); return; }
+  if (err) {
+    d.err = err; renderOverlay();
+    const t = document.getElementById('e-time');
+    if (t) { t.setAttribute('aria-invalid', 'true'); t.setAttribute('aria-describedby', 'e-err'); t.focus(); }
+    return;
+  }
   session().updateEvent(event);
   ui.draft = null;
   renderGame();
@@ -337,7 +346,7 @@ const handlers = {
   'noloc': () => startPlayAt(null, null, 'player'),
   'sync-open': () => { ui.overlay = 'sync'; ui.csv = null; hideToast(); renderOverlay(); },
   'sync-save': () => syncClock(),
-  'sync-dismiss': () => { ui.clockNotice = null; renderPanel(); },
+  'sync-dismiss': () => { ui.clockNotice = null; renderBoard(); },
   'sync-step': ({ data }) => {
     const mEl = $('#sync-m'), sEl = $('#sync-s');
     const G = currentGame(), max = periodLengthSec(G, G.period);
@@ -388,6 +397,7 @@ const handlers = {
     renderPanel();
   },
   'ft-res': ({ data }) => { ui.ft.res[+data.i] = data.v; renderPanel(); },
+  'ft-quick': ({ data }) => record({ type: 'FT', att: ui.ft.att, made: Math.min(+data.m, ui.ft.att) }),
   'ft-save': () => {
     const f = ui.ft;
     if (f.res.includes(null)) return;
@@ -476,7 +486,9 @@ function onGameKey(event) {
   if (state.view !== 'game' || !currentGame()) return false;
   const tag = (event.target.tagName || '').toLowerCase();
   if (tag === 'input' || tag === 'select' || tag === 'textarea') return false;
-  if (event.code === 'Space' && !ui.overlay) { event.preventDefault(); toggleGameClock(); }
+  // Espacio arranca/pausa el reloj solo si el foco no está en un control (si no, activa ese control).
+  const onControl = event.target.closest && event.target.closest('button, a, [role=button], [role=radio], summary');
+  if (event.code === 'Space' && !ui.overlay && !onControl) { event.preventDefault(); toggleGameClock(); }
   if (event.key === 'Escape') {
     if (ui.overlay === 'forced') return true;
     if (ui.overlay) { ui.overlay = null; ui.draft = null; renderOverlay(); }

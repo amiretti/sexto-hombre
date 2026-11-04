@@ -47,16 +47,17 @@ function editForm(G, d) {
   let po = '';
   for (let p = 1; p <= Math.max(G.period, d.period, 4); p++) po += '<option value="' + p + '"' + (d.period === p ? ' selected' : '') + '>' + periodLong(p) + '</option>';
   h += '<label>Período<select id="e-per">' + po + '</select></label><label>Tiempo (reloj)<input id="e-time" inputmode="decimal" value="' + esc(d.timeStr) + '" placeholder="7:32 o 45.3"></label>';
-  h += '<div class="acts"><span class="err" id="e-err">' + esc(d.err || '') + '</span><button class="btn" data-a="cancel-edit">Cancelar</button><button class="btn primary" data-a="save-edit">Guardar cambios</button></div></div>';
+  h += '<div class="acts"><span class="err" id="e-err" role="alert">' + esc(d.err || '') + '</span><button class="btn" data-a="cancel-edit">Cancelar</button><button class="btn primary" data-a="save-edit">Guardar cambios</button></div></div>';
   return h;
 }
 
 function historyRow(G, e) {
   const armed = ui.confirm === 'del-' + e.id, d = eventDetail(G, e), z = !isTeamEvent(e.type) && e.x != null ? zoneName(e.x, e.y) : '';
   const pts = eventPoints(e);
+  const rowName = periodShort(e.period) + ' ' + formatSeconds(e.t) + ' ' + eventActor(G, e) + ' ' + (EVENT_LABELS[e.type] || '');
   let h = '<li class="hrow"><span class="per2">' + periodShort(e.period) + '</span><span class="t">' + formatSeconds(e.t) + '</span><span class="who">' + esc(eventActor(G, e)) + '</span>' +
     '<span class="what"><span class="tag ' + eventCategory(e) + '"></span>' + esc(e.type === 'SUB' ? '' : EVENT_LABELS[e.type]) + (d || z ? '<small>' + esc([d, z].filter(Boolean).join(' · ')) + '</small>' : '') + '</span>' +
-    '<span class="pts">' + (pts ? '+' + pts : '') + '</span><span class="hact"><button class="btn" data-a="edit" data-id="' + esc(e.id) + '">Editar</button><button class="btn danger' + (armed ? ' armed' : '') + '" data-a="del" data-id="' + esc(e.id) + '">' + (armed ? '¿Borrar?' : 'Borrar') + '</button></span>';
+    '<span class="pts">' + (pts ? '+' + pts : '') + '</span><span class="hact"><button class="btn" data-a="edit" data-id="' + esc(e.id) + '" aria-label="' + esc('Editar jugada ' + rowName) + '">Editar</button><button class="btn danger' + (armed ? ' armed' : '') + '" data-a="del" data-id="' + esc(e.id) + '" aria-label="' + esc((armed ? 'Confirmar borrar jugada ' : 'Borrar jugada ') + rowName) + '">' + (armed ? '¿Borrar?' : 'Borrar') + '</button></span>';
   if (ui.draft && ui.draft.id === e.id) h += editForm(G, ui.draft);
   return h + '</li>';
 }
@@ -100,7 +101,7 @@ function subsSheet(G) {
   const sel = ui.subSel, need = requiredOnCourt(G);
   const toggle = (p) => {
     const s = playerStats(G, p.id), on = sel.includes(p.id);
-    return '<button class="stog" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '"' + (s.out && !on ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + ' faltas' + (s.out ? ' · ' + s.outWhy : '') + '</small></span></button>';
+    return '<button class="stog" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '"' + (s.out && !on ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + (s.fouls === 1 ? ' falta' : ' faltas') + (s.out ? ' · ' + s.outWhy : '') + '</small></span></button>';
   };
   return sheet('Cambios · ' + periodShort(G.period) + ' ' + clockNow(G), '<span class="chip ' + (sel.length === need ? 'ok' : 'bad') + '">' + sel.length + ' de ' + need + ' en cancha</span>',
     '<p class="lead">Marcá quiénes quedan en cancha. El cambio se registra con el tiempo actual del reloj.</p><div class="slist">' + G.roster.map(toggle).join('') +
@@ -149,9 +150,11 @@ function finalDialog(G) {
     '<div class="row end"><button class="btn" data-a="close-ov">Ahora no</button><button class="btn primary big" data-a="share" data-close="1">Compartir planilla</button></div></div></section>';
 }
 
+const foulsText = (n) => n + (n === 1 ? ' falta' : ' faltas');
+
 function forcedDialog(G) {
   const F = ui.forced, fp = findPlayer(G, F.out), cands = benchCandidates(G);
-  const candidate = (p) => '<button class="stog" data-a="forced-pick" data-id="' + esc(p.id) + '"><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + playerStats(G, p.id).fouls + ' faltas</small></span></button>';
+  const candidate = (p) => '<button class="stog" data-a="forced-pick" data-id="' + esc(p.id) + '"><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + foulsText(playerStats(G, p.id).fouls) + '</small></span></button>';
   return '<section class="sheet small" role="dialog" aria-label="Cambio obligatorio"><div class="sheet-head"><div class="forced-head"><span class="eyebrow">Reloj detenido · ' + periodShort(G.period) + ' ' + clockNow(G) + '</span>' +
     '<strong>#' + esc(fp.num) + ' ' + esc(fp.name || '') + ' · ' + esc(F.why) + '</strong></div></div><div class="sheet-body">' +
     (cands.length ? '<p class="lead">Tiene que salir. Elegí quién entra:</p><div class="slist">' + cands.map(candidate).join('') + '</div>'
