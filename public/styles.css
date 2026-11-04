@@ -472,22 +472,6 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
   .oppb{min-height:40px}
 }
 
-/* ---- #24: modo sol (alto contraste para usar al aire libre) ---- */
-:root[data-theme="sun"]{
-  --bg:#ffffff; --panel:#ffffff; --ink:#000000; --muted:#262b33; --rule:#5c6470;
-  --accent:#0a33a0; --accent-ink:#ffffff; --accent-soft:#d6e0fb;
-  --board:#000000; --board-2:#1c1c1c; --board-ink:#ffffff; --board-muted:#e2e6ec; --clock:#ffc233;
-  --good:#075e2d; --good-soft:#c6ecd4; --bad:#9e150b; --bad-soft:#f8cfc9; --warn:#6e3f00; --warn-soft:#f7dca8; --bad-ink:#8a1208; --warn-ink:#ffffff;
-  --floor:#ecc78f; --floor-key:#c2783a; --floor-line:#111111; --floor-out:#1b2f52; color-scheme:light}
-:root[data-theme="sun"] body{font-weight:500}
-:root[data-theme="sun"] .abtn,:root[data-theme="sun"] .btn,:root[data-theme="sun"] .pcard,:root[data-theme="sun"] .stog,
-:root[data-theme="sun"] .starter,:root[data-theme="sun"] input,:root[data-theme="sun"] select,:root[data-theme="sun"] .panel,:root[data-theme="sun"] .card{border-width:2px}
-:root[data-theme="sun"] .abtn small,:root[data-theme="sun"] .lead,:root[data-theme="sun"] h3{color:var(--ink)}
-:root[data-theme="sun"] .tfdots i,:root[data-theme="sun"] .fd i{border-color:#9aa3ae}
-:root[data-theme="sun"] .c-lines{stroke-width:10}
-:root[data-theme="sun"] .btn.ghost{border-color:var(--rule)}
-[data-a="sun-toggle"][aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-
 /* ---- estadios ---- */
 .field.full{grid-column:1/-1}
 .vrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) 10.5rem 44px;gap:8px;align-items:center}
@@ -533,3 +517,16 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .setup-grid>.field{min-width:0;grid-template-columns:minmax(0,1fr)}
 .tstatic{display:block;line-height:1.6}
 @media (min-width:700px){.setup-grid>.field.wide{grid-column:span 2}}
+
+/* ---- interruptor claro / oscuro ---- */
+.theme-switch{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 6px;border:0;background:none;color:var(--muted);cursor:pointer;border-radius:22px}
+.theme-switch svg{width:18px;height:18px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.theme-switch .ts-moon svg{fill:currentColor;stroke:none}
+.ts-track{position:relative;width:44px;height:24px;border-radius:12px;background:var(--rule);transition:background .15s}
+.ts-knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.35);transition:transform .15s}
+.theme-switch[aria-checked="true"] .ts-track{background:var(--accent)}
+.theme-switch[aria-checked="true"] .ts-knob{transform:translateX(20px)}
+.theme-switch[aria-checked="false"] .ts-sun,.theme-switch[aria-checked="true"] .ts-moon{color:var(--ink)}
+.theme-switch:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.ts-track,.ts-knob{transition:none}}
+.row.theme-row{align-items:center;gap:10px}

@@ -51,7 +51,7 @@ document.addEventListener('visibilitychange', () => {
   else if (app.lock) app.lock.check(); // al volver, ¿otro dispositivo tomó el partido?
 });
 
-applyTheme();
+applyTheme(render);
 render();
 createStore().then((store) => {
   app.store = store;

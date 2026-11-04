@@ -2,7 +2,7 @@
 
 import { esc, plural } from '../../shared/html.js';
 import { venuesOf } from '../../domain/club.js';
-import { isSunMode } from '../../infrastructure/platform/theme.js';
+import { themeSwitchHTML } from '../components/theme-switch.js';
 import { formatDate } from '../../shared/ids.js';
 import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, safeColor } from '../../shared/colors.js';
 import { state, ui, isDemo } from '../state.js';
@@ -76,7 +76,7 @@ function competitionsSectionHTML() {
 
 function userHTML(u) {
   return '<div class="user">' + (u.photo ? '<img src="' + esc(u.photo) + '" alt="" referrerpolicy="no-referrer">' : '') + '<span>' + esc(u.name) + '</span>' +
-    '<button class="btn ghost" data-a="sun-toggle" aria-pressed="' + isSunMode() + '" title="Alto contraste para usar al sol">☀ Modo sol</button>' +
+    themeSwitchHTML() +
     (isDemo() ? '' : '<button class="btn ghost" data-a="logout">Salir</button>') + '</div>';
 }
 

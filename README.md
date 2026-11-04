@@ -31,8 +31,8 @@ _La planilla del cuerpo técnico._
 - **Camiseta:** se propone la titular del club; si se parece al color del rival, pasás a la alternativa con un toque.
 - **Estadios:** cada club guarda sus canchas (nombre y ubicación). Podés marcar una por defecto, que se propone en cada partido de local y se cambia si hace falta; queda en la lista de partidos y en la planilla.
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
-- **Modo sol:** tema de alto contraste para canchas abiertas o con mucha luz (fondo blanco, bordes gruesos, líneas oscuras). Se activa desde el inicio o el menú del partido y queda guardado en el dispositivo.
-- **Accesible:** se puede usar con teclado y lector de pantalla (WCAG 2.2 AA; axe-core sin violaciones en claro, oscuro y modo sol).
+- **Modo claro y oscuro:** interruptor con sol y luna en el inicio y en el menú del partido. Mientras no elijas, sigue al sistema; lo que elijas queda guardado en el dispositivo.
+- **Accesible:** se puede usar con teclado y lector de pantalla (WCAG 2.2 AA; axe-core sin violaciones en modo claro y oscuro).
 - **Login con Google** y acceso restringido por lista blanca de correos.
 
 ## Capturas

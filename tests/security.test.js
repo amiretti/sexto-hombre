@@ -48,11 +48,20 @@ test('clearLocalAppData borra solo las claves de la app', () => {
 });
 
 test('clearLocalAppData conserva las preferencias del dispositivo (tema, chicharra)', () => {
-  const data = new Map([['pb-setup-u1', '{}'], ['pb-theme', 'sun'], ['pb-buzzer', 'off'], ['pb-allowed-u1', '1']]);
+  const data = new Map([['pb-setup-u1', '{}'], ['pb-theme', 'dark'], ['pb-buzzer', 'off'], ['pb-allowed-u1', '1']]);
   const fake = { getItem: (k) => data.get(k) ?? null, removeItem: (k) => data.delete(k), setItem: (k, v) => data.set(k, v) };
   const proxy = new Proxy(fake, { ownKeys: () => [...data.keys()], getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }) });
   const previous = globalThis.localStorage;
   globalThis.localStorage = proxy;
   try { clearLocalAppData(); } finally { globalThis.localStorage = previous; }
   assert.deepEqual([...data.keys()].sort(), ['pb-buzzer', 'pb-theme']);
+});
+
+test('theme: lo elegido gana; sin elegir sigue al sistema; el viejo modo sol se lee como claro', async () => {
+  const { resolveTheme } = await import('../public/src/infrastructure/platform/theme.js');
+  assert.equal(resolveTheme('dark', false), 'dark');
+  assert.equal(resolveTheme('light', true), 'light');
+  assert.equal(resolveTheme('sun', true), 'light');
+  assert.equal(resolveTheme(null, true), 'dark');
+  assert.equal(resolveTheme('auto', false), 'light');
 });
