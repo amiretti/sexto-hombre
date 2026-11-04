@@ -12,6 +12,7 @@ import { createGameSession } from './src/application/game-session.js';
 import { createGameLock } from './src/application/game-lock.js';
 import { currentDevice } from './src/infrastructure/platform/device-id.js';
 import { registerServiceWorker } from './src/infrastructure/platform/device.js';
+import { applyTheme } from './src/infrastructure/platform/theme.js';
 import { esc } from './src/shared/html.js';
 import { app, state, currentGame } from './src/ui/state.js';
 import { $ } from './src/ui/dom.js';
@@ -46,6 +47,7 @@ document.addEventListener('visibilitychange', () => {
   else if (app.lock) app.lock.check(); // al volver, ¿otro dispositivo tomó el partido?
 });
 
+applyTheme();
 render();
 createStore().then((store) => {
   app.store = store;

@@ -3,6 +3,7 @@
 import { app, state, ui, resetUi, currentGame } from './state.js';
 import { render } from './render.js';
 import { toast } from './toast.js';
+import { isSunMode, setSunMode } from '../infrastructure/platform/theme.js';
 import { hydrateGame } from '../domain/game.js';
 import { saveSetupDraft } from '../infrastructure/platform/setup-draft-storage.js';
 import { keepScreenOn } from '../infrastructure/platform/device.js';
@@ -112,6 +113,12 @@ export function onUser(user) {
 export const navigationActions = {
   'go-home': () => goHome(),
   'open-game': ({ id }) => openGame(id),
+  'sun-toggle': () => {
+    setSunMode(!isSunMode());
+    render();
+    const btn = document.querySelector('[data-a="sun-toggle"]');
+    if (btn) btn.focus();
+  },
   'lock-force': () => { if (state.lockInfo) openGame(state.lockInfo.gameId, true); },
   'login': () => {
     ui.authErr = '';

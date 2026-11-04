@@ -28,6 +28,8 @@ _La planilla del cuerpo técnico._
 - **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico. Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
 - **Planteles guardados:** cargás a tus jugadores una vez. En cada partido elegís el rival, los convocados y el quinteto.
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
+- **Modo sol:** tema de alto contraste para canchas abiertas o con mucha luz (fondo blanco, bordes gruesos, líneas oscuras). Se activa desde el inicio o el menú del partido y queda guardado en el dispositivo.
+- **Accesible:** se puede usar con teclado y lector de pantalla (WCAG 2.2 AA; axe-core sin violaciones en claro, oscuro y modo sol).
 - **Login con Google** y acceso restringido por lista blanca de correos.
 
 ## Capturas

@@ -1,6 +1,7 @@
 // Hojas superpuestas del partido: historial, planilla, cambios, reloj, menú, final y cambio obligatorio.
 
 import { esc } from '../../../shared/html.js';
+import { isSunMode } from '../../../infrastructure/platform/theme.js';
 import { focusKey, focusQuiet } from '../../focus.js';
 import { isBuzzerEnabled } from '../../../infrastructure/platform/buzzer.js';
 import { EVENT_LABELS, hasSubtype, subtypeKinds, isTeamEvent, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
@@ -148,6 +149,7 @@ function menuSheet(G) {
   return sheet('Partido', '', '<p class="lead">' + esc(G.team) + ' vs ' + esc(G.opponent) + ' · ' + esc(G.date || '') + (G.competition ? ' · ' + esc(G.competition) : '') + ' · cuartos de ' + G.periodMin + ' min' + (G.coach ? ' · DT ' + esc(G.coach) : '') + '</p>' +
     '<p class="lead">' + (isDemo() ? 'Modo demo: el partido se guarda solo en este dispositivo.' : 'Cada jugada se guarda en tu cuenta. Sin señal queda en el dispositivo y se envía sola cuando vuelve la conexión.') + '</p>' +
     '<div class="row"><button class="btn share" data-a="share">Compartir planilla (PDF)</button><button class="btn" data-a="ov" data-o="box">Ver planilla</button><button class="btn" data-a="ov" data-o="history">Ver historial</button></div>' +
+    '<div class="row"><button class="btn" data-a="sun-toggle" aria-pressed="' + isSunMode() + '">☀ Modo sol (alto contraste): ' + (isSunMode() ? 'activado' : 'desactivado') + '</button></div>' +
     '<div class="row"><button class="btn" data-a="buzzer-toggle" aria-pressed="' + isBuzzerEnabled() + '">Chicharra al terminar el tiempo: ' + (isBuzzerEnabled() ? 'activada' : 'silenciada') + '</button></div>' +
     '<div class="row end"><button class="btn" data-a="go-home">Volver a mis partidos</button>' +
     (fin ? '<span class="chip ok">Partido finalizado</span>' : '<button class="btn danger' + (armed ? ' armed' : '') + '" data-a="finish">' + (armed ? 'Tocá de nuevo para finalizar' : 'Finalizar partido') + '</button>') + '</div>' +

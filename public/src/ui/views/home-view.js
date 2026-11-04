@@ -1,6 +1,7 @@
 // «Mis partidos»: planteles y lista de partidos.
 
 import { esc } from '../../shared/html.js';
+import { isSunMode } from '../../infrastructure/platform/theme.js';
 import { formatDate } from '../../shared/ids.js';
 import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, safeColor } from '../../shared/colors.js';
 import { state, ui, isDemo } from '../state.js';
@@ -54,6 +55,7 @@ function teamsSectionHTML() {
 
 function userHTML(u) {
   return '<div class="user">' + (u.photo ? '<img src="' + esc(u.photo) + '" alt="" referrerpolicy="no-referrer">' : '') + '<span>' + esc(u.name) + '</span>' +
+    '<button class="btn ghost" data-a="sun-toggle" aria-pressed="' + isSunMode() + '" title="Alto contraste para usar al sol">☀ Modo sol</button>' +
     (isDemo() ? '' : '<button class="btn ghost" data-a="logout">Salir</button>') + '</div>';
 }
 
