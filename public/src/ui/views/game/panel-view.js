@@ -132,10 +132,11 @@ function defenseGroup() {
     actionButton('STL', 'Robo') + actionButton('BLK', 'Tapón') + '</div></div>';
 }
 
+/** Faltas poco frecuentes, plegadas para que las acciones habituales entren sin scroll. */
 function technicalGroup() {
-  return '<div class="agroup"><h3>Técnicas y otras faltas</h3><div class="agrid">' +
+  return '<details class="agroup more"><summary>Técnica, antideportiva o descalificante</summary><div class="agrid">' +
     '<button class="abtn tech" data-a="act" data-t="TF">Técnica</button><button class="abtn tech" data-a="act" data-t="UF">Antideportiva</button>' +
-    '<button class="abtn tech wide" data-a="act" data-t="DF">Descalificante</button></div></div>';
+    '<button class="abtn tech wide" data-a="act" data-t="DF">Descalificante</button></div></details>';
 }
 
 /** Acciones ordenadas según dónde fue la jugada: en campo propio primero las defensivas. */

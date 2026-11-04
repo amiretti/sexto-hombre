@@ -371,3 +371,22 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .ftq-n{font-family:var(--f-display);font-weight:800;font-size:1.5rem;display:block}
 .fd i.on.t{border-radius:1px}
 @media (max-width:760px){.toast{top:auto;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:8px;right:8px;transform:none;max-width:none}}
+
+/* ---- #14: paso Acción completo sin scroll en tablet ---- */
+.more summary{cursor:pointer;list-style:none;border:1px dashed var(--bad);color:var(--bad-ink);border-radius:9px;min-height:44px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:.9rem}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:' ▾';margin-left:.3em}
+.more[open] summary::after{content:' ▴'}
+.more[open] summary{margin-bottom:6px}
+.abtn{min-height:46px}
+@media (max-height:900px) and (min-width:761px){
+  .board{padding-block:4px;row-gap:2px}
+  .clock{font-size:2.9rem}
+  .side .score{font-size:2.7rem}
+  .per{font-size:.75rem}
+  .stage{padding-block:8px}
+  .panel{padding:10px 12px;gap:8px}
+  .agroup{gap:5px}
+  .abtn{min-height:42px;padding:4px 6px}
+  .abtn small{font-size:.68rem}
+}
