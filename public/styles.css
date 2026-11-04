@@ -410,3 +410,9 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 @media (max-width:520px){.subcols{grid-template-columns:1fr}}
 .stog.court[aria-pressed="true"]{background:var(--bg);color:var(--ink);border-color:var(--rule)}
 .stog.entra[aria-pressed="true"]{color:var(--ink)}
+
+/* ---- #18: previa con «Empezar» siempre visible ---- */
+.setup-foot.sticky{position:sticky;bottom:0;z-index:5;background:var(--bg);padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--rule);box-shadow:0 -6px 12px -10px rgba(0,0,0,.35)}
+.setup-foot.sticky .err:empty{display:none}
+.setup-foot.sticky .err{margin-right:auto}
+.crow .starter{min-width:7.6em;justify-content:center;text-align:center}

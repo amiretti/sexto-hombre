@@ -18,14 +18,19 @@ function teamPickerHTML() {
     teams.map((t) => teamCardHTML(t, 'pick-team')).join('') + '</div></section>' + TOAST_HTML + '</div>';
 }
 
+/** Opción de un grupo segmentado (patrón radiogroup: solo la marcada entra en el orden de Tab; flechas para cambiar). */
+function radio(action, value, checked, label) {
+  return '<button role="radio" data-a="' + action + '" data-v="' + value + '" aria-checked="' + checked + '" tabindex="' + (checked ? 0 : -1) + '">' + label + '</button>';
+}
+
 function venueFieldHTML(venue) {
   return '<div class="field"><span class="flabel" id="venue-l">Jugamos de</span><div class="seg" role="radiogroup" aria-labelledby="venue-l">' +
-    '<button role="radio" data-a="venue" data-v="home" aria-checked="' + (venue === 'home') + '">Local</button><button role="radio" data-a="venue" data-v="away" aria-checked="' + (venue === 'away') + '">Visitante</button></div></div>';
+    radio('venue', 'home', venue === 'home', 'Local') + radio('venue', 'away', venue === 'away', 'Visitante') + '</div></div>';
 }
 
 function attackFieldHTML(attack) {
   return '<div class="field"><span class="flabel" id="attack-l">En el 1er tiempo atacamos hacia</span><div class="seg" role="radiogroup" aria-labelledby="attack-l">' +
-    '<button role="radio" data-a="attack" data-v="left" aria-checked="' + (attack === 'left') + '">← Izquierda</button><button role="radio" data-a="attack" data-v="right" aria-checked="' + (attack === 'right') + '">Derecha →</button></div></div>';
+    radio('attack', 'left', attack === 'left', '← Izquierda') + radio('attack', 'right', attack === 'right', 'Derecha →') + '</div></div>';
 }
 
 function matchCardHTML(s, t) {
@@ -58,9 +63,17 @@ function rosterCardHTML(s, t) {
     '</section>';
 }
 
+/** Pie fijo: siempre se ve cuántos titulares hay y el botón para empezar. */
+function startFooterHTML(s, t) {
+  const sel = s.sel || {}, starters = calledPlayers(s, t).filter((p) => sel[p.id].starter).length;
+  return '<div class="setup-foot sticky"><p class="err" id="setup-err" role="alert">' + esc(ui.setupErr) + '</p>' +
+    '<span class="chip ' + (starters === 5 ? 'ok' : 'bad') + '">' + starters + ' de 5 titulares</span>' +
+    '<button class="btn primary big" data-a="start">Empezar partido</button></div>';
+}
+
 export function setupHTML() {
   const s = state.setup, t = teamById(s.teamId);
   if (!t) return teamPickerHTML();
   return '<div class="setup">' + HEADER + matchCardHTML(s, t) + rosterCardHTML(s, t) +
-    '<div class="setup-foot"><p class="err" id="setup-err" role="alert">' + esc(ui.setupErr) + '</p><button class="btn primary big" data-a="start">Empezar partido</button></div>' + TOAST_HTML + '</div>';
+    startFooterHTML(s, t) + TOAST_HTML + '</div>';
 }

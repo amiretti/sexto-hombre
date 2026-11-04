@@ -40,7 +40,26 @@ function handleChange(event) {
   if (t.type === 'color') render();
 }
 
+const ARROWS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };
+
+/** Grupos segmentados (role=radiogroup): las flechas cambian la opción y el foco la sigue. */
+function moveRadio(event) {
+  const step = ARROWS[event.key];
+  const radio = event.target.closest && event.target.closest('[role="radio"]');
+  const group = radio && radio.closest('[role="radiogroup"]');
+  if (!step || !group) return false;
+  const radios = [...group.querySelectorAll('[role="radio"]')];
+  const next = radios[(radios.indexOf(radio) + step + radios.length) % radios.length];
+  event.preventDefault();
+  const action = next.dataset.a;
+  next.click(); // re-dibuja la previa
+  const checked = document.querySelector('[role="radio"][data-a="' + action + '"][aria-checked="true"]');
+  if (checked) checked.focus();
+  return true;
+}
+
 function handleKeydown(event) {
+  if (activeForm() && moveRadio(event)) return true;
   if (!(activeForm() && event.key === 'Escape' && ui.colorOpen)) return false;
   const field = ui.colorOpen;
   setColorPopover(null);
