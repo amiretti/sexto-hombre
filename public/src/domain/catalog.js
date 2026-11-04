@@ -56,6 +56,17 @@ export function isTeamEvent(type) {
   return TEAM_EVENT_TYPES.has(type);
 }
 
+/**
+ * Acciones que ocurren con la pelota viva (el reloj corre): tiros de campo, rebotes, asistencias,
+ * robos, tapones y las pérdidas que suelen terminar en robo. Faltas, libres, violaciones,
+ * tiempos muertos y cambios ocurren con el reloj detenido.
+ */
+const LIVE_BALL_TYPES = new Set(['2M', '2X', '3M', '3X', 'RO', 'RD', 'AST', 'STL', 'BLK']);
+const LIVE_BALL_TURNOVERS = new Set(['pase', 'manejo']);
+export function isLiveBallAction(type, sub) {
+  return LIVE_BALL_TYPES.has(type) || (type === 'TOV' && LIVE_BALL_TURNOVERS.has(sub));
+}
+
 /** Acciones que detienen el reloj al cargarse. */
 export const STOPPAGE_TYPES = ['TO', 'REV'];
 

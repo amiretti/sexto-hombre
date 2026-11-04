@@ -1,7 +1,7 @@
 // Controlador de la pantalla del partido: traduce toques y teclas en casos de uso y redibuja.
 
-import { EVENT_LABELS, FREE_THROWS_FOR } from '../../domain/catalog.js';
-import { periodLengthSec, periodLong, toggleClock, adjustClock, remainingMs } from '../../domain/clock.js';
+import { EVENT_LABELS, FREE_THROWS_FOR, isLiveBallAction } from '../../domain/catalog.js';
+import { periodLengthSec, periodLong, toggleClock, adjustClock, remainingMs, runClockFrom, formatSeconds } from '../../domain/clock.js';
 import { clampToCourt, flipAttackingSide, attackingSide } from '../../domain/court.js';
 import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes } from '../../domain/stats.js';
 import { whoLabel } from '../../domain/describe.js';
@@ -49,6 +49,7 @@ function recordAssist(playerId) {
   const a = ui.assistFor;
   if (!a) return;
   const r = session().recordPlay(a.moment, { type: 'AST', who: playerId });
+  if (!r.error) autoStartClock({ type: 'AST' }, r.event);
   resetPlayFlow();
   renderGame();
   if (r.error) toast(r.error, true); else toast('Asistencia: ' + whoLabel(currentGame(), playerId), false, r.event.id);
@@ -66,10 +67,47 @@ function startPlayAt(x, y, step) {
   renderDots();
 }
 
+/**
+ * Si se carga una acción con la pelota viva y el reloj estaba detenido, lo pone a correr y
+ * deja un aviso para sincronizarlo con el tablero (recuerda qué jugadas quedaron con el tiempo viejo).
+ */
+function autoStartClock(action, event) {
+  const G = currentGame(), c = G.clock;
+  const note = ui.clockNotice;
+  if (note && c.running) { note.eventIds.push(event.id); return; }
+  if (c.running || c.rem <= 0 || !isLiveBallAction(action.type, action.sub)) return;
+  toggleClock(c);
+  ui.clockNotice = { stoppedAt: c.rem / 1000, eventIds: [event.id] };
+  persistView();
+}
+
+/** Sincronizar: el reloj corre desde lo que marca el tablero y las jugadas del aviso toman ese tiempo. */
+function syncClock() {
+  const G = currentGame(), note = ui.clockNotice;
+  const m = parseInt($('#sync-m').value, 10) || 0, s = parseInt($('#sync-s').value, 10) || 0;
+  const max = periodLengthSec(G, G.period), sec = Math.min(max, m * 60 + s);
+  // Diferencia entre nuestro reloj y el tablero: se aplica a las jugadas cargadas desde que arrancó solo.
+  const offset = sec - remainingMs(G.clock) / 1000;
+  runClockFrom(G.clock, sec, max);
+  if (note) {
+    note.eventIds.forEach((id) => {
+      const e = G.events.find((x) => x.id === id);
+      if (!e || e.period !== G.period) return;
+      e.t = Math.max(0, Math.min(max, Math.round((e.t + offset) * 10) / 10));
+      session().updateEvent(e);
+    });
+  }
+  ui.clockNotice = null; ui.overlay = null;
+  persistView();
+  renderGame();
+  toast('Reloj sincronizado en ' + formatSeconds(sec));
+}
+
 function record(action) {
   const moment = ui.pending, who = action.who || ui.player, afterFoulAssist = ui.assistFor;
   const result = session().recordPlay(moment, { ...action, who });
   if (result.error) { toast(result.error, true); return; }
+  autoStartClock(action, result.event);
   resetPlayFlow();
   if (isFieldGoalMade(action.type)) askAssistOrReset(who, moment);
   else if (action.type === 'FT' && afterFoulAssist) { ui.assistFor = afterFoulAssist; ui.step = 'assist'; }
@@ -113,6 +151,7 @@ function recordFoulDrawn(kind) {
 
 function toggleGameClock() {
   if (!toggleClock(currentGame().clock)) return;
+  if (ui.clockNotice) { ui.clockNotice = null; renderPanel(); }
   persistView();
   renderBoard();
 }
@@ -294,6 +333,15 @@ const handlers = {
   },
   'opp': ({ data }) => { adjustOpponentScore(currentGame(), +data.d); persistView(); renderBoard(); },
   'noloc': () => startPlayAt(null, null, 'player'),
+  'sync-open': () => { ui.overlay = 'sync'; ui.csv = null; hideToast(); renderOverlay(); },
+  'sync-save': () => syncClock(),
+  'sync-dismiss': () => { ui.clockNotice = null; renderPanel(); },
+  'sync-step': ({ data }) => {
+    const mEl = $('#sync-m'), sEl = $('#sync-s');
+    const G = currentGame(), max = periodLengthSec(G, G.period);
+    const t = Math.max(0, Math.min(max, (parseInt(mEl.value, 10) || 0) * 60 + (parseInt(sEl.value, 10) || 0) + (+data.d)));
+    mEl.value = Math.floor(t / 60); sEl.value = String(Math.floor(t % 60)).padStart(2, '0');
+  },
   'stoppage': ({ data }) => {
     const r = session().recordStoppage(data.t, data.team);
     resetPlayFlow();

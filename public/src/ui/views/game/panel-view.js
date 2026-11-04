@@ -224,7 +224,16 @@ const STEPS = {
   staff: staffStep
 };
 
+/** Aviso: el reloj estaba detenido y lo pusimos a correr al cargar la jugada. */
+function clockNoticeHTML() {
+  const n = ui.clockNotice;
+  if (!n) return '';
+  return '<div class="clocknote" role="status"><span><strong>El reloj estaba detenido</strong> en ' + formatSeconds(n.stoppedAt) +
+    ' y lo pusimos a correr. ¿Lo sincronizamos con el tablero?</span>' +
+    '<span class="row"><button class="btn primary" data-a="sync-open">Sincronizar</button><button class="btn ghost" data-a="sync-dismiss">Está bien</button></span></div>';
+}
+
 export function renderPanel() {
   const step = STEPS[ui.step];
-  $('#panel').innerHTML = step ? step(currentGame()) : '';
+  $('#panel').innerHTML = clockNoticeHTML() + (step ? step(currentGame()) : '');
 }

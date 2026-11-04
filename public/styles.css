@@ -351,3 +351,6 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .quick.three{grid-template-columns:repeat(3,minmax(0,1fr))}
 .qtitle{margin:.9em 0 .4em}
 .abtn.stop{border-color:var(--warn,#c98a00)}
+.clocknote{display:flex;flex-direction:column;gap:8px;background:var(--warn-soft,#fdf1d6);border:1px solid var(--warn,#c98a00);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:.9rem}
+.timepick input{width:4.5em;font-size:1.6rem;text-align:center}
+.tsep{font-size:1.6rem;font-weight:700;align-self:flex-end;padding-bottom:.2em}

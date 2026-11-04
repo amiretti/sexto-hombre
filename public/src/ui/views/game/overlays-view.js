@@ -116,6 +116,17 @@ function clockSheet(G) {
     '<div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="clock-save">Aplicar</button></div>', true);
 }
 
+/** Sincronizar con el tablero: minutos y segundos, con atajos de ±10 s y ±1 s. El reloj sigue corriendo. */
+function syncSheet(G) {
+  const r = remainingMs(G.clock) / 1000, m = Math.floor(r / 60), s = Math.floor(r % 60);
+  const step = (d, label) => '<button class="btn" data-a="sync-step" data-d="' + d + '">' + label + '</button>';
+  return sheet('Sincronizar reloj', '', '<p class="lead">Poné el tiempo que marca el tablero ahora. El reloj sigue corriendo desde ahí y las jugadas que se cargaron con el reloj detenido toman ese tiempo.</p>' +
+    '<div class="row timepick"><label class="inline-field">Min<input id="sync-m" inputmode="numeric" value="' + m + '"></label>' +
+    '<span class="tsep">:</span><label class="inline-field">Seg<input id="sync-s" inputmode="numeric" value="' + String(s).padStart(2, '0') + '"></label></div>' +
+    '<div class="row">' + step(-10, '−10 s') + step(-1, '−1 s') + step(1, '+1 s') + step(10, '+10 s') + '</div>' +
+    '<div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="sync-save">Sincronizar</button></div>', true);
+}
+
 function menuSheet(G) {
   const armed = ui.confirm === 'finish', fin = G.status === 'final';
   return sheet('Partido', '', '<p class="lead">' + esc(G.team) + ' vs ' + esc(G.opponent) + ' · ' + esc(G.date || '') + (G.competition ? ' · ' + esc(G.competition) : '') + ' · cuartos de ' + G.periodMin + ' min' + (G.coach ? ' · DT ' + esc(G.coach) : '') + '</p>' +
@@ -154,6 +165,7 @@ const OVERLAYS = {
   box: { html: boxSheet, scrim: CLOSABLE_SCRIM },
   subs: { html: subsSheet, scrim: CLOSABLE_SCRIM },
   clock: { html: clockSheet, scrim: CLOSABLE_SCRIM },
+  sync: { html: syncSheet, scrim: CLOSABLE_SCRIM },
   menu: { html: menuSheet, scrim: CLOSABLE_SCRIM },
   final: { html: finalDialog, scrim: CLOSABLE_SCRIM },
   forced: { html: forcedDialog, scrim: '<div class="scrim"></div>' }
