@@ -1,13 +1,13 @@
 // Hojas superpuestas del partido: historial, planilla, cambios, reloj, menú, final y cambio obligatorio.
 
 import { esc } from '../../../shared/html.js';
-import { EVENT_LABELS, hasSubtype, subtypeKinds, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
+import { EVENT_LABELS, hasSubtype, subtypeKinds, isTeamEvent, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
 import { periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../../../domain/clock.js';
 import { zoneName } from '../../../domain/court.js';
 import {
   playerStats, ourScore, opponentScore, teamFouls, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
 } from '../../../domain/stats.js';
-import { findPlayer, whoLabel, eventDetail, eventCategory } from '../../../domain/describe.js';
+import { findPlayer, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
 import { benchCandidates } from '../../../domain/game.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame, isDemo } from '../../state.js';
@@ -30,7 +30,7 @@ function options(values, selected, label = (v) => v, value = null) {
 
 function editForm(G, d) {
   let h = '<div class="edit">';
-  if (d.type !== 'SUB') {
+  if (!isTeamEvent(d.type)) {
     h += '<label>Quién<select id="e-who">' + G.roster.map((p) => '<option value="' + esc(p.id) + '"' + (d.who === p.id ? ' selected' : '') + '>#' + esc(p.num) + ' ' + esc(p.name) + '</option>').join('') +
       '<option value="coach"' + (d.who === 'coach' ? ' selected' : '') + '>DT</option><option value="bench"' + (d.who === 'bench' ? ' selected' : '') + '>Banca</option></select></label>';
     h += '<label>Acción<select id="e-type">' + options(isStaff(d.who) ? STAFF_EVENT_TYPES : EDITABLE_EVENT_TYPES, d.type, (t) => EVENT_LABELS[t], (t) => t) + '</select></label>';
@@ -51,9 +51,9 @@ function editForm(G, d) {
 }
 
 function historyRow(G, e) {
-  const armed = ui.confirm === 'del-' + e.id, d = eventDetail(G, e), z = e.type !== 'SUB' && e.x != null ? zoneName(e.x, e.y) : '';
+  const armed = ui.confirm === 'del-' + e.id, d = eventDetail(G, e), z = !isTeamEvent(e.type) && e.x != null ? zoneName(e.x, e.y) : '';
   const pts = eventPoints(e);
-  let h = '<li class="hrow"><span class="per2">' + periodShort(e.period) + '</span><span class="t">' + formatSeconds(e.t) + '</span><span class="who">' + esc(e.type === 'SUB' ? 'Cambio' : whoLabel(G, e.who, false)) + '</span>' +
+  let h = '<li class="hrow"><span class="per2">' + periodShort(e.period) + '</span><span class="t">' + formatSeconds(e.t) + '</span><span class="who">' + esc(eventActor(G, e)) + '</span>' +
     '<span class="what"><span class="tag ' + eventCategory(e) + '"></span>' + esc(e.type === 'SUB' ? '' : EVENT_LABELS[e.type]) + (d || z ? '<small>' + esc([d, z].filter(Boolean).join(' · ')) + '</small>' : '') + '</span>' +
     '<span class="pts">' + (pts ? '+' + pts : '') + '</span><span class="hact"><button class="btn" data-a="edit" data-id="' + esc(e.id) + '">Editar</button><button class="btn danger' + (armed ? ' armed' : '') + '" data-a="del" data-id="' + esc(e.id) + '">' + (armed ? '¿Borrar?' : 'Borrar') + '</button></span>';
   if (ui.draft && ui.draft.id === e.id) h += editForm(G, ui.draft);
@@ -116,6 +116,17 @@ function clockSheet(G) {
     '<div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="clock-save">Aplicar</button></div>', true);
 }
 
+/** Sincronizar con el tablero: minutos y segundos, con atajos de ±10 s y ±1 s. El reloj sigue corriendo. */
+function syncSheet(G) {
+  const r = remainingMs(G.clock) / 1000, m = Math.floor(r / 60), s = Math.floor(r % 60);
+  const step = (d, label) => '<button class="btn" data-a="sync-step" data-d="' + d + '">' + label + '</button>';
+  return sheet('Sincronizar reloj', '', '<p class="lead">Poné el tiempo que marca el tablero ahora. El reloj sigue corriendo desde ahí y las jugadas que se cargaron con el reloj detenido toman ese tiempo.</p>' +
+    '<div class="row timepick"><label class="inline-field">Min<input id="sync-m" inputmode="numeric" value="' + m + '"></label>' +
+    '<span class="tsep">:</span><label class="inline-field">Seg<input id="sync-s" inputmode="numeric" value="' + String(s).padStart(2, '0') + '"></label></div>' +
+    '<div class="row">' + step(-10, '−10 s') + step(-1, '−1 s') + step(1, '+1 s') + step(10, '+10 s') + '</div>' +
+    '<div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="sync-save">Sincronizar</button></div>', true);
+}
+
 function menuSheet(G) {
   const armed = ui.confirm === 'finish', fin = G.status === 'final';
   return sheet('Partido', '', '<p class="lead">' + esc(G.team) + ' vs ' + esc(G.opponent) + ' · ' + esc(G.date || '') + (G.competition ? ' · ' + esc(G.competition) : '') + ' · cuartos de ' + G.periodMin + ' min' + (G.coach ? ' · DT ' + esc(G.coach) : '') + '</p>' +
@@ -154,6 +165,7 @@ const OVERLAYS = {
   box: { html: boxSheet, scrim: CLOSABLE_SCRIM },
   subs: { html: subsSheet, scrim: CLOSABLE_SCRIM },
   clock: { html: clockSheet, scrim: CLOSABLE_SCRIM },
+  sync: { html: syncSheet, scrim: CLOSABLE_SCRIM },
   menu: { html: menuSheet, scrim: CLOSABLE_SCRIM },
   final: { html: finalDialog, scrim: CLOSABLE_SCRIM },
   forced: { html: forcedDialog, scrim: '<div class="scrim"></div>' }

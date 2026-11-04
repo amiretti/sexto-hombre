@@ -4,7 +4,7 @@ import { EVENT_LABELS } from '../domain/catalog.js';
 import { periodShort, formatSeconds } from '../domain/clock.js';
 import { zoneName } from '../domain/court.js';
 import { playerStats, eventPoints, eventsChronological } from '../domain/stats.js';
-import { findPlayer, whoLabel, eventDetail } from '../domain/describe.js';
+import { findPlayer, eventDetail, eventActor } from '../domain/describe.js';
 
 /** Texto que una planilla de cálculo interpretaría como fórmula (CSV injection). */
 const FORMULA_START = /^[=+\-@\t\r]/;
@@ -24,7 +24,7 @@ export function historyCsv(game) {
   eventsChronological(game).forEach((e) => {
     const p = findPlayer(game, e.who);
     rows.push([
-      periodShort(e.period), formatSeconds(e.t), p ? p.num : '', e.type === 'SUB' ? '' : whoLabel(game, e.who, true),
+      periodShort(e.period), formatSeconds(e.t), p ? p.num : '', e.type === 'SUB' ? '' : eventActor(game, e, true),
       EVENT_LABELS[e.type], eventDetail(game, e), eventPoints(e), e.x != null ? zoneName(e.x, e.y) : '',
       e.x == null ? '' : e.x, e.y == null ? '' : e.y
     ]);

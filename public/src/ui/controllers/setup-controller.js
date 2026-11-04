@@ -48,6 +48,7 @@ function startGame() {
   if (result.error) { ui.setupErr = result.error; render(); return; }
   showGame(result.game);
   app.session.persistNow();
+  app.lock.acquire(result.game.id);
   app.store.saveTeam(team.id, { lastStarters: result.starters }).catch(() => {});
   clearSetupDraft(uid());
 }

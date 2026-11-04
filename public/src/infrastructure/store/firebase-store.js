@@ -5,6 +5,7 @@ import { clean, userInfo, sortGames, sortTeams, sortEvents } from './serializati
 import { clearLocalAppData } from '../platform/local-data.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
+const CLAIM_TIMEOUT_MS = 6000;
 const REDIRECT_FALLBACK = ['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/cancelled-popup-request'];
 
 const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
@@ -114,6 +115,37 @@ export async function createFirebaseStore(config) {
     deleteEvent(gameId, ev) {
       return pending.track(F.setDoc(F.doc(db, 'games', gameId, 'events', ev.id),
         { ownerUid: current.uid, deleted: true, rev: (ev.rev || 1) + 1, updatedAt: Date.now() }, { merge: true }));
+    },
+    /**
+     * Toma el bloqueo del partido para `holder` ({id, label}). Si otro lo tiene y no venció, devuelve
+     * {ok: false, holder}. Sin conexión no se puede verificar: devuelve {ok: true, offline: true}.
+     */
+    async claimGame(gameId, holder, { force = false, ttlMs }) {
+      const ref = F.doc(db, 'games', gameId);
+      const attempt = F.runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return { ok: true }; // partido nuevo todavía sin guardar en el servidor
+        const lock = snap.data().lock;
+        const now = Date.now();
+        if (!force && lock && lock.id !== holder.id && now - (lock.at || 0) < ttlMs) return { ok: false, holder: lock };
+        tx.set(ref, { ownerUid: current.uid, lock: { id: holder.id, label: holder.label, at: now } }, { merge: true });
+        return { ok: true };
+      });
+      const timeout = new Promise((resolve) => setTimeout(() => resolve({ ok: true, offline: true }), CLAIM_TIMEOUT_MS));
+      return Promise.race([attempt, timeout]).catch(() => ({ ok: true, offline: true }));
+    },
+    async releaseGame(gameId, holderId) {
+      const ref = F.doc(db, 'games', gameId);
+      try {
+        await F.runTransaction(db, async (tx) => {
+          const snap = await tx.get(ref);
+          if (snap.exists() && snap.data().lock && snap.data().lock.id === holderId) tx.update(ref, { lock: F.deleteField() });
+        });
+      } catch (e) { /* sin conexión: el bloqueo vence solo */ }
+    },
+    /** cb(lock|null) cada vez que cambia el documento del partido. */
+    watchGameLock(gameId, cb) {
+      return F.onSnapshot(F.doc(db, 'games', gameId), (snap) => cb(snap.exists() ? snap.data().lock || null : null), () => {});
     },
     onPending(cb) { return pending.on(cb); }
   };

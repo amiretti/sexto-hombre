@@ -1,6 +1,6 @@
 // Reglas del partido en curso. Las funciones que cambian el partido lo mutan y lo dicen en su nombre/doc.
 
-import { isFoul, isStaff, COACH, STAFF_EVENT_TYPES, normalizeSubtype, hasSubtype } from './catalog.js';
+import { isFoul, isStaff, COACH, STAFF_EVENT_TYPES, normalizeSubtype, hasSubtype, isTeamEvent } from './catalog.js';
 import {
   REGULAR_PERIODS, periodLengthSec, remainingMs, clockStamp, newClock, pauseClock, parseClockTime, formatSeconds
 } from './clock.js';
@@ -10,6 +10,7 @@ import { findPlayer } from './describe.js';
 /** Completa un partido recién leído del store con valores por defecto. Muta `game`. */
 export function hydrateGame(game, events) {
   game.events = events;
+  delete game.lock; // lo maneja application/game-lock
   game.oppP = game.oppP || {};
   game.status = game.status || 'live';
   game.seq = Math.max(game.seq || 1, events.reduce((a, e) => Math.max(a, (e.seq || 0) + 1), 1));
@@ -19,7 +20,7 @@ export function hydrateGame(game, events) {
 /** Documento del partido para guardar (sin jugadas, con resumen del tanteador). */
 export function gameDocument(game) {
   const doc = {};
-  Object.keys(game).forEach((k) => { if (k !== 'events' && k !== 'id') doc[k] = game[k]; });
+  Object.keys(game).forEach((k) => { if (k !== 'events' && k !== 'id' && k !== 'lock') doc[k] = game[k]; });
   doc.summary = { us: ourScore(game), them: opponentScore(game) };
   return doc;
 }
@@ -27,6 +28,13 @@ export function gameDocument(game) {
 /** Momento capturado al tocar la cancha (o sin ubicación). */
 export function captureMoment(game, x = null, y = null, now = Date.now()) {
   return { x, y, period: game.period, t: clockStamp(game.clock, now) };
+}
+
+/** Acción sin ubicación ni jugador (tiempo muerto, revisión). `team`: 'us' | 'them' para los tiempos muertos. */
+export function stoppageEvent(moment, type, team) {
+  const e = { period: moment.period, t: moment.t, x: null, y: null, who: null, type };
+  if (team) e.team = team;
+  return e;
 }
 
 /** Agrega la jugada al partido asignándole seq/rev/at. Muta `game` y `event`. */
@@ -140,6 +148,28 @@ export function applyForcedSubstitution(game, outId, inId) {
   return { inn: inId ? [inId] : [], out: [outId] };
 }
 
+/**
+ * Cambio que no se cargó a tiempo: entra `inId` por `outId` (o sin que salga nadie si hay lugar).
+ * Devuelve {inn, out} o null si no corresponde. Muta `game.onCourt`.
+ */
+export function applyLateSubstitution(game, inId, outId) {
+  if (game.onCourt.includes(inId) || !findPlayer(game, inId) || playerStats(game, inId).out) return null;
+  if (outId) {
+    const ix = game.onCourt.indexOf(outId);
+    if (ix < 0) return null;
+    game.onCourt[ix] = inId;
+    return { inn: [inId], out: [outId] };
+  }
+  if (game.onCourt.length >= requiredOnCourt(game)) return null;
+  game.onCourt.push(inId);
+  return { inn: [inId], out: [] };
+}
+
+/** Evento de cambio fechado en un momento ya capturado (período y tiempo de la jugada). */
+export function substitutionEventAt(moment, { inn, out }) {
+  return { period: moment.period, t: moment.t, x: null, y: null, who: null, type: 'SUB', inn, out };
+}
+
 export function substitutionEvent(game, { inn, out }, now = Date.now()) {
   return { period: game.period, t: clockStamp(game.clock, now), x: null, y: null, who: null, type: 'SUB', inn, out };
 }
@@ -206,7 +236,7 @@ export function applyEditDraft(game, event, draft) {
   if (t == null || t > max) return 'Tiempo inválido. Usá 7:32 o 45.3 (máx. ' + formatSeconds(max) + ').';
   event.period = draft.period;
   event.t = t;
-  if (event.type !== 'SUB') {
+  if (!isTeamEvent(event.type)) {
     event.who = draft.who;
     event.type = draft.type;
     delete event.sub; delete event.att; delete event.made;

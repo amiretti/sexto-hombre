@@ -54,6 +54,9 @@ export function createDemoStore(storage = globalThis.localStorage) {
       if (m[ev.id]) { m[ev.id].deleted = true; m[ev.id].rev = (ev.rev || 1) + 1; }
       return commit(db);
     },
+    async claimGame() { return { ok: true }; },
+    async releaseGame() {},
+    watchGameLock() { return () => {}; },
     onPending(cb) { return pending.on(cb); }
   };
 }

@@ -14,11 +14,14 @@ _La planilla del cuerpo técnico._
 
 - **Cancha interactiva.** Tocás dónde ocurrió la jugada, elegís el jugador y la acción. El tiempo de reloj se toma al tocar. La app sugiere doble o triple según la zona.
 - **Sabe hacia dónde atacás.** En la previa elegís el aro del primer tiempo; se invierte solo en el 3° cuarto y un indicador sobre la cancha lo muestra (se toca para corregirlo). Si tocás en campo rival aparecen primero las acciones de ataque; en campo propio, las de defensa.
+- **Asistencia al toque:** después de cada doble o triple convertido pregunta si hubo asistencia y muestra a los compañeros en cancha.
 - **Falta recibida en tiro:** pregunta si fue en tiro, sugiere 2 o 3 libres según la ubicación y abre directo la carga de libres. El 2+1 / 3+1 registra también el canasto.
 - **Reloj de juego** con cuartos configurables (6, 8, 10 o 12 minutos), suplementarios de 5 minutos, ajuste manual y pase de período.
+- **Reloj que no se olvida:** si se carga una acción con la pelota viva (tiro, rebote, asistencia, robo, tapón) y el reloj estaba detenido, lo pone a correr y ofrece sincronizarlo con el tablero; las jugadas cargadas mientras estaba detenido se corrigen solas. Faltas, libres, violaciones y tiempos muertos no lo arrancan.
 - **Todas las acciones de la planilla:** dobles, triples, libres, rebotes, asistencias, robos, tapones, pérdidas (con tipo), faltas personales (con situación de tiro), técnicas, antideportivas y descalificantes, también para el DT y la banca.
 - **Reglas FIBA de exclusión:** 5 faltas, 2 técnicas, 2 antideportivas, técnica más antideportiva o descalificante. Si el jugador está en cancha, el reloj se detiene y se pide el **cambio obligatorio**. También avisa la 4ª falta de equipo (penalización).
 - **Cambios** con registro de quién entra y quién sale.
+- **Tiempos muertos y pedidos de revisión** con un toque: detienen el reloj en el acto. Lleva la cuenta de tiempos muertos de cada equipo según FIBA (2 en el primer tiempo, 3 en el segundo, 1 por suplementario).
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
 - **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
 - **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico. Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
@@ -170,7 +173,7 @@ Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos 
 
 ## Límites conocidos (Fase 0)
 
-- **Un dispositivo por partido.** Si se abre el mismo partido en dos tablets a la vez, una puede pisar el reloj y los jugadores en cancha de la otra.
+- **Un dispositivo por partido.** El partido se carga desde un solo dispositivo (o pestaña) a la vez: si está abierto en otro, la app avisa y ofrece «Abrir acá igual», que hace que el otro deje de guardar. El bloqueo se renueva cada 30 s y vence solo a los 90 s si el dispositivo se apaga. No hay sincronización en vivo entre dispositivos.
 - **El tanteador del rival es manual.** El pase a suplementario depende de que esté bien cargado.
 - **Las reglas de Firestore no se probaron contra el emulador.** Antes de un uso real conviene verificar que un correo fuera de la lista no ve nada y que un usuario habilitado no puede leer los partidos de otro.
 - La interfaz está solo en español (Argentina).

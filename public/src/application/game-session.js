@@ -3,11 +3,11 @@
 
 import { newId } from '../shared/ids.js';
 import { EVENT_LABELS } from '../domain/catalog.js';
-import { eventPoints, playerStats, teamFouls, staffFouls } from '../domain/stats.js';
+import { eventPoints, playerStats, teamFouls, staffFouls, timeoutsLeft, inLastTwoMinutes } from '../domain/stats.js';
 import { whoLabel, eventDetail, findPlayer } from '../domain/describe.js';
 import { pauseClock } from '../domain/clock.js';
 import {
-  gameDocument, appendEvent, touchEvent, removeEvent, buildPlayEvent, playBlockReason, playConsequences
+  gameDocument, appendEvent, touchEvent, removeEvent, buildPlayEvent, playBlockReason, playConsequences, captureMoment, stoppageEvent
 } from '../domain/game.js';
 
 const pauseClockOf = (game) => pauseClock(game.clock);
@@ -89,11 +89,41 @@ export function createGameSession({ store, onSaveError }) {
     return { event: e, forced: null, message, warn };
   }
 
+  /**
+   * Tiempo muerto o pedido de revisión: detiene el reloj en el acto y lo registra.
+   * @param {'TO'|'REV'} type
+   * @param {'us'|'them'} [team] para los tiempos muertos
+   */
+  function recordStoppage(type, team) {
+    pauseClock(game.clock);
+    const moment = captureMoment(game);
+    if (type !== 'TO') {
+      const e = addEvent(stoppageEvent(moment, type));
+      return { event: e, message: EVENT_LABELS[type] + ' · reloj detenido', warn: false };
+    }
+    const side = team || 'us';
+    const leftBefore = timeoutsLeft(game, side, moment.period, moment.t);
+    const e = addEvent(stoppageEvent(moment, type, side));
+    const name = side === 'them' ? game.opponent : game.team;
+    if (leftBefore <= 0) {
+      const lastTwo = inLastTwoMinutes(moment.period, moment.t);
+      return {
+        event: e, warn: true,
+        message: 'Tiempo muerto ' + name + ': no le quedaban' + (lastTwo ? ' (máximo 2 en los últimos 2 minutos)' : '') + '. Revisalo · reloj detenido'
+      };
+    }
+    const left = leftBefore - 1;
+    return { event: e, warn: false, message: 'Tiempo muerto ' + name + ' · ' + (left === 0 ? 'ya no le quedan' : left === 1 ? 'le queda 1' : 'le quedan ' + left) + ' · reloj detenido' };
+  }
+
   return {
+    recordStoppage,
     get game() { return game; },
     /** Empieza a llevar `g` (o null para soltar el partido actual, guardándolo antes). */
     open(g) { if (game && game !== g) persistNow(); game = g; },
     close() { if (game) persistNow(); game = null; },
+    /** Suelta el partido SIN guardar (otro dispositivo tomó el control). */
+    abandon() { clearTimeout(timer); game = null; },
     persistNow,
     schedulePersist,
     addEvent,

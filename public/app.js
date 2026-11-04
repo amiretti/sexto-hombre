@@ -9,6 +9,8 @@
 
 import { createStore } from './src/infrastructure/store/index.js';
 import { createGameSession } from './src/application/game-session.js';
+import { createGameLock } from './src/application/game-lock.js';
+import { currentDevice } from './src/infrastructure/platform/device-id.js';
 import { registerServiceWorker } from './src/infrastructure/platform/device.js';
 import { esc } from './src/shared/html.js';
 import { app, state, currentGame } from './src/ui/state.js';
@@ -16,7 +18,7 @@ import { $ } from './src/ui/dom.js';
 import { render } from './src/ui/render.js';
 import { reportSaveError } from './src/ui/toast.js';
 import { registerActions, startEventLoop } from './src/ui/events.js';
-import { navigationActions, onUser } from './src/ui/navigation.js';
+import { navigationActions, onUser, onGameTakenOver } from './src/ui/navigation.js';
 import { homeActions } from './src/ui/controllers/home-controller.js';
 import { teamActions } from './src/ui/controllers/team-controller.js';
 import { setupActions } from './src/ui/controllers/setup-controller.js';
@@ -39,12 +41,16 @@ const persistGame = () => { if (currentGame()) app.session.persistNow(); };
 window.addEventListener('online', renderSync);
 window.addEventListener('offline', renderSync);
 window.addEventListener('pagehide', persistGame);
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') persistGame(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') persistGame();
+  else if (app.lock) app.lock.check(); // al volver, ¿otro dispositivo tomó el partido?
+});
 
 render();
 createStore().then((store) => {
   app.store = store;
   app.session = createGameSession({ store, onSaveError: reportSaveError });
+  app.lock = createGameLock({ store, device: currentDevice(), onLost: onGameTakenOver });
   store.onPending((n) => { state.pending = n; renderSync(); });
   store.onAuth(onUser);
 }).catch((e) => {

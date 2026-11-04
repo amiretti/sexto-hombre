@@ -4,7 +4,7 @@ export const EVENT_LABELS = {
   '2M': 'Doble convertido', '2X': 'Doble errado', '3M': 'Triple convertido', '3X': 'Triple errado', 'FT': 'Tiros libres',
   'RO': 'Rebote ofensivo', 'RD': 'Rebote defensivo', 'AST': 'Asistencia', 'STL': 'Robo', 'BLK': 'Tapón', 'TOV': 'Pérdida',
   'PF': 'Falta personal', 'FD': 'Falta recibida', 'TF': 'Falta técnica', 'UF': 'Falta antideportiva', 'DF': 'Falta descalificante',
-  'SUB': 'Cambio'
+  'SUB': 'Cambio', 'TO': 'Tiempo muerto', 'REV': 'Pedido de revisión'
 };
 
 export const TURNOVER_KINDS = {
@@ -49,6 +49,26 @@ export const FREE_THROWS_FOR = { none: 0, shot2: 2, shot3: 3, and1: 1 };
 
 /** Tipos que se pueden elegir al editar una jugada de un jugador. */
 export const EDITABLE_EVENT_TYPES = ['2M', '2X', '3M', '3X', 'FT', 'RO', 'RD', 'AST', 'STL', 'BLK', 'TOV', 'PF', 'FD', 'TF', 'UF', 'DF'];
+
+/** Acciones del partido que no son de un jugador (sin ubicación ni jugador). */
+const TEAM_EVENT_TYPES = new Set(['SUB', 'TO', 'REV']);
+export function isTeamEvent(type) {
+  return TEAM_EVENT_TYPES.has(type);
+}
+
+/**
+ * Acciones que ocurren con la pelota viva (el reloj corre): tiros de campo, rebotes, asistencias,
+ * robos, tapones y las pérdidas que suelen terminar en robo. Faltas, libres, violaciones,
+ * tiempos muertos y cambios ocurren con el reloj detenido.
+ */
+const LIVE_BALL_TYPES = new Set(['2M', '2X', '3M', '3X', 'RO', 'RD', 'AST', 'STL', 'BLK']);
+const LIVE_BALL_TURNOVERS = new Set(['pase', 'manejo']);
+export function isLiveBallAction(type, sub) {
+  return LIVE_BALL_TYPES.has(type) || (type === 'TOV' && LIVE_BALL_TURNOVERS.has(sub));
+}
+
+/** Acciones que detienen el reloj al cargarse. */
+export const STOPPAGE_TYPES = ['TO', 'REV'];
 
 /** Tipos que se pueden cargar al cuerpo técnico. */
 export const STAFF_EVENT_TYPES = ['TF', 'DF'];

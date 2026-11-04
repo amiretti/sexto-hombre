@@ -1,11 +1,11 @@
 // Panel lateral: los pasos para cargar una jugada (ubicación → jugador → acción).
 
 import { esc } from '../../../shared/html.js';
-import { EVENT_LABELS, TURNOVER_KINDS } from '../../../domain/catalog.js';
-import { periodShort, formatSeconds } from '../../../domain/clock.js';
+import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
+import { periodShort, formatSeconds, remainingMs } from '../../../domain/clock.js';
 import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
-import { playerStats, playerFoulTypes, staffFouls, eventPoints } from '../../../domain/stats.js';
-import { findPlayer, shortName, whoLabel, eventDetail } from '../../../domain/describe.js';
+import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsLeft, inLastTwoMinutes } from '../../../domain/stats.js';
+import { findPlayer, shortName, whoLabel, eventDetail, eventActor } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
 
@@ -54,14 +54,29 @@ function actionButton(type, label) {
 
 function recentRow(G, e) {
   const d = eventDetail(G, e), pts = eventPoints(e);
-  return '<li><span class="t">' + periodShort(e.period) + ' ' + formatSeconds(e.t) + '</span><span class="who">' + esc(whoLabel(G, e.who)) + '</span><span class="what">' + esc(EVENT_LABELS[e.type]) + (d ? ' · ' + esc(d) : '') + '</span>' +
+  const what = e.type === 'SUB' ? d : EVENT_LABELS[e.type] + (d ? ' · ' + d : '');
+  return '<li><span class="t">' + periodShort(e.period) + ' ' + formatSeconds(e.t) + '</span><span class="who">' + esc(eventActor(G, e)) + '</span><span class="what">' + esc(what) + '</span>' +
     (pts ? '<span class="pts">+' + pts + '</span>' : '<span></span>') + '</li>';
+}
+
+/** Acciones sin ubicación ni jugador: detienen el reloj en el acto. */
+function stoppageButtons(G) {
+  const sec = remainingMs(G.clock) / 1000, lastTwo = inLastTwoMinutes(G.period, sec);
+  const to = (team, label) => {
+    const left = timeoutsLeft(G, team, G.period, sec);
+    return '<button class="abtn stop' + (left ? '' : ' dim') + '" data-a="stoppage" data-t="TO" data-team="' + team + '">' + label +
+      '<small>' + (left === 0 ? 'no quedan' : left === 1 ? 'queda 1' : 'quedan ' + left) + (lastTwo ? ' · últ. 2 min' : '') + '</small></button>';
+  };
+  return '<h3 class="qtitle">Sin jugador · detienen el reloj</h3><div class="quick three">' +
+    to('us', 'Tiempo muerto') + to('them', 'Tiempo muerto rival') +
+    '<button class="abtn stop" data-a="stoppage" data-t="REV">Pedido de revisión<small>video / árbitros</small></button></div>';
 }
 
 function locationStep(G) {
   const rec = G.events.slice(-5).reverse();
   return stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
     '<div class="quick"><button class="abtn" data-a="noloc">Sin ubicación<small>libres, técnicas</small></button><button class="abtn tech" data-a="staff">Técnica DT / banca<small>' + staffSummary(G) + '</small></button></div>' +
+    stoppageButtons(G) +
     '<div class="ptitle"><h3>Últimas jugadas</h3>' + (rec.length ? '<button class="btn ghost" data-a="undo">Deshacer última</button>' : '') + '</div>' +
     (rec.length ? '<ul class="recent">' + rec.map((e) => recentRow(G, e)).join('') + '</ul>' : '<p class="empty">Todavía no hay jugadas. Arrancá el reloj tocándolo y marcá la primera en la cancha.</p>');
 }
@@ -168,7 +183,37 @@ function staffStep(G) {
     '<button class="abtn tech wide" data-a="act-staff" data-w="bench" data-t="DF">Descalificante a la banca</button></div>';
 }
 
+/** Tras un gol: ¿hubo asistencia? Muestra a los compañeros en cancha. */
+function assistStep(G) {
+  const a = ui.assistFor;
+  const mates = G.onCourt.filter((id) => id !== a.scorer);
+  const card = (id) => {
+    const p = findPlayer(G, id);
+    return '<button class="pcard" data-a="assist-pick" data-id="' + esc(id) + '"><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span></button>';
+  };
+  return stepsBar(3) + titleBar('Gol de ' + esc(whoLabel(G, a.scorer)) + ' · ¿Hubo asistencia?', 'assist-none', 'Sin asistencia') +
+    '<div class="pgrid">' + mates.map(card).join('') + '</div>' +
+    '<p class="lead" style="font-size:.82rem">Tocá la cancha para seguir con la próxima jugada.</p>';
+}
+
+/** Se eligió un jugador de la banca: ¿faltó cargar el cambio? */
+function benchStep(G) {
+  const inId = ui.benchPick, p = findPlayer(G, inId);
+  const card = (id) => {
+    const q = findPlayer(G, id);
+    return '<button class="pcard" data-a="bench-sub" data-id="' + esc(id) + '"><span class="pnum">' + esc(q.num) + '</span><span class="pname">' + esc(shortName(q.name) || 'Jugador') + '</span>' + foulDots(G, id) + '</button>';
+  };
+  const room = G.onCourt.length < requiredOnCourt(G);
+  return stepsBar(2) + titleBar(whenText(), 'bench-back', '‹ Jugador') +
+    '<p class="lead"><strong>#' + esc(p.num) + ' ' + esc(p.name || '') + '</strong> está en la banca. ¿Nos olvidamos de registrar el cambio?</p>' +
+    '<h3>Sí, entró por</h3><div class="pgrid">' + G.onCourt.map(card).join('') + '</div>' +
+    (room ? '<div class="row"><button class="btn" data-a="bench-sub">Entró sin que salga nadie</button></div>' : '') +
+    '<div class="row"><button class="btn ghost" data-a="bench-back">No, elegir otro jugador</button></div>';
+}
+
 const STEPS = {
+  bench: benchStep,
+  assist: assistStep,
   loc: locationStep,
   player: playerStep,
   action: actionStep,
@@ -179,7 +224,16 @@ const STEPS = {
   staff: staffStep
 };
 
+/** Aviso: el reloj estaba detenido y lo pusimos a correr al cargar la jugada. */
+function clockNoticeHTML() {
+  const n = ui.clockNotice;
+  if (!n) return '';
+  return '<div class="clocknote" role="status"><span><strong>El reloj estaba detenido</strong> en ' + formatSeconds(n.stoppedAt) +
+    ' y lo pusimos a correr. ¿Lo sincronizamos con el tablero?</span>' +
+    '<span class="row"><button class="btn primary" data-a="sync-open">Sincronizar</button><button class="btn ghost" data-a="sync-dismiss">Está bien</button></span></div>';
+}
+
 export function renderPanel() {
   const step = STEPS[ui.step];
-  $('#panel').innerHTML = step ? step(currentGame()) : '';
+  $('#panel').innerHTML = clockNoticeHTML() + (step ? step(currentGame()) : '');
 }

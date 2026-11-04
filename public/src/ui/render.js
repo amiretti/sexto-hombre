@@ -6,6 +6,7 @@ import { loginHTML, deniedHTML } from './views/auth-view.js';
 import { homeHTML } from './views/home-view.js';
 import { teamHTML } from './views/team-view.js';
 import { setupHTML } from './views/setup-view.js';
+import { lockedHTML } from './views/locked-view.js';
 import { gameShellHTML, renderGame } from './views/game/game-view.js';
 
 const centered = (text) => '<div class="center"><p class="lead">' + text + '</p></div>';
@@ -17,7 +18,8 @@ const SCREENS = {
   denied: deniedHTML,
   home: homeHTML,
   setup: setupHTML,
-  team: teamHTML
+  team: teamHTML,
+  locked: lockedHTML
 };
 
 export function render() {

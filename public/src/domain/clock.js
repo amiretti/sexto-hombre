@@ -48,6 +48,13 @@ export function toggleClock(clock, now = Date.now()) {
   return true;
 }
 
+/** Pone el reloj a correr desde `sec` segundos (sincronizar con el tablero). Muta `clock`. */
+export function runClockFrom(clock, sec, maxSec, now = Date.now()) {
+  clock.rem = Math.max(0, Math.min(maxSec, sec)) * 1000;
+  clock.t0 = now;
+  clock.running = clock.rem > 0;
+}
+
 /** Suma/resta segundos respetando [0, máximo del período]. Muta `clock`. */
 export function adjustClock(clock, deltaSec, maxSec, now = Date.now()) {
   const r = Math.max(0, Math.min(maxSec * 1000, remainingMs(clock, now) + deltaSec * 1000));

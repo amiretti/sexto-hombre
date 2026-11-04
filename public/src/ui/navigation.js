@@ -39,6 +39,7 @@ export function stopWatching() {
 
 export function goHome() {
   app.session.close();
+  app.lock.release();
   state.view = 'home';
   resetUi();
   watchUserData();
@@ -54,10 +55,21 @@ export function showGame(game) {
   keepScreenOn();
 }
 
-export function openGame(id) {
+/**
+ * Abre un partido guardado. Si otro dispositivo lo tiene abierto, muestra el aviso (salvo `force`).
+ */
+export function openGame(id, force = false) {
   state.view = 'loading';
   render();
-  app.store.loadGame(id).then((r) => {
+  app.store.loadGame(id).then(async (r) => {
+    const claim = await app.lock.acquire(id, force);
+    if (!claim.ok) {
+      state.lockInfo = { gameId: id, holder: claim.holder, team: r.game.team, opponent: r.game.opponent };
+      state.view = 'locked';
+      render();
+      return;
+    }
+    state.lockInfo = null;
     showGame(hydrateGame(r.game, r.events));
   }).catch((e) => {
     state.view = 'home';
@@ -66,12 +78,20 @@ export function openGame(id) {
   });
 }
 
+/** Otro dispositivo tomó el partido: dejamos de guardar y volvemos al inicio. */
+export function onGameTakenOver(holder) {
+  app.session.abandon();
+  goHome();
+  toast('Este partido se abrió en ' + ((holder && holder.label) || 'otro dispositivo') + '. Desde acá ya no se guardan cambios.', true);
+}
+
 /** Cambió la sesión (login, logout o reintento de lista blanca). */
 export function onUser(user) {
   const my = ++authSeq;
   if (!user) {
     stopWatching();
     app.session.close();
+    app.lock.release();
     state.user = null; state.games = null; state.view = 'login';
     resetUi(); render();
     return;
@@ -92,6 +112,7 @@ export function onUser(user) {
 export const navigationActions = {
   'go-home': () => goHome(),
   'open-game': ({ id }) => openGame(id),
+  'lock-force': () => { if (state.lockInfo) openGame(state.lockInfo.gameId, true); },
   'login': () => {
     ui.authErr = '';
     app.store.signIn().catch((e) => { ui.authErr = 'No se pudo ingresar: ' + (e.code || e.message); render(); });

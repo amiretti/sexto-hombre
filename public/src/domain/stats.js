@@ -131,3 +131,43 @@ export function requiredOnCourt(game) {
 export function percent(made, att) {
   return att ? Math.round(made * 100 / att) + '%' : '—';
 }
+
+/* ---------- tiempos muertos (FIBA: 2 en el 1er tiempo, 3 en el 2do, 1 por suplementario) ---------- */
+
+const timeoutWindow = (period) => (period <= 2 ? 'h1' : period <= REGULAR_PERIODS ? 'h2' : 'ot' + period);
+
+/** Tiempos muertos disponibles en el tramo del partido que incluye `period`. */
+export function timeoutAllowance(period) {
+  return period <= 2 ? 2 : period <= REGULAR_PERIODS ? 3 : 1;
+}
+
+/** Tiempos muertos usados por 'us' o 'them' en el tramo de `period`. */
+export function timeoutsUsed(game, team, period = game.period) {
+  const w = timeoutWindow(period);
+  return game.events.filter((e) => e.type === 'TO' && (e.team || 'us') === team && timeoutWindow(e.period) === w).length;
+}
+
+/** FIBA: en los últimos 2 minutos del 4° cuarto cada equipo puede usar como máximo 2 tiempos muertos. */
+export const LAST_MINUTES_SEC = 120;
+const LAST_MINUTES_MAX = 2;
+
+export function inLastTwoMinutes(period, secLeft) {
+  return period === REGULAR_PERIODS && secLeft != null && secLeft <= LAST_MINUTES_SEC;
+}
+
+/** Tiempos muertos que le quedan a `team` en `period`, con `secLeft` segundos en el reloj. */
+export function timeoutsLeft(game, team, period = game.period, secLeft = null) {
+  let left = timeoutAllowance(period) - timeoutsUsed(game, team, period);
+  if (inLastTwoMinutes(period, secLeft)) {
+    const usedLast = game.events.filter((e) => e.type === 'TO' && (e.team || 'us') === team && e.period === REGULAR_PERIODS && e.t <= LAST_MINUTES_SEC).length;
+    left = Math.min(left, LAST_MINUTES_MAX - usedLast);
+  }
+  return Math.max(0, left);
+}
+
+/** Tiempos muertos usados por tramo: [{label, n}] (1°T, 2°T y cada suplementario jugado). */
+export function timeoutsByWindow(game, team) {
+  const rows = [{ label: '1°T', n: timeoutsUsed(game, team, 1) }, { label: '2°T', n: timeoutsUsed(game, team, 3) }];
+  for (let p = REGULAR_PERIODS + 1; p <= game.period; p++) rows.push({ label: 'S' + (p - REGULAR_PERIODS), n: timeoutsUsed(game, team, p) });
+  return rows;
+}
