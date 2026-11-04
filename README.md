@@ -114,7 +114,9 @@ Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas d
 
 **Al agregar un módulo en `src/`**, sumalo a `MODULES` en `public/sw.js` y subí `VERSION`. Si no, la app instalada no lo va a tener sin señal.
 
-## Desplegar tu propia instancia con Firebase
+## Despliegue con Firebase
+
+> Esta guía documenta cómo se despliega el proyecto. Para desplegar otra instancia hace falta autorización del autor (ver [Licencia](#licencia)).
 
 1. **Creá un proyecto** en la [consola de Firebase](https://console.firebase.google.com). Alcanza el plan Spark, que es gratis.
 2. **Authentication → Método de acceso → Google:** habilitalo y elegí el correo de soporte.
@@ -163,5 +165,13 @@ Firestore usa caché persistente: cada jugada se guarda al instante en el dispos
 
 - Tipografías [Saira Condensed](https://fonts.google.com/specimen/Saira+Condensed) e [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), bajo licencia SIL Open Font License (ver `public/fonts/`).
 - [jsPDF](https://github.com/parallax/jsPDF) y [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable), bajo licencia MIT (ver `public/vendor/`).
+
+## Licencia
+
+© 2026 Andrés Miretti. **Todos los derechos reservados.**
+
+El código se publica solo para que se pueda ver. No es software libre ni open source. Sin autorización por escrito no se permite usarlo, copiarlo, modificarlo, distribuirlo, ofrecerlo como servicio ni desplegarlo. La única excepción es correrlo en tu computadora en modo demo para evaluarlo en forma personal. Los términos completos están en [`LICENSE`](LICENSE).
+
+¿Te interesa usarlo en tu club o liga? Escribime a través de [GitHub](https://github.com/amiretti).
 
 Hecho por [Andrés Miretti](https://github.com/amiretti).

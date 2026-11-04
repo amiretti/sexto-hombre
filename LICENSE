@@ -1,0 +1,37 @@
+Copyright (c) 2026 Andrés Miretti. Todos los derechos reservados.
+
+Este repositorio es público solo para que se pueda ver el código.
+
+Publicar el código no otorga ninguna licencia ni ningún derecho de uso. Sin
+autorización previa y por escrito del titular, no se permite usar, copiar,
+modificar, fusionar, publicar, distribuir, sublicenciar ni vender este software
+ni obras derivadas, ni total ni parcialmente. Tampoco se permite ofrecerlo como
+servicio ni desplegarlo para uso propio o de terceros.
+
+Única excepción: se permite clonar el repositorio y ejecutar la app en tu
+propia computadora, en modo demo, solo para evaluarla en forma personal y sin
+fines comerciales.
+
+EL SOFTWARE SE PROVEE «TAL CUAL», SIN GARANTÍAS DE NINGÚN TIPO, EXPRESAS O
+IMPLÍCITAS. EL TITULAR NO SERÁ RESPONSABLE POR NINGÚN RECLAMO, DAÑO U OTRA
+RESPONSABILIDAD QUE SURJA DEL SOFTWARE O DE SU USO.
+
+Para consultas sobre licencias o uso comercial, escribí a través de
+https://github.com/amiretti.
+
+Componentes de terceros
+-----------------------
+Los componentes de terceros que se incluyen conservan sus propias licencias:
+- jsPDF y jsPDF-AutoTable: licencia MIT (public/vendor/LICENSE-*.txt).
+- Saira Condensed e IBM Plex Sans: SIL Open Font License 1.1 (public/fonts/OFL-*.txt).
+
+---
+
+Copyright (c) 2026 Andrés Miretti. All rights reserved.
+
+This repository is public for viewing purposes only. No license or right to use,
+copy, modify, distribute, sublicense, sell, host or deploy this software, in
+whole or in part, is granted without prior written permission from the copyright
+holder. The only exception is cloning and running the app locally in demo mode
+for personal, non-commercial evaluation. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+Third-party components keep their own licenses, as listed above.
