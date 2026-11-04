@@ -1,13 +1,13 @@
 // Hojas superpuestas del partido: historial, planilla, cambios, reloj, menú, final y cambio obligatorio.
 
 import { esc } from '../../../shared/html.js';
-import { EVENT_LABELS, hasSubtype, subtypeKinds, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
+import { EVENT_LABELS, hasSubtype, subtypeKinds, isTeamEvent, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
 import { periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../../../domain/clock.js';
 import { zoneName } from '../../../domain/court.js';
 import {
   playerStats, ourScore, opponentScore, teamFouls, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
 } from '../../../domain/stats.js';
-import { findPlayer, whoLabel, eventDetail, eventCategory } from '../../../domain/describe.js';
+import { findPlayer, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
 import { benchCandidates } from '../../../domain/game.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame, isDemo } from '../../state.js';
@@ -30,7 +30,7 @@ function options(values, selected, label = (v) => v, value = null) {
 
 function editForm(G, d) {
   let h = '<div class="edit">';
-  if (d.type !== 'SUB') {
+  if (!isTeamEvent(d.type)) {
     h += '<label>Quién<select id="e-who">' + G.roster.map((p) => '<option value="' + esc(p.id) + '"' + (d.who === p.id ? ' selected' : '') + '>#' + esc(p.num) + ' ' + esc(p.name) + '</option>').join('') +
       '<option value="coach"' + (d.who === 'coach' ? ' selected' : '') + '>DT</option><option value="bench"' + (d.who === 'bench' ? ' selected' : '') + '>Banca</option></select></label>';
     h += '<label>Acción<select id="e-type">' + options(isStaff(d.who) ? STAFF_EVENT_TYPES : EDITABLE_EVENT_TYPES, d.type, (t) => EVENT_LABELS[t], (t) => t) + '</select></label>';
@@ -51,9 +51,9 @@ function editForm(G, d) {
 }
 
 function historyRow(G, e) {
-  const armed = ui.confirm === 'del-' + e.id, d = eventDetail(G, e), z = e.type !== 'SUB' && e.x != null ? zoneName(e.x, e.y) : '';
+  const armed = ui.confirm === 'del-' + e.id, d = eventDetail(G, e), z = !isTeamEvent(e.type) && e.x != null ? zoneName(e.x, e.y) : '';
   const pts = eventPoints(e);
-  let h = '<li class="hrow"><span class="per2">' + periodShort(e.period) + '</span><span class="t">' + formatSeconds(e.t) + '</span><span class="who">' + esc(e.type === 'SUB' ? 'Cambio' : whoLabel(G, e.who, false)) + '</span>' +
+  let h = '<li class="hrow"><span class="per2">' + periodShort(e.period) + '</span><span class="t">' + formatSeconds(e.t) + '</span><span class="who">' + esc(eventActor(G, e)) + '</span>' +
     '<span class="what"><span class="tag ' + eventCategory(e) + '"></span>' + esc(e.type === 'SUB' ? '' : EVENT_LABELS[e.type]) + (d || z ? '<small>' + esc([d, z].filter(Boolean).join(' · ')) + '</small>' : '') + '</span>' +
     '<span class="pts">' + (pts ? '+' + pts : '') + '</span><span class="hact"><button class="btn" data-a="edit" data-id="' + esc(e.id) + '">Editar</button><button class="btn danger' + (armed ? ' armed' : '') + '" data-a="del" data-id="' + esc(e.id) + '">' + (armed ? '¿Borrar?' : 'Borrar') + '</button></span>';
   if (ui.draft && ui.draft.id === e.id) h += editForm(G, ui.draft);

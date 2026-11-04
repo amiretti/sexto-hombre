@@ -1,11 +1,11 @@
 // Panel lateral: los pasos para cargar una jugada (ubicación → jugador → acción).
 
 import { esc } from '../../../shared/html.js';
-import { EVENT_LABELS, TURNOVER_KINDS } from '../../../domain/catalog.js';
+import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds } from '../../../domain/clock.js';
 import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
-import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt } from '../../../domain/stats.js';
-import { findPlayer, shortName, whoLabel, eventDetail } from '../../../domain/describe.js';
+import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsUsed, timeoutAllowance } from '../../../domain/stats.js';
+import { findPlayer, shortName, whoLabel, eventDetail, eventActor } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
 
@@ -54,15 +54,25 @@ function actionButton(type, label) {
 
 function recentRow(G, e) {
   const d = eventDetail(G, e), pts = eventPoints(e);
-  const sub = e.type === 'SUB';
-  return '<li><span class="t">' + periodShort(e.period) + ' ' + formatSeconds(e.t) + '</span><span class="who">' + esc(sub ? 'Cambio' : whoLabel(G, e.who)) + '</span><span class="what">' + esc(sub ? d : EVENT_LABELS[e.type] + (d ? ' · ' + d : '')) + '</span>' +
+  const what = e.type === 'SUB' ? d : EVENT_LABELS[e.type] + (d ? ' · ' + d : '');
+  return '<li><span class="t">' + periodShort(e.period) + ' ' + formatSeconds(e.t) + '</span><span class="who">' + esc(eventActor(G, e)) + '</span><span class="what">' + esc(what) + '</span>' +
     (pts ? '<span class="pts">+' + pts + '</span>' : '<span></span>') + '</li>';
+}
+
+/** Acciones sin ubicación ni jugador: detienen el reloj en el acto. */
+function stoppageButtons(G) {
+  const to = (team, label) => '<button class="abtn stop" data-a="stoppage" data-t="TO" data-team="' + team + '">' + label +
+    '<small>' + timeoutsUsed(G, team) + ' de ' + timeoutAllowance(G.period) + '</small></button>';
+  return '<h3 class="qtitle">Sin jugador · detienen el reloj</h3><div class="quick three">' +
+    to('us', 'Tiempo muerto') + to('them', 'Tiempo muerto rival') +
+    '<button class="abtn stop" data-a="stoppage" data-t="REV">Pedido de revisión<small>video / árbitros</small></button></div>';
 }
 
 function locationStep(G) {
   const rec = G.events.slice(-5).reverse();
   return stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
     '<div class="quick"><button class="abtn" data-a="noloc">Sin ubicación<small>libres, técnicas</small></button><button class="abtn tech" data-a="staff">Técnica DT / banca<small>' + staffSummary(G) + '</small></button></div>' +
+    stoppageButtons(G) +
     '<div class="ptitle"><h3>Últimas jugadas</h3>' + (rec.length ? '<button class="btn ghost" data-a="undo">Deshacer última</button>' : '') + '</div>' +
     (rec.length ? '<ul class="recent">' + rec.map((e) => recentRow(G, e)).join('') + '</ul>' : '<p class="empty">Todavía no hay jugadas. Arrancá el reloj tocándolo y marcá la primera en la cancha.</p>');
 }

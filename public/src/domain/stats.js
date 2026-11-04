@@ -131,3 +131,18 @@ export function requiredOnCourt(game) {
 export function percent(made, att) {
   return att ? Math.round(made * 100 / att) + '%' : '—';
 }
+
+/* ---------- tiempos muertos (FIBA: 2 en el 1er tiempo, 3 en el 2do, 1 por suplementario) ---------- */
+
+const timeoutWindow = (period) => (period <= 2 ? 'h1' : period <= REGULAR_PERIODS ? 'h2' : 'ot' + period);
+
+/** Tiempos muertos disponibles en el tramo del partido que incluye `period`. */
+export function timeoutAllowance(period) {
+  return period <= 2 ? 2 : period <= REGULAR_PERIODS ? 3 : 1;
+}
+
+/** Tiempos muertos usados por 'us' o 'them' en el tramo de `period`. */
+export function timeoutsUsed(game, team, period = game.period) {
+  const w = timeoutWindow(period);
+  return game.events.filter((e) => e.type === 'TO' && (e.team || 'us') === team && timeoutWindow(e.period) === w).length;
+}

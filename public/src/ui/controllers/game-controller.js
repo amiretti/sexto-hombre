@@ -285,6 +285,12 @@ const handlers = {
   },
   'opp': ({ data }) => { adjustOpponentScore(currentGame(), +data.d); persistView(); renderBoard(); },
   'noloc': () => startPlayAt(null, null, 'player'),
+  'stoppage': ({ data }) => {
+    const r = session().recordStoppage(data.t, data.team);
+    resetPlayFlow();
+    renderGame();
+    toast(r.message, r.warn, r.event.id);
+  },
   'staff': () => startPlayAt(null, null, 'staff'),
   'cancel': () => {
     const pendingAssist = ui.step === 'ft' && ui.ft.afterFoul ? ui.assistFor : null;

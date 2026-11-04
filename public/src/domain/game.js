@@ -1,6 +1,6 @@
 // Reglas del partido en curso. Las funciones que cambian el partido lo mutan y lo dicen en su nombre/doc.
 
-import { isFoul, isStaff, COACH, STAFF_EVENT_TYPES, normalizeSubtype, hasSubtype } from './catalog.js';
+import { isFoul, isStaff, COACH, STAFF_EVENT_TYPES, normalizeSubtype, hasSubtype, isTeamEvent } from './catalog.js';
 import {
   REGULAR_PERIODS, periodLengthSec, remainingMs, clockStamp, newClock, pauseClock, parseClockTime, formatSeconds
 } from './clock.js';
@@ -27,6 +27,13 @@ export function gameDocument(game) {
 /** Momento capturado al tocar la cancha (o sin ubicación). */
 export function captureMoment(game, x = null, y = null, now = Date.now()) {
   return { x, y, period: game.period, t: clockStamp(game.clock, now) };
+}
+
+/** Acción sin ubicación ni jugador (tiempo muerto, revisión). `team`: 'us' | 'them' para los tiempos muertos. */
+export function stoppageEvent(moment, type, team) {
+  const e = { period: moment.period, t: moment.t, x: null, y: null, who: null, type };
+  if (team) e.team = team;
+  return e;
 }
 
 /** Agrega la jugada al partido asignándole seq/rev/at. Muta `game` y `event`. */
@@ -228,7 +235,7 @@ export function applyEditDraft(game, event, draft) {
   if (t == null || t > max) return 'Tiempo inválido. Usá 7:32 o 45.3 (máx. ' + formatSeconds(max) + ').';
   event.period = draft.period;
   event.t = t;
-  if (event.type !== 'SUB') {
+  if (!isTeamEvent(event.type)) {
     event.who = draft.who;
     event.type = draft.type;
     delete event.sub; delete event.att; delete event.made;

@@ -3,11 +3,11 @@
 
 import { newId } from '../shared/ids.js';
 import { EVENT_LABELS } from '../domain/catalog.js';
-import { eventPoints, playerStats, teamFouls, staffFouls } from '../domain/stats.js';
+import { eventPoints, playerStats, teamFouls, staffFouls, timeoutsUsed, timeoutAllowance } from '../domain/stats.js';
 import { whoLabel, eventDetail, findPlayer } from '../domain/describe.js';
 import { pauseClock } from '../domain/clock.js';
 import {
-  gameDocument, appendEvent, touchEvent, removeEvent, buildPlayEvent, playBlockReason, playConsequences
+  gameDocument, appendEvent, touchEvent, removeEvent, buildPlayEvent, playBlockReason, playConsequences, captureMoment, stoppageEvent
 } from '../domain/game.js';
 
 const pauseClockOf = (game) => pauseClock(game.clock);
@@ -89,7 +89,26 @@ export function createGameSession({ store, onSaveError }) {
     return { event: e, forced: null, message, warn };
   }
 
+  /**
+   * Tiempo muerto o pedido de revisión: detiene el reloj en el acto y lo registra.
+   * @param {'TO'|'REV'} type
+   * @param {'us'|'them'} [team] para los tiempos muertos
+   */
+  function recordStoppage(type, team) {
+    pauseClock(game.clock);
+    const e = addEvent(stoppageEvent(captureMoment(game), type, type === 'TO' ? (team || 'us') : undefined));
+    if (type !== 'TO') return { event: e, message: EVENT_LABELS[type] + ' · reloj detenido', warn: false };
+    const used = timeoutsUsed(game, e.team), allowed = timeoutAllowance(game.period);
+    const name = e.team === 'them' ? game.opponent : game.team;
+    const over = used > allowed;
+    return {
+      event: e, warn: over,
+      message: 'Tiempo muerto ' + name + ' · ' + used + ' de ' + allowed + (over ? ' (se pasaron del máximo)' : '') + ' · reloj detenido'
+    };
+  }
+
   return {
+    recordStoppage,
     get game() { return game; },
     /** Empieza a llevar `g` (o null para soltar el partido actual, guardándolo antes). */
     open(g) { if (game && game !== g) persistNow(); game = g; },

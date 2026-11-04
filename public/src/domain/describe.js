@@ -1,6 +1,6 @@
 // Cómo se nombra cada cosa del partido (jugadores, jugadas). Texto plano, sin HTML.
 
-import { hasSubtype, subtypeLabel, COACH, BENCH } from './catalog.js';
+import { hasSubtype, subtypeLabel, isTeamEvent, COACH, BENCH } from './catalog.js';
 
 export function findPlayer(game, id) {
   return game.roster.find((p) => p.id === id);
@@ -23,6 +23,14 @@ export function whoLabel(game, who, long = false) {
   return '#' + p.num + ' ' + (long ? p.name : shortName(p.name));
 }
 
+/** Quién protagoniza la jugada: el jugador, o el equipo / partido en las acciones sin jugador. */
+export function eventActor(game, e, long = false) {
+  if (e.type === 'SUB') return 'Cambio';
+  if (e.type === 'TO') return e.team === 'them' ? game.opponent : game.team;
+  if (e.type === 'REV') return 'Partido';
+  return whoLabel(game, e.who, long);
+}
+
 /** Detalle secundario de una jugada ("Mal pase", "2 de 3", "Entra … · Sale …"). */
 export function eventDetail(game, e) {
   if (hasSubtype(e.type)) return subtypeLabel(e.type, e.sub);
@@ -41,6 +49,6 @@ export function eventCategory(e) {
   if (['2X', '3X', 'FT'].includes(e.type)) return 'miss';
   if (e.type === 'PF') return 'foul';
   if (['TF', 'UF', 'DF'].includes(e.type)) return 'tech';
-  if (e.type === 'SUB') return 'sub';
+  if (isTeamEvent(e.type)) return 'sub';
   return '';
 }
