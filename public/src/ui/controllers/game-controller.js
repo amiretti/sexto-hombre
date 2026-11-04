@@ -1,9 +1,9 @@
 // Controlador de la pantalla del partido: traduce toques y teclas en casos de uso y redibuja.
 
 import { EVENT_LABELS, FREE_THROWS_FOR } from '../../domain/catalog.js';
-import { periodLengthSec, periodLong, toggleClock, adjustClock } from '../../domain/clock.js';
+import { periodLengthSec, periodLong, toggleClock, adjustClock, remainingMs } from '../../domain/clock.js';
 import { clampToCourt, flipAttackingSide, attackingSide } from '../../domain/court.js';
-import { ourScore, opponentScore, requiredOnCourt } from '../../domain/stats.js';
+import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes } from '../../domain/stats.js';
 import { whoLabel } from '../../domain/describe.js';
 import {
   captureMoment, lastLoggedEvent, adjustOpponentScore, applySubstitution, applyForcedSubstitution, substitutionEvent,
@@ -124,11 +124,20 @@ function periodEndMessage(G) {
   return 'Final del partido: ' + G.team + ' ' + us + ' – ' + them + ' ' + G.opponent;
 }
 
+let enteredLastTwo = false;
+
 function onTick() {
   const G = currentGame();
   if (state.view !== 'game' || !G || !G.clock.running) return;
   const what = tickClock(G);
-  if (what === 'running') { tickClockDisplay(); return; }
+  if (what === 'running') {
+    tickClockDisplay();
+    // Al entrar en los últimos 2 minutos del 4° cuarto cambian los tiempos muertos disponibles.
+    const last = inLastTwoMinutes(G.period, remainingMs(G.clock) / 1000);
+    if (last && !enteredLastTwo && ui.step === 'loc') renderPanel();
+    enteredLastTwo = last;
+    return;
+  }
   if (what === 'final') {
     if (!ui.overlay) ui.overlay = 'final';
     session().persistNow();

@@ -2,9 +2,9 @@
 
 import { esc } from '../../../shared/html.js';
 import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
-import { periodShort, formatSeconds } from '../../../domain/clock.js';
+import { periodShort, formatSeconds, remainingMs } from '../../../domain/clock.js';
 import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
-import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsUsed, timeoutAllowance } from '../../../domain/stats.js';
+import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsLeft, inLastTwoMinutes } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail, eventActor } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
@@ -61,8 +61,12 @@ function recentRow(G, e) {
 
 /** Acciones sin ubicación ni jugador: detienen el reloj en el acto. */
 function stoppageButtons(G) {
-  const to = (team, label) => '<button class="abtn stop" data-a="stoppage" data-t="TO" data-team="' + team + '">' + label +
-    '<small>' + timeoutsUsed(G, team) + ' de ' + timeoutAllowance(G.period) + '</small></button>';
+  const sec = remainingMs(G.clock) / 1000, lastTwo = inLastTwoMinutes(G.period, sec);
+  const to = (team, label) => {
+    const left = timeoutsLeft(G, team, G.period, sec);
+    return '<button class="abtn stop' + (left ? '' : ' dim') + '" data-a="stoppage" data-t="TO" data-team="' + team + '">' + label +
+      '<small>' + (left === 0 ? 'no quedan' : left === 1 ? 'queda 1' : 'quedan ' + left) + (lastTwo ? ' · últ. 2 min' : '') + '</small></button>';
+  };
   return '<h3 class="qtitle">Sin jugador · detienen el reloj</h3><div class="quick three">' +
     to('us', 'Tiempo muerto') + to('them', 'Tiempo muerto rival') +
     '<button class="abtn stop" data-a="stoppage" data-t="REV">Pedido de revisión<small>video / árbitros</small></button></div>';

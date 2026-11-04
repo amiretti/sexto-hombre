@@ -3,7 +3,7 @@
 
 import { newId } from '../shared/ids.js';
 import { EVENT_LABELS } from '../domain/catalog.js';
-import { eventPoints, playerStats, teamFouls, staffFouls, timeoutsUsed, timeoutAllowance } from '../domain/stats.js';
+import { eventPoints, playerStats, teamFouls, staffFouls, timeoutsLeft, inLastTwoMinutes } from '../domain/stats.js';
 import { whoLabel, eventDetail, findPlayer } from '../domain/describe.js';
 import { pauseClock } from '../domain/clock.js';
 import {
@@ -96,15 +96,24 @@ export function createGameSession({ store, onSaveError }) {
    */
   function recordStoppage(type, team) {
     pauseClock(game.clock);
-    const e = addEvent(stoppageEvent(captureMoment(game), type, type === 'TO' ? (team || 'us') : undefined));
-    if (type !== 'TO') return { event: e, message: EVENT_LABELS[type] + ' · reloj detenido', warn: false };
-    const used = timeoutsUsed(game, e.team), allowed = timeoutAllowance(game.period);
-    const name = e.team === 'them' ? game.opponent : game.team;
-    const over = used > allowed;
-    return {
-      event: e, warn: over,
-      message: 'Tiempo muerto ' + name + ' · ' + used + ' de ' + allowed + (over ? ' (se pasaron del máximo)' : '') + ' · reloj detenido'
-    };
+    const moment = captureMoment(game);
+    if (type !== 'TO') {
+      const e = addEvent(stoppageEvent(moment, type));
+      return { event: e, message: EVENT_LABELS[type] + ' · reloj detenido', warn: false };
+    }
+    const side = team || 'us';
+    const leftBefore = timeoutsLeft(game, side, moment.period, moment.t);
+    const e = addEvent(stoppageEvent(moment, type, side));
+    const name = side === 'them' ? game.opponent : game.team;
+    if (leftBefore <= 0) {
+      const lastTwo = inLastTwoMinutes(moment.period, moment.t);
+      return {
+        event: e, warn: true,
+        message: 'Tiempo muerto ' + name + ': no le quedaban' + (lastTwo ? ' (máximo 2 en los últimos 2 minutos)' : '') + '. Revisalo · reloj detenido'
+      };
+    }
+    const left = leftBefore - 1;
+    return { event: e, warn: false, message: 'Tiempo muerto ' + name + ' · ' + (left === 0 ? 'ya no le quedan' : left === 1 ? 'le queda 1' : 'le quedan ' + left) + ' · reloj detenido' };
   }
 
   return {

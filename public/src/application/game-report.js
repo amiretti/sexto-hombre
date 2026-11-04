@@ -5,7 +5,7 @@ import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../shared/colors.js'
 import { formatDate } from '../shared/ids.js';
 import { REGULAR_PERIODS, periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../domain/clock.js';
 import {
-  playerStats, ourScore, opponentScore, pointsByPeriod, isEnded, teamFouls, staffFouls, teamTotals
+  playerStats, ourScore, opponentScore, pointsByPeriod, isEnded, teamFouls, staffFouls, teamTotals, timeoutsByWindow
 } from '../domain/stats.js';
 
 function pctSuffix(made, att) {
@@ -16,6 +16,12 @@ function pctSuffix(made, att) {
 function foulsCell(s) {
   if (!(s.tf || s.uf)) return s.fouls;
   return s.fouls + ' (' + (s.tf ? s.tf + 'T' : '') + (s.tf && s.uf ? ' ' : '') + (s.uf ? s.uf + 'U' : '') + ')';
+}
+
+/** "Unión Central 1°T 1 · 2°T 2     Rival 1°T 0 · 2°T 3". */
+function timeoutsText(game) {
+  const one = (team, name) => name + ' ' + timeoutsByWindow(game, team).map((w) => w.label + ' ' + w.n).join(' · ');
+  return one('us', game.team) + '     ' + one('them', game.opponent);
 }
 
 function statusText(game, now) {
@@ -56,6 +62,7 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
       as: T.ast, rb: T.stl, tp: T.blk, pe: T.tov, fc: T.fouls, fr: T.fd
     },
     teamFoulsText: Array.from({ length: REGULAR_PERIODS }, (_, i) => periodShort(i + 1) + ' ' + teamFouls(game, i + 1)).join('   '),
+    timeoutsText: timeoutsText(game),
     staffText: 'DT ' + st.c + ' técnica' + (st.c === 1 ? '' : 's') + ' · Banca ' + st.b + (st.out ? ' · DT descalificado' : ''),
     generatedAt: now.toLocaleDateString('es-AR') + ' ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
     generatedBy
