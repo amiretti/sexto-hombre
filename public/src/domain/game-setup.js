@@ -2,13 +2,13 @@
 
 import { newId, todayISO } from '../shared/ids.js';
 import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../shared/colors.js';
-import { activePlayers, DEFAULT_PERIOD_MIN } from './team.js';
+import { activePlayers, teamVenues, DEFAULT_PERIOD_MIN } from './team.js';
 import { newClock } from './clock.js';
 
 export const SETUP_VERSION = 2;
 
 export function blankSetup() {
-  return { v: SETUP_VERSION, teamId: null, opponent: '', oppColor: DEFAULT_OPPONENT_COLOR, venue: 'home', attack: 'right', date: todayISO(), sel: {} };
+  return { v: SETUP_VERSION, teamId: null, opponent: '', oppColor: DEFAULT_OPPONENT_COLOR, venue: 'home', venueId: null, attack: 'right', date: todayISO(), sel: {} };
 }
 
 /** Toma los datos por defecto del plantel y convoca a todos sus activos. Muta `setup`. */
@@ -21,6 +21,20 @@ export function applyTeamToSetup(setup, team) {
   setup.periodMin = String(team.periodMin || DEFAULT_PERIOD_MIN);
   setup.sel = {};
   activePlayers(team).forEach((p) => { setup.sel[p.id] = { in: true, starter: lastStarters.includes(p.id) }; });
+  setup.venueId = null;
+  reconcileVenue(setup, team);
+}
+
+/** Si el plantel tiene un solo estadio, es ese; si el elegido ya no existe, se vuelve a elegir. Muta `setup`. */
+function reconcileVenue(setup, team) {
+  const venues = teamVenues(team);
+  if (!venues.some((v) => v.id === setup.venueId)) setup.venueId = venues.length === 1 ? venues[0].id : null;
+}
+
+/** Estadio donde se juega: solo de local y si el plantel tiene estadios cargados. null si no corresponde. */
+export function selectedVenue(setup, team) {
+  if (setup.venue === 'away') return null;
+  return teamVenues(team).find((v) => v.id === setup.venueId) || null;
 }
 
 /** Suma a los jugadores nuevos del plantel (convocados) y quita a los que ya no están activos. Muta `setup`. */
@@ -30,6 +44,7 @@ export function reconcileSelection(setup, team) {
   const ids = {};
   activePlayers(team).forEach((p) => { ids[p.id] = 1; if (!setup.sel[p.id]) setup.sel[p.id] = { in: true, starter: false }; });
   Object.keys(setup.sel).forEach((k) => { if (!ids[k]) delete setup.sel[k]; });
+  reconcileVenue(setup, team);
 }
 
 export function toggleCalled(setup, playerId) {
@@ -64,6 +79,8 @@ export function createGame(setup, team, now = Date.now()) {
   const players = calledPlayers(setup, team);
   const starters = starterIds(setup, team);
   if (!String(setup.opponent).trim()) return { error: 'Falta el nombre del rival.' };
+  const stadium = selectedVenue(setup, team);
+  if (setup.venue !== 'away' && teamVenues(team).length && !stadium) return { error: 'Elegí en qué estadio se juega.' };
   if (players.length < 5) return { error: 'Convocá al menos 5 jugadores.' };
   if (starters.length !== 5) return { error: 'Elegí exactamente 5 titulares.' };
   const seen = {};
@@ -83,5 +100,7 @@ export function createGame(setup, team, now = Date.now()) {
     starters: starters.slice(), onCourt: starters.slice(),
     period: 1, clock: newClock(periodMin * 60000), events: [], seq: 1
   };
+  // Copia del estadio (si después se edita el plantel, el partido conserva dónde se jugó).
+  if (stadium) game.stadium = { name: stadium.name, location: stadium.location };
   return { game, starters };
 }

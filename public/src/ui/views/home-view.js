@@ -26,7 +26,7 @@ function gameItemHTML(game) {
   const them = [game.opponent, safeColor(game.oppColor, DEFAULT_OPPONENT_COLOR), Number(sm.them) || 0];
   const [left, right] = game.venue === 'away' ? [them, us] : [us, them];
   return '<li class="gitem"><button class="gopen" data-a="open-game" data-id="' + esc(game.id) + '">' +
-    '<span class="gmeta">' + esc(formatDate(game.date)) + (game.competition ? ' · ' + esc(game.competition) : '') + '</span>' +
+    '<span class="gmeta">' + esc(formatDate(game.date)) + (game.competition ? ' · ' + esc(game.competition) : '') + (game.stadium && game.stadium.name ? ' · ' + esc(game.stadium.name) : '') + '</span>' +
     '<span class="gteams">' + sideHTML(...left, false) + '<span class="gsep">–</span>' + sideHTML(...right, true) + '</span>' +
     '<span class="gstate">' + statusChip(game) + '<span class="gcta">' + (game.status === 'final' ? 'Ver ›' : 'Continuar ›') + '</span></span></button>' +
     // Borrar queda chico y apartado, y pide confirmación (segundo toque).

@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions } from '../public/src/domain/team.js';
+import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions, editableTeamDraft, teamVenues } from '../public/src/domain/team.js';
 import {
-  createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup
+  createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup, selectedVenue
 } from '../public/src/domain/game-setup.js';
 
 const draft = (players, extra = {}) => ({ id: 't1', name: 'Unión', color: '#111111', coach: ' DT ', competition: '', periodMin: '12', players, ...extra });
@@ -20,8 +20,26 @@ test('buildTeamDocument output', () => {
   const { doc } = buildTeamDocument(draft([p('a', ' 7 ', ' Ana '), { id: 'b', num: '', name: '' }], { isNew: true }), 99);
   assert.deepEqual(doc, {
     name: 'Unión', color: '#111111', coach: 'DT', competition: '', periodMin: '12', createdAt: 99,
-    players: [{ id: 'a', num: '7', name: 'Ana', active: true }]
+    players: [{ id: 'a', num: '7', name: 'Ana', active: true }], venues: []
   });
+});
+
+test('buildTeamDocument venues', () => {
+  const base = [p('a', '7')];
+  const v = (id, name, location) => ({ id, name, location });
+  assert.equal(buildTeamDocument(draft(base, { venues: [v('v1', 'Estadio', ' ')] })).error, 'Cada estadio necesita nombre y ubicación.');
+  assert.equal(buildTeamDocument(draft(base, { venues: [v('v1', ' ', 'Calle 1')] })).error, 'Cada estadio necesita nombre y ubicación.');
+  assert.equal(buildTeamDocument(draft(base, { venues: [v('v1', 'Estadio', 'A'), v('v2', 'estadio ', 'B')] })).error, 'Hay dos estadios llamados «estadio».');
+  const { doc } = buildTeamDocument(draft(base, { venues: [v('v1', ' Principal ', ' Calle 1 '), v('v2', '', '')] }));
+  assert.deepEqual(doc.venues, [{ id: 'v1', name: 'Principal', location: 'Calle 1' }]);
+});
+
+test('editableTeamDraft always offers a venue row and does not touch the saved team', () => {
+  const saved = { id: 't', name: 'X', players: [] };
+  const d = editableTeamDraft(saved);
+  assert.equal(d.venues.length, 1);
+  assert.equal(saved.venues, undefined);
+  assert.deepEqual(teamVenues({ venues: [{ id: 'a', name: 'A' }, { id: 'b', name: ' ' }] }).map((x) => x.id), ['a']);
 });
 
 test('team helpers', () => {
@@ -78,4 +96,37 @@ test('createGame validation and result', () => {
   assert.deepEqual(game.onCourt, starters);
   assert.equal(game.roster.length, 6);
   assert.equal(game.createdAt, 5);
+});
+
+test('createGame: stadium when playing at home', () => {
+  const ready = (t) => {
+    const s = blankSetup();
+    applyTeamToSetup(s, t);
+    s.opponent = 'Norte';
+    ['c', 'd', 'e'].forEach((id) => { s.sel[id].starter = true; });
+    return s;
+  };
+  // sin estadios cargados: se juega igual, sin estadio
+  assert.equal(createGame(ready(team), team).game.stadium, undefined);
+  // un solo estadio: queda elegido solo
+  const one = { ...team, venues: [{ id: 'v1', name: 'Principal', location: 'Calle 1' }] };
+  const s1 = ready(one);
+  assert.equal(s1.venueId, 'v1');
+  assert.deepEqual(createGame(s1, one).game.stadium, { name: 'Principal', location: 'Calle 1' });
+  // varios: hay que elegir
+  const two = { ...team, venues: [{ id: 'v1', name: 'Principal', location: 'Calle 1' }, { id: 'v2', name: 'Auxiliar', location: 'Calle 2' }] };
+  const s2 = ready(two);
+  assert.equal(s2.venueId, null);
+  assert.equal(createGame(s2, two).error, 'Elegí en qué estadio se juega.');
+  s2.venueId = 'v2';
+  assert.equal(selectedVenue(s2, two).name, 'Auxiliar');
+  assert.deepEqual(createGame(s2, two).game.stadium, { name: 'Auxiliar', location: 'Calle 2' });
+  // de visitante no se pide ni se guarda
+  assert.equal(createGame({ ...s2, venueId: null, venue: 'away' }, two).game.stadium, undefined);
+  // si el estadio elegido se borró del plantel, se vuelve a elegir
+  const s3 = { ...s2, venueId: 'gone' };
+  reconcileSelection(s3, two);
+  assert.equal(s3.venueId, null);
+  reconcileSelection(s3, one);
+  assert.equal(s3.venueId, 'v1');
 });

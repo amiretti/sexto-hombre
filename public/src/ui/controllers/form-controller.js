@@ -30,6 +30,10 @@ function handleInput(event) {
     const p = form.players.find((x) => x.id === t.dataset.pid);
     if (p) { p[t.dataset.pf] = t.value; persistView(); }
   }
+  if (t.dataset.vf && form.venues) {
+    const v = form.venues.find((x) => x.id === t.dataset.vid);
+    if (v) { v[t.dataset.vf] = t.value; persistView(); }
+  }
 }
 
 function handleChange(event) {
