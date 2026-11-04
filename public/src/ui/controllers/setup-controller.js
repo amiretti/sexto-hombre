@@ -42,10 +42,18 @@ export function newSetup(teamId) {
   if (s.teamId) focusId('f-opp');
 }
 
+/** Lleva el foco al campo del error de la previa (o al mensaje). */
+function focusInvalid(error) {
+  const field = /rival/i.test(error) ? document.getElementById('f-opp') : null;
+  if (field) { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'setup-err'); field.focus(); return; }
+  const msg = document.getElementById('setup-err');
+  if (msg) { msg.tabIndex = -1; msg.focus(); }
+}
+
 function startGame() {
   const team = teamById(state.setup.teamId);
   const result = createGame(state.setup, team);
-  if (result.error) { ui.setupErr = result.error; render(); return; }
+  if (result.error) { ui.setupErr = result.error; render(); focusInvalid(result.error); return; }
   showGame(result.game);
   app.session.persistNow();
   app.lock.acquire(result.game.id);

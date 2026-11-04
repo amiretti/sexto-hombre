@@ -38,7 +38,13 @@ function leaveEditor(after, teamId) {
 function saveTeamEdit() {
   const draft = state.teamEdit;
   const result = buildTeamDocument(draft);
-  if (result.error) { ui.setupErr = result.error; render(); return; }
+  if (result.error) {
+    ui.setupErr = result.error; render();
+    const field = /nombre del equipo/i.test(result.error) ? document.getElementById('f-tname') : null;
+    if (field) { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'setup-err'); field.focus(); }
+    else { const msg = document.getElementById('setup-err'); if (msg) { msg.tabIndex = -1; msg.focus(); } }
+    return;
+  }
   const { doc } = result;
   app.store.saveTeam(draft.id, doc).catch(reportSaveError);
   const saved = Object.assign({}, teamById(draft.id) || {}, doc, { id: draft.id });

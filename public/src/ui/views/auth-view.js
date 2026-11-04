@@ -11,7 +11,7 @@ export function loginHTML() {
     '<p class="btag">La planilla del cuerpo técnico</p>' +
     '<p class="bcopy">Ingresá con tu cuenta de Google para guardar los partidos y compartir la planilla.</p>' +
     '<button class="btn big gbtn bprimary" data-a="login"><span class="g" aria-hidden="true">G</span>Ingresar con Google</button>' +
-    '<p class="err">' + esc(ui.authErr || '') + '</p></section></div>';
+    '<p class="err" role="alert">' + esc(ui.authErr || '') + '</p></section></div>';
 }
 
 export function deniedHTML() {

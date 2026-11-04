@@ -10,9 +10,9 @@ import { textField, colorField, competitionField, periodLengthField } from '../c
 
 function playerRowHTML(p) {
   const on = p.active !== false;
-  return '<div class="rrow' + (on ? '' : ' off') + '"><input class="n" inputmode="numeric" maxlength="2" aria-label="Número" id="n-' + esc(p.id) + '" data-pid="' + esc(p.id) + '" data-pf="num" value="' + esc(p.num) + '">' +
-    '<input aria-label="Nombre" id="m-' + esc(p.id) + '" data-pid="' + esc(p.id) + '" data-pf="name" value="' + esc(p.name) + '" placeholder="Nombre y apellido">' +
-    '<button class="starter" data-a="tp-active" data-id="' + esc(p.id) + '" aria-pressed="' + on + '">' + (on ? 'Activo' : 'De baja') + '</button>' +
+  return '<div class="rrow' + (on ? '' : ' off') + '"><input class="n" inputmode="numeric" maxlength="2" aria-label="' + esc('Número de ' + (p.name || 'jugador nuevo')) + '" id="n-' + esc(p.id) + '" data-pid="' + esc(p.id) + '" data-pf="num" value="' + esc(p.num) + '">' +
+    '<input aria-label="' + esc('Nombre del jugador ' + (p.num || 'nuevo')) + '" id="m-' + esc(p.id) + '" data-pid="' + esc(p.id) + '" data-pf="name" value="' + esc(p.name) + '" placeholder="Nombre y apellido">' +
+    '<button class="starter" data-a="tp-active" data-id="' + esc(p.id) + '" aria-pressed="' + on + '" aria-label="' + esc('Activo: #' + (p.num || '') + ' ' + (p.name || '')) + '">' + (on ? 'Activo' : 'De baja') + '</button>' +
     (p.fresh ? '<button class="rm" data-a="tp-rm" data-id="' + esc(p.id) + '" aria-label="Quitar jugador">×</button>' : '<span></span>') + '</div>';
 }
 
@@ -42,7 +42,7 @@ function rosterCardHTML(t) {
 function footerHTML(t) {
   const armed = ui.confirm === 'tdel';
   return '<div class="setup-foot">' + (t.isNew ? '' : '<button class="btn danger lft' + (armed ? ' armed' : '') + '" data-a="team-del">' + (armed ? '¿Borrar el plantel?' : 'Borrar plantel') + '</button>') +
-    '<p class="err" id="setup-err">' + esc(ui.setupErr) + '</p><button class="btn primary big" data-a="team-save">Guardar plantel</button></div>';
+    '<p class="err" id="setup-err" role="alert">' + esc(ui.setupErr) + '</p><button class="btn primary big" data-a="team-save">Guardar plantel</button></div>';
 }
 
 export function teamHTML() {

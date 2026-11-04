@@ -44,8 +44,8 @@ function matchCardHTML(s, t) {
 function callRowHTML(p, sel) {
   const c = sel[p.id] || {}, on = !!c.in;
   return '<div class="crow' + (on ? '' : ' off') + '"><span class="cn">' + esc(p.num) + '</span><span class="cname">' + esc(p.name || '—') + '</span>' +
-    '<button class="starter callb" data-a="call" data-id="' + esc(p.id) + '" aria-pressed="' + on + '">' + (on ? 'Convocado' : 'No va') + '</button>' +
-    '<button class="starter" data-a="starter" data-id="' + esc(p.id) + '" aria-pressed="' + !!(on && c.starter) + '"' + (on ? '' : ' disabled') + '>' + (on && c.starter ? 'Titular' : 'Suplente') + '</button></div>';
+    '<button class="starter callb" data-a="call" data-id="' + esc(p.id) + '" aria-pressed="' + on + '" aria-label="' + esc('Convocado: #' + p.num + ' ' + (p.name || '')) + '">' + (on ? 'Convocado' : 'No va') + '</button>' +
+    '<button class="starter" data-a="starter" data-id="' + esc(p.id) + '" aria-pressed="' + !!(on && c.starter) + '" aria-label="' + esc('Titular: #' + p.num + ' ' + (p.name || '')) + '"' + (on ? '' : ' disabled') + '>' + (on && c.starter ? 'Titular' : 'Suplente') + '</button></div>';
 }
 
 function rosterCardHTML(s, t) {
@@ -62,5 +62,5 @@ export function setupHTML() {
   const s = state.setup, t = teamById(s.teamId);
   if (!t) return teamPickerHTML();
   return '<div class="setup">' + HEADER + matchCardHTML(s, t) + rosterCardHTML(s, t) +
-    '<div class="setup-foot"><p class="err" id="setup-err">' + esc(ui.setupErr) + '</p><button class="btn primary big" data-a="start">Empezar partido</button></div>' + TOAST_HTML + '</div>';
+    '<div class="setup-foot"><p class="err" id="setup-err" role="alert">' + esc(ui.setupErr) + '</p><button class="btn primary big" data-a="start">Empezar partido</button></div>' + TOAST_HTML + '</div>';
 }

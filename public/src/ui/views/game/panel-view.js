@@ -10,9 +10,20 @@ import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
 
 const STEP_NAMES = ['Ubicación', 'Jugador', 'Acción'];
+const STEP_NUMBER = { loc: 1, player: 2, bench: 2, action: 3, foul: 3, fdrawn: 3, tov: 3, ft: 3, staff: 3, assist: 3 };
+let announcedStep = null;
+
+/** Lectores de pantalla: anuncia solo el cambio de paso (no todo el panel). */
+function announceStep() {
+  const n = STEP_NUMBER[ui.step];
+  const el = $('#sr-status');
+  if (!el || !n || ui.step === announcedStep) return;
+  announcedStep = ui.step;
+  el.textContent = ui.step === 'assist' ? '¿Hubo asistencia?' : 'Paso ' + n + ' de 3: ' + STEP_NAMES[n - 1];
+}
 
 function stepsBar(n) {
-  return '<div class="steps">' + STEP_NAMES.map((x, i) => '<span class="' + (i + 1 === n ? 'on' : i + 1 < n ? 'done' : '') + '">' + (i + 1) + ' · ' + x + '</span>').join('') + '</div>';
+  return '<div class="steps">' + STEP_NAMES.map((x, i) => '<span class="' + (i + 1 === n ? 'on' : i + 1 < n ? 'done' : '') + '"' + (i + 1 === n ? ' aria-current="step"' : '') + '>' + (i + 1) + ' · ' + x + '</span>').join('') + '</div>';
 }
 
 /** "DT: 1 C · Banca: 0 B". */
@@ -34,7 +45,8 @@ function titleBar(left, backAction, backLabel) {
 
 function foulDots(G, pid) {
   const list = playerFoulTypes(G, pid);
-  let h = '<span class="fd" aria-label="' + list.length + ' faltas">';
+  const techs = list.filter((t) => t !== 'PF').length;
+  let h = '<span class="fd" role="img" aria-label="' + list.length + (list.length === 1 ? ' falta' : ' faltas') + (techs ? ' (' + techs + ' técnica' + (techs > 1 ? 's' : '') + ' o antideportiva' + (techs > 1 ? 's' : '') + ')' : '') + '">';
   for (let i = 0; i < Math.max(5, list.length); i++) {
     const t = list[i];
     h += '<i class="' + (t ? 'on' + (t !== 'PF' ? ' t' : '') : '') + '"></i>';
@@ -84,7 +96,7 @@ function locationStep(G) {
 function playerStep(G) {
   const bench = G.roster.filter((p) => !G.onCourt.includes(p.id)).map((p) => p.id);
   return stepsBar(2) + titleBar(whenText(), 'cancel', 'Cancelar') +
-    '<h3>En cancha</h3><div class="pgrid">' + G.onCourt.map((id) => playerCard(G, id)).join('') + '</div>' +
+    '<h3>En cancha</h3><div class="pgrid five">' + G.onCourt.map((id) => playerCard(G, id)).join('') + '</div>' +
     (bench.length ? '<h3>Banca</h3><div class="pgrid bench">' + bench.map((id) => playerCard(G, id)).join('') + '</div>' : '') +
     '<p class="lead" style="font-size:.82rem">¿Ubicación equivocada? Tocá de nuevo la cancha para moverla.</p>';
 }
@@ -107,10 +119,10 @@ function attackGroup(three) {
       shot('3M', 'Triple<small>convertido</small>', 'make', true) + shot('3X', 'Triple<small>errado</small>', 'miss', true) +
       '<button class="abtn wide" data-a="ft">Tiros libres</button></div>' +
     '<div class="agrid three">' +
-      actionButton('RO', 'Rebote<small>ofensivo</small>') + actionButton('AST', 'Asistencia') +
+      actionButton('RO', 'Rebote<small>ofensivo</small>') +
       '<button class="abtn" data-a="foul-drawn">Falta recibida<small>¿en tiro?</small></button>' +
       '<button class="abtn" data-a="act" data-t="TOV" data-s="pasos">Pasos<small>caminata</small></button>' +
-      '<button class="abtn span2" data-a="tov">Pérdida…<small>mal pase, doble, 3 seg, 24 seg, campo atrás</small></button></div></div>';
+      '<button class="abtn wide" data-a="tov">Pérdida…<small>mal pase, doble, 3 seg, 24 seg, campo atrás</small></button></div></div>';
 }
 
 function defenseGroup() {
@@ -169,8 +181,9 @@ function freeThrowStep(G) {
     : titleBar(esc(whoLabel(G, ui.player)) + ' · Tiros libres', 'back-action', '‹ Acciones');
   return stepsBar(3) + back +
     '<h3>Cantidad</h3><div class="agrid three">' + [1, 2, 3].map((n) => '<button class="abtn' + (f.att === n ? ' sel' : '') + '" data-a="ft-att" data-n="' + n + '">' + n + ' libre' + (n > 1 ? 's' : '') + '</button>').join('') + '</div>' +
-    '<h3>Resultado</h3>' + f.res.map((r, i) => '<div class="ftrow"><b>' + (i + 1) + '°</b><button class="abtn make' + (r === 'm' ? ' sel' : '') + '" data-a="ft-res" data-i="' + i + '" data-v="m">Convertido</button><button class="abtn miss' + (r === 'x' ? ' sel' : '') + '" data-a="ft-res" data-i="' + i + '" data-v="x">Errado</button></div>').join('') +
-    '<button class="btn primary big" data-a="ft-save"' + (f.res.includes(null) ? ' disabled' : '') + '>Registrar libres</button>';
+    '<h3>Resultado · tocá para registrar</h3><div class="agrid ftq">' + Array.from({ length: f.att + 1 }, (_, i) => f.att - i).map((made) =>
+      '<button class="abtn ' + (made === f.att ? 'make' : made === 0 ? 'miss' : '') + '" data-a="ft-quick" data-m="' + made + '" aria-label="' + made + ' de ' + f.att + ' convertidos">' +
+      '<span class="ftq-n">' + made + '/' + f.att + '</span><small>' + (made === f.att ? 'todos adentro' : made === 0 ? 'ninguno' : made + ' adentro') + '</small></button>').join('') + '</div>';
 }
 
 function staffStep(G) {
@@ -224,16 +237,8 @@ const STEPS = {
   staff: staffStep
 };
 
-/** Aviso: el reloj estaba detenido y lo pusimos a correr al cargar la jugada. */
-function clockNoticeHTML() {
-  const n = ui.clockNotice;
-  if (!n) return '';
-  return '<div class="clocknote" role="status"><span><strong>El reloj estaba detenido</strong> en ' + formatSeconds(n.stoppedAt) +
-    ' y lo pusimos a correr. ¿Lo sincronizamos con el tablero?</span>' +
-    '<span class="row"><button class="btn primary" data-a="sync-open">Sincronizar</button><button class="btn ghost" data-a="sync-dismiss">Está bien</button></span></div>';
-}
-
 export function renderPanel() {
   const step = STEPS[ui.step];
-  $('#panel').innerHTML = clockNoticeHTML() + (step ? step(currentGame()) : '');
+  $('#panel').innerHTML = step ? step(currentGame()) : '';
+  announceStep();
 }
