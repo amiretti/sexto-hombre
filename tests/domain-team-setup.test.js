@@ -1,0 +1,81 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions } from '../public/src/domain/team.js';
+import {
+  createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup
+} from '../public/src/domain/game-setup.js';
+
+const draft = (players, extra = {}) => ({ id: 't1', name: 'Unión', color: '#111111', coach: ' DT ', competition: '', periodMin: '12', players, ...extra });
+const p = (id, num, name = 'X', active = true) => ({ id, num, name, active });
+
+test('buildTeamDocument validation', () => {
+  assert.equal(buildTeamDocument(draft([p('a', '1')], { name: ' ' })).error, 'Falta el nombre del equipo.');
+  assert.equal(buildTeamDocument(draft([{ id: 'a', num: '', name: '' }])).error, 'Cargá al menos un jugador.');
+  assert.equal(buildTeamDocument(draft([p('a', 'x')])).error, 'Cada jugador necesita un número (0 a 99).');
+  assert.equal(buildTeamDocument(draft([p('a', '7'), p('b', '7')])).error, 'El número 7 está repetido entre los jugadores activos.');
+  assert.equal(buildTeamDocument(draft([p('a', '7'), p('b', '7', 'Y', false)])).error, undefined);
+});
+
+test('buildTeamDocument output', () => {
+  const { doc } = buildTeamDocument(draft([p('a', ' 7 ', ' Ana '), { id: 'b', num: '', name: '' }], { isNew: true }), 99);
+  assert.deepEqual(doc, {
+    name: 'Unión', color: '#111111', coach: 'DT', competition: '', periodMin: '12', createdAt: 99,
+    players: [{ id: 'a', num: '7', name: 'Ana', active: true }]
+  });
+});
+
+test('team helpers', () => {
+  assert.equal(activePlayers({ players: [p('a', '1'), p('b', '2', 'X', false)] }).length, 1);
+  assert.equal(activePlayers(null).length, 0);
+  assert.equal(seedTeamDraft(null, true).seeded, 'example');
+  assert.equal(seedTeamDraft(null, false).seeded, undefined);
+  assert.equal(seedTeamDraft({ lastSetup: { team: 'Viejo', players: [{ num: '3', name: 'Z' }] } }, true).name, 'Viejo');
+  assert.deepEqual(knownCompetitions([{ competition: 'B' }], [{ competition: 'A' }, { competition: 'B' }, {}]), ['A', 'B']);
+});
+
+const team = {
+  id: 't1', name: 'Unión', color: '#111111', coach: 'DT', competition: 'Liga', periodMin: '8', lastStarters: ['a', 'b'],
+  players: ['a', 'b', 'c', 'd', 'e', 'f'].map((id, i) => p(id, String(i + 1), 'J ' + id)).concat([p('z', '99', 'Baja', false)])
+};
+
+test('setup selection', () => {
+  const s = blankSetup();
+  applyTeamToSetup(s, team);
+  assert.equal(s.periodMin, '8');
+  assert.deepEqual(s.sel.a, { in: true, starter: true });
+  assert.deepEqual(s.sel.c, { in: true, starter: false });
+  assert.equal(s.sel.z, undefined);
+  toggleCalled(s, 'a');
+  assert.deepEqual(s.sel.a, { in: false, starter: false });
+  assert.equal(toggleStarter(s, 'a'), false);
+  assert.equal(toggleStarter(s, 'c'), true);
+  s.sel.gone = { in: true };
+  delete s.sel.f;
+  reconcileSelection(s, team);
+  assert.equal(s.sel.gone, undefined);
+  assert.deepEqual(s.sel.f, { in: true, starter: false });
+});
+
+test('createGame validation and result', () => {
+  const s = blankSetup();
+  assert.equal(createGame(s, null).error, 'Elegí el plantel.');
+  applyTeamToSetup(s, team);
+  assert.equal(createGame(s, team).error, 'Falta el nombre del rival.');
+  s.opponent = ' Norte ';
+  ['b', 'c', 'd', 'e', 'f'].forEach((id) => { s.sel[id].in = false; });
+  assert.equal(createGame(s, team).error, 'Convocá al menos 5 jugadores.');
+  ['b', 'c', 'd', 'e', 'f'].forEach((id) => { s.sel[id].in = true; });
+  assert.equal(createGame(s, team).error, 'Elegí exactamente 5 titulares.');
+  ['c', 'd', 'e'].forEach((id) => { s.sel[id].starter = true; });
+  const dup = { ...team, players: team.players.map((x) => (x.id === 'f' ? { ...x, num: '1' } : x)) };
+  assert.equal(createGame(s, dup).error, 'El número 1 está repetido. Corregilo en el plantel.');
+  const { game, starters } = createGame({ ...s, venue: 'away' }, team, 5);
+  assert.deepEqual(starters, ['a', 'b', 'c', 'd', 'e']);
+  assert.equal(game.opponent, 'Norte');
+  assert.equal(game.venue, 'away');
+  assert.equal(game.periodMin, 8);
+  assert.deepEqual(game.clock, { rem: 480000, running: false, t0: 0 });
+  assert.deepEqual(game.onCourt, starters);
+  assert.equal(game.roster.length, 6);
+  assert.equal(game.createdAt, 5);
+});

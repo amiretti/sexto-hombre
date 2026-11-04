@@ -1,0 +1,63 @@
+// Caso de uso: armar el reporte del partido que consume el generador de PDF.
+// Devuelve datos planos (sin HTML, sin jsPDF).
+
+import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../shared/colors.js';
+import { formatDate } from '../shared/ids.js';
+import { REGULAR_PERIODS, periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../domain/clock.js';
+import {
+  playerStats, ourScore, opponentScore, pointsByPeriod, isEnded, teamFouls, staffFouls, teamTotals
+} from '../domain/stats.js';
+
+function pctSuffix(made, att) {
+  return att ? ' (' + Math.round(made * 100 / att) + '%)' : '';
+}
+
+/** "3 (1T 1U)" para la columna de faltas cometidas. */
+function foulsCell(s) {
+  if (!(s.tf || s.uf)) return s.fouls;
+  return s.fouls + ' (' + (s.tf ? s.tf + 'T' : '') + (s.tf && s.uf ? ' ' : '') + (s.uf ? s.uf + 'U' : '') + ')';
+}
+
+function statusText(game, now) {
+  if (isEnded(game, now)) {
+    const ot = overtimeCount(game.period);
+    return 'Final' + (ot ? ' tras ' + ot + ' suplementario' + (ot > 1 ? 's' : '') : '');
+  }
+  return 'En juego · ' + periodLong(game.period) + ' · ' + formatSeconds(remainingMs(game.clock, now) / 1000) + ' por jugar';
+}
+
+/**
+ * @param {object} game
+ * @param {{generatedBy?: string, now?: Date}} [opts]
+ */
+export function buildGameReport(game, { generatedBy = '', now = new Date() } = {}) {
+  const ms = now.getTime();
+  const rows = game.roster.map((p) => {
+    const s = playerStats(game, p.id);
+    return {
+      num: p.num, name: p.name || '—', outWhy: s.outWhy, pts: s.pts,
+      t2: s.m2 + '/' + s.a2, t3: s.m3 + '/' + s.a3, tl: s.ftm + '/' + s.fta,
+      ro: s.ro, rd: s.rd, rt: s.ro + s.rd, as: s.ast, rb: s.stl, tp: s.blk, pe: s.tov, fc: foulsCell(s), fr: s.fd
+    };
+  });
+  const T = teamTotals(game);
+  const st = staffFouls(game);
+  return {
+    away: game.venue === 'away', team: game.team, opponent: game.opponent,
+    teamColor: game.teamColor || DEFAULT_TEAM_COLOR, oppColor: game.oppColor || DEFAULT_OPPONENT_COLOR,
+    coach: game.coach, competition: game.competition,
+    date: game.date, dateText: formatDate(game.date), statusText: statusText(game, ms),
+    us: ourScore(game), them: opponentScore(game),
+    periods: pointsByPeriod(game).map((x) => ({ label: periodShort(x.p), us: x.us, them: x.them })),
+    rows,
+    totals: {
+      pts: T.pts, t2: T.m2 + '/' + T.a2 + pctSuffix(T.m2, T.a2), t3: T.m3 + '/' + T.a3 + pctSuffix(T.m3, T.a3),
+      tl: T.ftm + '/' + T.fta + pctSuffix(T.ftm, T.fta), ro: T.ro, rd: T.rd, rt: T.ro + T.rd,
+      as: T.ast, rb: T.stl, tp: T.blk, pe: T.tov, fc: T.fouls, fr: T.fd
+    },
+    teamFoulsText: Array.from({ length: REGULAR_PERIODS }, (_, i) => periodShort(i + 1) + ' ' + teamFouls(game, i + 1)).join('   '),
+    staffText: 'DT ' + st.c + ' técnica' + (st.c === 1 ? '' : 's') + ' · Banca ' + st.b + (st.out ? ' · DT descalificado' : ''),
+    generatedAt: now.toLocaleDateString('es-AR') + ' ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
+    generatedBy
+  };
+}
