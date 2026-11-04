@@ -1,6 +1,7 @@
 // Panel lateral: los pasos para cargar una jugada (ubicación → jugador → acción).
 
 import { esc } from '../../../shared/html.js';
+import { rerenderKeepingFocus, firstFocusable } from '../../focus.js';
 import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds, remainingMs } from '../../../domain/clock.js';
 import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
@@ -240,6 +241,9 @@ const STEPS = {
 
 export function renderPanel() {
   const step = STEPS[ui.step];
-  $('#panel').innerHTML = step ? step(currentGame()) : '';
+  const panel = $('#panel');
+  // Si el foco estaba en el panel, queda en el mismo control o pasa al primero del paso nuevo.
+  rerenderKeepingFocus(panel, () => { panel.innerHTML = step ? step(currentGame()) : ''; },
+    () => firstFocusable(panel.querySelector('.agroup, .pgrid, .assistbar, .quick, .agrid') || panel));
   announceStep();
 }

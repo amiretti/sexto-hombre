@@ -1,6 +1,7 @@
 // Hojas superpuestas del partido: historial, planilla, cambios, reloj, menú, final y cambio obligatorio.
 
 import { esc } from '../../../shared/html.js';
+import { focusKey, focusQuiet } from '../../focus.js';
 import { isBuzzerEnabled } from '../../../infrastructure/platform/buzzer.js';
 import { EVENT_LABELS, hasSubtype, subtypeKinds, isTeamEvent, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
 import { periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../../../domain/clock.js';
@@ -155,7 +156,7 @@ const foulsText = (n) => n + (n === 1 ? ' falta' : ' faltas');
 function forcedDialog(G) {
   const F = ui.forced, fp = findPlayer(G, F.out), cands = benchCandidates(G);
   const candidate = (p) => '<button class="stog" data-a="forced-pick" data-id="' + esc(p.id) + '"><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + foulsText(playerStats(G, p.id).fouls) + '</small></span></button>';
-  return '<section class="sheet small" role="dialog" aria-label="Cambio obligatorio"><div class="sheet-head"><div class="forced-head"><span class="eyebrow">Reloj detenido · ' + periodShort(G.period) + ' ' + clockNow(G) + '</span>' +
+  return '<section class="sheet small" role="alertdialog" aria-label="Cambio obligatorio"><div class="sheet-head"><div class="forced-head"><span class="eyebrow">Reloj detenido · ' + periodShort(G.period) + ' ' + clockNow(G) + '</span>' +
     '<strong>#' + esc(fp.num) + ' ' + esc(fp.name || '') + ' · ' + esc(F.why) + '</strong></div></div><div class="sheet-body">' +
     (cands.length ? '<p class="lead">Tiene que salir. Elegí quién entra:</p><div class="slist">' + cands.map(candidate).join('') + '</div>'
       : '<p class="lead">No quedan jugadores habilitados en la banca. El equipo sigue con uno menos en cancha.</p><div class="row end"><button class="btn primary big" data-a="forced-none">Seguir con uno menos</button></div>') +
@@ -176,10 +177,47 @@ const OVERLAYS = {
   forced: { html: forcedDialog, scrim: '<div class="scrim"></div>' }
 };
 
+/* ---------- foco y modalidad ---------- */
+
+let openOverlay = null;   // overlay abierto en el render anterior
+let openerKey = null;     // control que lo abrió (para devolverle el foco)
+let editingId = null;     // jugada en edición en el render anterior
+
+/** Con un diálogo abierto, el fondo no se puede tocar ni recorrer con Tab. */
+function setBackgroundInert(on) {
+  document.querySelectorAll('.game > .board, .game > .stage').forEach((n) => { n.inert = on; });
+}
+
+function afterOverlayRender(el, prev, cur, prevFocusKey) {
+  const dialog = el.querySelector('[role="dialog"], [role="alertdialog"]');
+  if (dialog) { dialog.setAttribute('aria-modal', 'true'); dialog.tabIndex = -1; }
+  setBackgroundInert(!!cur);
+  if (cur && !prev) { focusQuiet(dialog); return; }                  // se abrió: foco al diálogo
+  if (!cur && prev) {                                                 // se cerró: foco a quien lo abrió
+    const back = openerKey && document.querySelector(openerKey);
+    focusQuiet(back || document.querySelector('#clock'));
+    return;
+  }
+  if (!cur) return;
+  // Mismo diálogo redibujado: edición de jugada → primer campo; al cerrar la edición → su botón «Editar».
+  if (ui.draft && ui.draft.id !== editingId) { focusQuiet(el.querySelector('.edit select, .edit input')); return; }
+  if (!ui.draft && editingId) { focusQuiet(el.querySelector('[data-a="edit"][data-id="' + CSS.escape(editingId) + '"]') || dialog); return; }
+  const same = prevFocusKey && el.querySelector(prevFocusKey);
+  if (same) focusQuiet(same);
+  else if (!el.contains(document.activeElement)) focusQuiet(dialog);
+}
+
 export function renderOverlay() {
   const el = $('#overlay');
   if (!el) return;
+  const prev = openOverlay, cur = ui.overlay || null;
+  const active = document.activeElement;
+  if (cur && !prev) openerKey = focusKey(active);
+  const prevFocusKey = el.contains(active) ? focusKey(active) : null;
   const o = OVERLAYS[ui.overlay];
   el.innerHTML = o ? o.scrim + o.html(currentGame()) : (ui.overlay ? CLOSABLE_SCRIM : '');
+  afterOverlayRender(el, prev, cur, prevFocusKey);
+  openOverlay = cur;
+  editingId = ui.draft ? ui.draft.id : null;
   renderDots();
 }
