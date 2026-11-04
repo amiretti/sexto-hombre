@@ -23,6 +23,7 @@ import { navigationActions, onUser, onGameTakenOver } from './src/ui/navigation.
 import { homeActions } from './src/ui/controllers/home-controller.js';
 import { teamActions } from './src/ui/controllers/team-controller.js';
 import { clubActions } from './src/ui/controllers/club-controller.js';
+import { competitionActions } from './src/ui/controllers/competition-controller.js';
 import { setupActions } from './src/ui/controllers/setup-controller.js';
 import { registerFormHandlers } from './src/ui/controllers/form-controller.js';
 import { gameActions, registerGameHandlers, startClockTicker } from './src/ui/controllers/game-controller.js';
@@ -33,6 +34,7 @@ registerActions(navigationActions);
 registerActions(homeActions);
 registerActions(teamActions);
 registerActions(clubActions);
+registerActions(competitionActions);
 registerActions(setupActions);
 registerActions(gameActions);
 registerFormHandlers();

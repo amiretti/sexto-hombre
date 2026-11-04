@@ -1,6 +1,8 @@
-// Migración de planteles creados antes de que existieran los clubes (ver domain/club planClubMigration).
+// Migración de datos de versiones anteriores: planteles sin club (domain/club planClubMigration) y
+// competiciones guardadas como texto en el plantel (domain/competition planCompetitionMigration).
 
 import { planClubMigration } from '../domain/club.js';
+import { planCompetitionMigration } from '../domain/competition.js';
 
 /**
  * Crea los clubes que falten y asigna cada plantel suelto a su club. Es idempotente: los planteles que
@@ -17,6 +19,21 @@ export function migrateLegacyTeams(store, teams, clubs, done, onError = () => {}
   // Se marcan antes de guardar: el store puede avisar de los cambios en el acto y volver a llamarnos.
   plan.teams.forEach((t) => done.add(t.id));
   plan.clubs.forEach((c) => store.saveClub(c.id, c.doc).catch(onError));
+  plan.teams.forEach((t) => store.saveTeam(t.id, t.patch).catch(onError));
+  return plan;
+}
+
+/**
+ * Crea las competiciones que estaban como texto en los planteles y deja a cada plantel recordándola.
+ * Idempotente igual que migrateLegacyTeams (`done` son ids de planteles).
+ * @returns {{competitions: object[], teams: object[]}}
+ */
+export function migrateLegacyCompetitions(store, teams, competitions, done, onError = () => {}) {
+  const pendingTeams = (teams || []).filter((t) => t.competition && !done.has(t.id));
+  if (!pendingTeams.length || !competitions) return { competitions: [], teams: [] };
+  const plan = planCompetitionMigration(pendingTeams, competitions);
+  plan.teams.forEach((t) => done.add(t.id));
+  plan.competitions.forEach((c) => store.saveCompetition(c.id, c.doc).catch(onError));
   plan.teams.forEach((t) => store.saveTeam(t.id, t.patch).catch(onError));
   return plan;
 }

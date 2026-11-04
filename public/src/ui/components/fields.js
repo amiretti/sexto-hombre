@@ -3,10 +3,9 @@
 
 import { esc } from '../../shared/html.js';
 import { SWATCHES, SWATCH_NAMES, DEFAULT_TEAM_COLOR, safeColor } from '../../shared/colors.js';
-import { knownCompetitions } from '../../domain/team.js';
 import { state, ui } from '../state.js';
 
-const PERIOD_LENGTHS = ['10', '12', '8', '6'];
+import { PERIOD_LENGTHS } from '../../domain/competition.js';
 
 /** Campo de texto simple. */
 export function textField(id, label, field, value) {
@@ -31,21 +30,14 @@ function swatchButton(colorField, color, current) {
  */
 export function colorField(id, label, field, value, colorKey, color, who, extra) {
   const open = ui.colorOpen === colorKey, cur = String(color).toLowerCase();
-  return '<div class="field">' + (field ? '<label for="' + id + '">' + label + '</label>' : '<span class="flabel">' + label + (extra || '') + '</span>') + '<div class="tc cpick">' +
+  return '<div class="field' + (field ? '' : ' wide') + '">' + (field ? '<label for="' + id + '">' + label + '</label>' : '<span class="flabel">' + label + (extra || '') + '</span>') + '<div class="tc cpick">' +
     '<button type="button" class="cchip" data-a="color-open" data-f="' + colorKey + '" style="background:' + esc(safeColor(color, DEFAULT_TEAM_COLOR)) + '" aria-haspopup="true" aria-expanded="' + open +
     '" aria-controls="' + id + '-pop" aria-label="Color ' + who + ': ' + esc(SWATCH_NAMES[cur] || color) + '"></button>' +
-    (field ? '<input id="' + id + '" data-f="' + field + '" value="' + esc(value) + '" autocomplete="off">' : '<span class="tstatic" id="' + id + '">' + esc(value) + '</span>') +
+    (field ? '<input id="' + id + '" data-f="' + field + '" value="' + esc(value) + '" autocomplete="off">' : '<span class="tstatic" id="' + id + '" title="' + esc(value) + '">' + esc(value) + '</span>') +
     '<div class="cpop" id="' + id + '-pop" role="dialog" aria-label="Color ' + who + '"' + (open ? '' : ' hidden') + '>' +
     '<div class="sw" role="group" aria-label="Colores">' + SWATCHES.map((c) => swatchButton(colorKey, c, cur)).join('') + '</div>' +
     '<label class="custom"><input type="color" data-f="' + colorKey + '" value="' + esc(safeColor(color, DEFAULT_TEAM_COLOR)) + '">Otro color…</label>' +
     '</div></div></div>';
-}
-
-/** Competición con sugerencias de las ya usadas. */
-export function competitionField(value) {
-  const options = knownCompetitions(state.games, state.teams).map((c) => '<option value="' + esc(c) + '"></option>').join('');
-  return '<div class="field"><label for="f-comp">Competición</label><input id="f-comp" data-f="competition" list="comp-list" value="' + esc(value || '') +
-    '" placeholder="Ej.: Liga del Oeste Santafesino"><datalist id="comp-list">' + options + '</datalist></div>';
 }
 
 /** Duración del cuarto. */

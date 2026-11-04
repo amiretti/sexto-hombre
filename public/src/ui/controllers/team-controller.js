@@ -85,6 +85,12 @@ export const teamActions = {
     focusId('f-cat');
   }),
   'team-del': inEditor(deleteTeam),
+  'team-branch': inEditor(({ data }) => {
+    state.teamEdit.branch = data.v;
+    render();
+    const checked = document.querySelector('[data-a="team-branch"][aria-checked="true"]');
+    if (checked) checked.focus();
+  }),
   'tp-active': inEditor(({ id }) => {
     const p = findDraftPlayer(id);
     if (!p) return;

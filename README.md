@@ -26,7 +26,8 @@ _La planilla del cuerpo técnico._
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
 - **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
 - **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico. Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
-- **Clubes y planteles:** el club guarda el nombre, los colores (titular y alternativo) y los estadios; cada club tiene uno o más planteles (Primera, U17, Femenino…) con sus jugadores. En cada partido elegís el plantel, el rival, los convocados y el quinteto.
+- **Clubes y planteles:** el club guarda el nombre, los colores (titular y alternativo) y los estadios; cada club tiene uno o más planteles, cada uno con su categoría (Mini a Maxi) y rama (masculino, femenino o mixto) y sus jugadores. En cada partido elegís el plantel, el rival, los convocados y el quinteto.
+- **Competiciones:** ligas y torneos con temporada y duración del cuarto. Se eligen al crear cada partido (o «Amistoso»), proponen su duración y el plantel recuerda la última que usó. Se crean desde Mis partidos o desde la previa.
 - **Camiseta:** se propone la titular del club; si se parece al color del rival, pasás a la alternativa con un toque.
 - **Estadios:** cada club guarda sus canchas (nombre y ubicación). Podés marcar una por defecto, que se propone en cada partido de local y se cambia si hace falta; queda en la lista de partidos y en la planilla.
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
@@ -88,7 +89,7 @@ flowchart LR
 | Capa | Qué contiene | Depende de |
 |---|---|---|
 | `shared/` | ids y fechas, escape de HTML, colores | nada |
-| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, estadísticas y exclusiones, club, plantel, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
+| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, estadísticas y exclusiones, club, plantel, competición, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
 | `application/` | sesión del partido (registrar jugadas, consecuencias, guardado con debounce), reporte para el PDF, exportación CSV | `domain` y el **puerto** `store` |
 | `infrastructure/` | `store/` (Firebase o demo con la misma interfaz), `pdf/` (render y Web Share), `platform/` (wake lock, portapapeles, service worker, borrador local) | `shared` |
 | `ui/` | estado, router de pantallas, despachador único de eventos, vistas (HTML) y controladores (acciones `data-a`) | todo lo anterior |
@@ -163,11 +164,12 @@ Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas d
 | `allowlist/{correo}` | Correos habilitados (se cargan a mano) |
 | `users/{uid}` | Perfil del usuario |
 | `clubs/{id}` | Club: nombre, color titular (`color`) y alternativo (`altColor`), estadios (`id`, `name`, `location`) y estadio por defecto (`defaultVenueId`) |
-| `teams/{id}` | Plantel: club (`clubId`), categoría, DT, competición, duración por defecto, jugadores (`id`, `num`, `name`, `active`) y último quinteto |
-| `games/{id}` | Partido: plantel y club de origen, categoría, local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado y resumen del tanteador |
+| `competitions/{id}` | Competición: nombre, temporada (`season`) y duración del cuarto (`periodMin`) |
+| `teams/{id}` | Plantel: club (`clubId`), categoría y rama (`branch`: `m`, `f` o `x`), DT, última competición usada (`lastCompetitionId`), duración por defecto, jugadores (`id`, `num`, `name`, `active`) y último quinteto |
+| `games/{id}` | Partido: plantel y club de origen, categoría, competición (id y copia del nombre), local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado y resumen del tanteador |
 | `games/{id}/events/{id}` | Una jugada por documento, con ID generado en el dispositivo, `seq`, `rev` y `deleted` |
 
-Los planteles creados antes de que existieran los clubes se migran solos al abrir la app: se agrupan por nombre en un club (con su color y sus estadios) y quedan con la categoría «Primera», que se puede editar. Los partidos ya jugados no cambian.
+Los planteles creados antes de que existieran los clubes se migran solos al abrir la app: se agrupan por nombre en un club (con su color y sus estadios) y quedan con la categoría «Primera», que se puede editar. Las competiciones que estaban escritas en el plantel pasan a ser competiciones de la temporada actual, y las categorías escritas a mano se interpretan («U17 Femenino» queda como U17, rama femenina). Los partidos ya jugados no cambian.
 
 ## Sin señal
 

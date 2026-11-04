@@ -1,13 +1,14 @@
 // Controlador de la previa del partido.
 
 import {
-  blankSetup, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, createGame, chooseKit, SETUP_VERSION
+  blankSetup, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, createGame, chooseKit, chooseCompetition, SETUP_VERSION
 } from '../../domain/game-setup.js';
 import { loadSetupDraft, clearSetupDraft } from '../../infrastructure/platform/setup-draft-storage.js';
 import { app, state, ui } from '../state.js';
 import { render } from '../render.js';
 import { focusId } from '../dom.js';
-import { teamById } from '../selectors.js';
+import { teamById, competitionById } from '../selectors.js';
+import { onFieldChange } from './form-controller.js';
 import { persistView, showGame } from '../navigation.js';
 import { editTeam } from './team-controller.js';
 
@@ -33,8 +34,9 @@ export function newSetup(teamId) {
   const s = state.setup;
   const tid = teamId || s.teamId || (state.teams.length === 1 ? state.teams[0].id : null);
   // (el plantel se usa siempre resuelto con su club: teamById)
-  if (tid && tid !== s.teamId) applyTeamToSetup(s, teamById(tid));
+  if (tid && tid !== s.teamId) applyTeamToSetup(s, teamById(tid), state.competitions);
   else reconcileSelection(s, teamById(s.teamId));
+  if (s.competitionId && !competitionById(s.competitionId)) s.competitionId = null;
   state.view = 'setup';
   ui.setupErr = '';
   ui.colorOpen = null;
@@ -54,12 +56,13 @@ function focusInvalid(error) {
 
 function startGame() {
   const team = teamById(state.setup.teamId);
-  const result = createGame(state.setup, team);
+  const competition = competitionById(state.setup.competitionId);
+  const result = createGame(state.setup, team, Date.now(), competition);
   if (result.error) { ui.setupErr = result.error; render(); focusInvalid(result.error); return; }
   showGame(result.game);
   app.session.persistNow();
   app.lock.acquire(result.game.id);
-  app.store.saveTeam(team.id, { lastStarters: result.starters }).catch(() => {});
+  app.store.saveTeam(team.id, { lastStarters: result.starters, lastCompetitionId: competition ? competition.id : null }).catch(() => {});
   clearSetupDraft(uid());
 }
 
@@ -68,7 +71,7 @@ const update = (fn) => (ctx) => { fn(state.setup, ctx); persistView(); render();
 
 export const setupActions = {
   'pick-team': ({ id }) => {
-    applyTeamToSetup(state.setup, teamById(id));
+    applyTeamToSetup(state.setup, teamById(id), state.competitions);
     persistView();
     render();
     focusId('f-opp');
@@ -84,3 +87,13 @@ export const setupActions = {
   },
   'start': () => startGame()
 };
+
+// Al elegir la competición se propone su duración del cuarto.
+onFieldChange('competitionId', () => {
+  if (state.view !== 'setup') return;
+  const s = state.setup;
+  chooseCompetition(s, competitionById(s.competitionId), teamById(s.teamId));
+  persistView();
+  render();
+  focusId('f-comp');
+});

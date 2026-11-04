@@ -7,6 +7,13 @@ import { setColorPopover } from '../components/fields.js';
 import { registerActions, onClickBefore, onInput, onChange, onKeydown } from '../events.js';
 import { persistView } from '../navigation.js';
 
+const fieldHooks = {};
+
+/** Registra qué hacer cuando cambia un campo data-f (después de guardarlo en el formulario). */
+export function onFieldChange(field, fn) {
+  fieldHooks[field] = fn;
+}
+
 /** Un clic fuera del selector de color lo cierra (y el clic sigue su curso). */
 function closeColorOnOutsideClick(event) {
   if (activeForm() && ui.colorOpen && !(event.target.closest && event.target.closest('.cpick'))) setColorPopover(null);
@@ -42,6 +49,7 @@ function handleChange(event) {
   form[t.dataset.f] = t.value;
   persistView();
   if (t.type === 'color') render();
+  if (fieldHooks[t.dataset.f]) fieldHooks[t.dataset.f](form);
 }
 
 const ARROWS = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 };

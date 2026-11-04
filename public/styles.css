@@ -525,3 +525,11 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .vpick.kitpick button[aria-checked="true"] b::before{content:none}
 .kitsw{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.3)}
 .vstatic .tsw{width:16px;height:16px;border-radius:4px;display:inline-block}
+
+/* ---- competiciones y rama ---- */
+.seg.seg3{grid-template-columns:repeat(3,1fr)}
+.field .flabel label{font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit}
+/* nombre fijo largo («Club · Categoría»): se recorta en vez de pisar el campo de al lado */
+.setup-grid>.field{min-width:0;grid-template-columns:minmax(0,1fr)}
+.tstatic{display:block;line-height:1.6}
+@media (min-width:700px){.setup-grid>.field.wide{grid-column:span 2}}

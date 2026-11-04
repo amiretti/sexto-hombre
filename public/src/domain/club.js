@@ -2,6 +2,7 @@
 
 import { newId, shortId } from '../shared/ids.js';
 import { DEFAULT_TEAM_COLOR, safeColor } from '../shared/colors.js';
+import { normalizeCategory, categoryLabel } from './team.js';
 
 export const MAX_VENUES_PER_CLUB = 10;
 export const DEFAULT_ALT_COLOR = '#ffffff';
@@ -102,7 +103,7 @@ export function resolveTeam(team, club) {
   return Object.assign({}, team, {
     clubId: club ? club.id : team.clubId || null,
     name: src.name || team.name || '',
-    category: String(team.category || ''),
+    ...normalizeCategory(team),
     color: src.color || DEFAULT_TEAM_COLOR,
     altColor: club ? club.altColor || '' : '',
     venues: src.venues || [],
@@ -110,10 +111,11 @@ export function resolveTeam(team, club) {
   });
 }
 
-/** "Unión Central · U17" (o solo el club si no hay categoría). */
+/** "Unión Central · U17 Fem." (o solo el club si no hay categoría). */
 export function teamLabel(team, sep = ' · ') {
   if (!team) return '';
-  return team.category ? team.name + sep + team.category : team.name;
+  const cat = categoryLabel(team, true);
+  return cat ? team.name + sep + cat : team.name;
 }
 
 /**

@@ -16,6 +16,8 @@
  * @property {(id: string, data: object) => Promise<void>} saveTeam    crea o actualiza (merge)
  * @property {(uid: string, cb: (list: object[]|null, err?: any) => void) => Function} watchClubs
  * @property {(id: string, data: object) => Promise<void>} saveClub    crea o actualiza (merge)
+ * @property {(uid: string, cb: (list: object[]|null, err?: any) => void) => Function} watchCompetitions
+ * @property {(id: string, data: object) => Promise<void>} saveCompetition crea o actualiza (merge)
  * @property {(id: string) => Promise<{game: object, events: object[]}>} loadGame
  * @property {(id: string, data: object) => Promise<void>} saveGame    crea o actualiza (merge)
  * @property {(gameId: string, ev: object) => Promise<void>} putEvent  crea o actualiza una jugada

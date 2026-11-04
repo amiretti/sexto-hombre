@@ -2,13 +2,13 @@
 
 import { esc, plural } from '../../shared/html.js';
 import { DEFAULT_TEAM_COLOR, safeColor } from '../../shared/colors.js';
-import { activePlayers } from '../../domain/team.js';
+import { activePlayers, categoryLabel } from '../../domain/team.js';
 import { teamLabel } from '../../domain/club.js';
 
 /** "12 jugadores · Liga…" (HTML escapado). */
 export function teamMeta(team) {
   const n = activePlayers(team).length;
-  return n + ' ' + plural(n, 'jugador', 'jugadores') + (team.competition ? ' · ' + esc(team.competition) : '');
+  return n + ' ' + plural(n, 'jugador', 'jugadores');
 }
 
 /**
@@ -18,7 +18,7 @@ export function teamMeta(team) {
  * @param {boolean} [inClub] dentro de su club: el título es solo la categoría
  */
 export function teamCardHTML(team, action, trailing = '', inClub = false) {
-  const title = inClub ? (team.category || 'Sin categoría') : teamLabel(team);
+  const title = inClub ? (categoryLabel(team) || 'Sin categoría') : teamLabel(team);
   return '<button class="tcard" data-a="' + action + '" data-id="' + esc(team.id) + '"><span class="tsw" style="background:' + esc(safeColor(team.color, DEFAULT_TEAM_COLOR)) +
     '"></span><span class="tinfo"><b>' + esc(title) + '</b><span>' + teamMeta(team) + '</span></span>' + trailing + '</button>';
 }

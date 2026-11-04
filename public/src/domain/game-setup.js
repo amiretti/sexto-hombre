@@ -3,7 +3,8 @@
 
 import { newId, todayISO } from '../shared/ids.js';
 import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../shared/colors.js';
-import { activePlayers, DEFAULT_PERIOD_MIN } from './team.js';
+import { activePlayers, categoryLabel, normalizeCategory, DEFAULT_PERIOD_MIN } from './team.js';
+import { competitionLabel } from './competition.js';
 import { venuesOf } from './club.js';
 import { newClock } from './clock.js';
 
@@ -13,14 +14,17 @@ export function blankSetup() {
   return { v: SETUP_VERSION, teamId: null, opponent: '', oppColor: DEFAULT_OPPONENT_COLOR, venue: 'home', venueId: null, attack: 'right', date: todayISO(), sel: {} };
 }
 
-/** Toma los datos por defecto del plantel y convoca a todos sus activos. Muta `setup`. */
-export function applyTeamToSetup(setup, team) {
+/**
+ * Toma los datos por defecto del plantel y convoca a todos sus activos. Muta `setup`.
+ * @param {object[]} [competitions] competiciones disponibles (se propone la última que usó el plantel)
+ */
+export function applyTeamToSetup(setup, team, competitions = []) {
   const lastStarters = team.lastStarters || [];
   setup.teamId = team.id;
   setup.teamColor = team.color || DEFAULT_TEAM_COLOR;
   setup.coach = team.coach || '';
-  setup.competition = team.competition || '';
   setup.periodMin = String(team.periodMin || DEFAULT_PERIOD_MIN);
+  chooseCompetition(setup, (competitions || []).find((c) => c.id === team.lastCompetitionId && !c.deleted) || null, team);
   setup.sel = {};
   activePlayers(team).forEach((p) => { setup.sel[p.id] = { in: true, starter: lastStarters.includes(p.id) }; });
   setup.venueId = null;
@@ -52,6 +56,16 @@ export function reconcileSelection(setup, team) {
   activePlayers(team).forEach((p) => { ids[p.id] = 1; if (!setup.sel[p.id]) setup.sel[p.id] = { in: true, starter: false }; });
   Object.keys(setup.sel).forEach((k) => { if (!ids[k]) delete setup.sel[k]; });
   reconcileVenue(setup, team);
+}
+
+/**
+ * Elige la competición (null = amistoso / sin competición) y propone su duración del cuarto. Muta `setup`.
+ * @param {object} [team] sin competición vuelve a la duración del plantel
+ */
+export function chooseCompetition(setup, competition, team) {
+  setup.competitionId = competition ? competition.id : null;
+  if (competition && competition.periodMin) setup.periodMin = String(competition.periodMin);
+  else if (team) setup.periodMin = String(team.periodMin || DEFAULT_PERIOD_MIN);
 }
 
 /** Camiseta que usamos según el color elegido: 'main', 'alt' o null (otro color). */
@@ -93,9 +107,10 @@ export function starterIds(setup, team) {
 
 /**
  * Valida la previa y crea el partido.
+ * @param {object|null} [competition] la competición elegida (setup.competitionId)
  * @returns {{error: string} | {game: object, starters: string[]}}
  */
-export function createGame(setup, team, now = Date.now()) {
+export function createGame(setup, team, now = Date.now(), competition = null) {
   if (!team) return { error: 'Elegí el plantel.' };
   const players = calledPlayers(setup, team);
   const starters = starterIds(setup, team);
@@ -114,9 +129,10 @@ export function createGame(setup, team, now = Date.now()) {
   const game = {
     id: newId(), status: 'live', teamId: team.id, venue: setup.venue === 'away' ? 'away' : 'home',
     attackFirstHalf: setup.attack === 'left' ? 'left' : 'right',
-    competition: String(setup.competition || '').trim(), createdAt: now, oppP: {},
+    // Copia del nombre: si después se edita la competición, el partido conserva cómo se llamaba.
+    competitionId: competition ? competition.id : null, competition: competitionLabel(competition), createdAt: now, oppP: {},
     teamColor: setup.teamColor || team.color || DEFAULT_TEAM_COLOR, oppColor: setup.oppColor || DEFAULT_OPPONENT_COLOR,
-    clubId: team.clubId || null, category: String(team.category || ''),
+    clubId: team.clubId || null, category: categoryLabel(team), branch: normalizeCategory(team).branch,
     team: team.name, opponent: String(setup.opponent).trim(), coach: String(setup.coach || '').trim(), date: setup.date, periodMin,
     roster: players.map((p) => ({ id: p.id, num: String(p.num).trim(), name: String(p.name || '').trim() })),
     starters: starters.slice(), onCourt: starters.slice(),
