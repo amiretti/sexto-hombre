@@ -22,8 +22,19 @@ const SCREENS = {
   locked: lockedHTML
 };
 
+const TITLES = {
+  boot: 'Cargando', loading: 'Abriendo el partido', login: 'Ingresar', denied: 'Cuenta no habilitada',
+  home: 'Mis partidos', setup: 'Nuevo partido', team: 'Plantel', locked: 'Partido abierto en otro dispositivo'
+};
+
+/** Título de la pestaña (lo anuncian los lectores de pantalla al cambiar de pantalla). */
+export function setPageTitle(text) {
+  document.title = text ? text + ' · Sexto Hombre' : 'Sexto Hombre';
+}
+
 export function render() {
   const root = $('#app');
+  if (TITLES[state.view]) setPageTitle(TITLES[state.view]);
   const screen = SCREENS[state.view];
   if (screen) { root.innerHTML = screen(); return; }
   root.innerHTML = gameShellHTML();

@@ -4,10 +4,10 @@ import { esc } from '../../shared/html.js';
 import { state, ui } from '../state.js';
 import { brandMark } from '../components/brand.js';
 
-const brandHeader = () => brandMark('blogo') + '<p class="bword big">SEXTO HOMBRE</p>';
+const brandHeader = (asTitle) => brandMark('blogo') + (asTitle ? '<h1 class="bword big">SEXTO HOMBRE</h1>' : '<p class="bword big">SEXTO HOMBRE</p>');
 
 export function loginHTML() {
-  return '<div class="brandscreen"><section class="bcard">' + brandHeader() +
+  return '<div class="brandscreen"><section class="bcard">' + brandHeader(true) +
     '<p class="btag">La planilla del cuerpo técnico</p>' +
     '<p class="bcopy">Ingresá con tu cuenta de Google para guardar los partidos y compartir la planilla.</p>' +
     '<button class="btn big gbtn bprimary" data-a="login"><span class="g" aria-hidden="true">G</span>Ingresar con Google</button>' +

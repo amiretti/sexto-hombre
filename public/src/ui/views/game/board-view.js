@@ -57,6 +57,11 @@ export function renderBoard() {
   const G = currentGame(), r = remainingMs(G.clock), ended = isEnded(G);
   const away = G.venue === 'away';
   $('#board').innerHTML = (away ? theirSide(G, 'home') : ourSide(G, 'home')) + middle(G, r, ended) + (away ? ourSide(G, 'away') : theirSide(G, 'away'));
+  // Título de la pantalla y de la pestaña con el tanteador.
+  const score = G.team + ' ' + ourScore(G) + ' – ' + opponentScore(G) + ' ' + G.opponent;
+  const h1 = $('#game-title');
+  if (h1) h1.textContent = 'Partido: ' + score;
+  document.title = 'Partido · ' + score + ' · Sexto Hombre';
 }
 
 /** Actualiza solo los números del reloj (cada tick). */
