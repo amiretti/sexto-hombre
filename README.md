@@ -17,6 +17,7 @@ _La planilla del cuerpo técnico._
 - **Asistencia al toque:** después de cada doble o triple convertido pregunta si hubo asistencia y muestra a los compañeros en cancha.
 - **Falta recibida en tiro:** pregunta si fue en tiro, sugiere 2 o 3 libres según la ubicación y abre directo la carga de libres. El 2+1 / 3+1 registra también el canasto.
 - **Reloj de juego** con cuartos configurables (6, 8, 10 o 12 minutos), suplementarios de 5 minutos, ajuste manual y pase de período.
+- **Chicharra** al terminar cada período, como en el estadio (sintetizada, funciona sin señal; se silencia desde el menú del partido).
 - **Reloj que no se olvida:** si se carga una acción con la pelota viva (tiro, rebote, asistencia, robo, tapón) y el reloj estaba detenido, lo pone a correr y ofrece sincronizarlo con el tablero; las jugadas cargadas mientras estaba detenido se corrigen solas. Faltas, libres, violaciones y tiempos muertos no lo arrancan.
 - **Todas las acciones de la planilla:** dobles, triples, libres, rebotes, asistencias, robos, tapones, pérdidas (con tipo), faltas personales (con situación de tiro), técnicas, antideportivas y descalificantes, también para el DT y la banca.
 - **Reglas FIBA de exclusión:** 5 faltas, 2 técnicas, 2 antideportivas, técnica más antideportiva o descalificante. Si el jugador está en cancha, el reloj se detiene y se pide el **cambio obligatorio**. También avisa la 4ª falta de equipo (penalización).
