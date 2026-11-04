@@ -4,7 +4,7 @@ import { esc } from '../../../shared/html.js';
 import { EVENT_LABELS, TURNOVER_KINDS } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds } from '../../../domain/clock.js';
 import { isThreePointer, zoneName, attackingSide, courtHalf } from '../../../domain/court.js';
-import { playerStats, playerFoulTypes, staffFouls, eventPoints } from '../../../domain/stats.js';
+import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
@@ -54,7 +54,8 @@ function actionButton(type, label) {
 
 function recentRow(G, e) {
   const d = eventDetail(G, e), pts = eventPoints(e);
-  return '<li><span class="t">' + periodShort(e.period) + ' ' + formatSeconds(e.t) + '</span><span class="who">' + esc(whoLabel(G, e.who)) + '</span><span class="what">' + esc(EVENT_LABELS[e.type]) + (d ? ' · ' + esc(d) : '') + '</span>' +
+  const sub = e.type === 'SUB';
+  return '<li><span class="t">' + periodShort(e.period) + ' ' + formatSeconds(e.t) + '</span><span class="who">' + esc(sub ? 'Cambio' : whoLabel(G, e.who)) + '</span><span class="what">' + esc(sub ? d : EVENT_LABELS[e.type] + (d ? ' · ' + d : '')) + '</span>' +
     (pts ? '<span class="pts">+' + pts + '</span>' : '<span></span>') + '</li>';
 }
 
@@ -181,7 +182,23 @@ function assistStep(G) {
     '<p class="lead" style="font-size:.82rem">Tocá la cancha para seguir con la próxima jugada.</p>';
 }
 
+/** Se eligió un jugador de la banca: ¿faltó cargar el cambio? */
+function benchStep(G) {
+  const inId = ui.benchPick, p = findPlayer(G, inId);
+  const card = (id) => {
+    const q = findPlayer(G, id);
+    return '<button class="pcard" data-a="bench-sub" data-id="' + esc(id) + '"><span class="pnum">' + esc(q.num) + '</span><span class="pname">' + esc(shortName(q.name) || 'Jugador') + '</span>' + foulDots(G, id) + '</button>';
+  };
+  const room = G.onCourt.length < requiredOnCourt(G);
+  return stepsBar(2) + titleBar(whenText(), 'bench-back', '‹ Jugador') +
+    '<p class="lead"><strong>#' + esc(p.num) + ' ' + esc(p.name || '') + '</strong> está en la banca. ¿Nos olvidamos de registrar el cambio?</p>' +
+    '<h3>Sí, entró por</h3><div class="pgrid">' + G.onCourt.map(card).join('') + '</div>' +
+    (room ? '<div class="row"><button class="btn" data-a="bench-sub">Entró sin que salga nadie</button></div>' : '') +
+    '<div class="row"><button class="btn ghost" data-a="bench-back">No, elegir otro jugador</button></div>';
+}
+
 const STEPS = {
+  bench: benchStep,
   assist: assistStep,
   loc: locationStep,
   player: playerStep,

@@ -140,6 +140,28 @@ export function applyForcedSubstitution(game, outId, inId) {
   return { inn: inId ? [inId] : [], out: [outId] };
 }
 
+/**
+ * Cambio que no se cargó a tiempo: entra `inId` por `outId` (o sin que salga nadie si hay lugar).
+ * Devuelve {inn, out} o null si no corresponde. Muta `game.onCourt`.
+ */
+export function applyLateSubstitution(game, inId, outId) {
+  if (game.onCourt.includes(inId) || !findPlayer(game, inId) || playerStats(game, inId).out) return null;
+  if (outId) {
+    const ix = game.onCourt.indexOf(outId);
+    if (ix < 0) return null;
+    game.onCourt[ix] = inId;
+    return { inn: [inId], out: [outId] };
+  }
+  if (game.onCourt.length >= requiredOnCourt(game)) return null;
+  game.onCourt.push(inId);
+  return { inn: [inId], out: [] };
+}
+
+/** Evento de cambio fechado en un momento ya capturado (período y tiempo de la jugada). */
+export function substitutionEventAt(moment, { inn, out }) {
+  return { period: moment.period, t: moment.t, x: null, y: null, who: null, type: 'SUB', inn, out };
+}
+
 export function substitutionEvent(game, { inn, out }, now = Date.now()) {
   return { period: game.period, t: clockStamp(game.clock, now), x: null, y: null, who: null, type: 'SUB', inn, out };
 }

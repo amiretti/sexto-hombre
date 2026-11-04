@@ -7,7 +7,7 @@ import { ourScore, opponentScore, requiredOnCourt } from '../../domain/stats.js'
 import { whoLabel } from '../../domain/describe.js';
 import {
   captureMoment, lastLoggedEvent, adjustOpponentScore, applySubstitution, applyForcedSubstitution, substitutionEvent,
-  advancePeriod, setClockManually, finishGame, tickClock, newEditDraft, normalizeEditDraft, applyEditDraft
+  applyLateSubstitution, substitutionEventAt, advancePeriod, setClockManually, finishGame, tickClock, newEditDraft, normalizeEditDraft, applyEditDraft
 } from '../../domain/game.js';
 import { buildGameReport } from '../../application/game-report.js';
 import { historyCsv, boxScoreCsv } from '../../application/csv-export.js';
@@ -31,6 +31,7 @@ function resetPlayFlow() {
   ui.pending = null;
   ui.player = null;
   ui.assistFor = null;
+  ui.benchPick = null;
 }
 
 const isFieldGoalMade = (type) => type === '2M' || type === '3M';
@@ -199,6 +200,20 @@ function saveSubstitution() {
   if (change.inn.length) toast('Cambio registrado: entra ' + change.inn.map((x) => whoLabel(G, x)).join(', '));
 }
 
+/** Cambio olvidado: entra el jugador de la banca y se sigue con la jugada. */
+function lateSubstitution(inId, outId) {
+  const G = currentGame();
+  const change = applyLateSubstitution(G, inId, outId);
+  if (!change) { toast('No se pudo registrar el cambio.', true); return; }
+  session().addEvent(substitutionEventAt(ui.pending, change));
+  ui.benchPick = null;
+  ui.player = inId;
+  ui.step = 'action';
+  persistView();
+  renderGame();
+  toast(outId ? 'Cambio registrado: entra ' + whoLabel(G, inId) + ' por ' + whoLabel(G, outId) : 'Entra ' + whoLabel(G, inId));
+}
+
 /* ---------- edición de jugadas ---------- */
 
 /** Lee el formulario de edición al borrador. */
@@ -277,7 +292,12 @@ const handlers = {
     if (pendingAssist) { ui.assistFor = pendingAssist; ui.step = 'assist'; }
     renderPanel(); renderDots();
   },
-  'pick': ({ id }) => { ui.player = id; goToStep('action'); },
+  'pick': ({ id }) => {
+    if (!currentGame().onCourt.includes(id)) { ui.benchPick = id; goToStep('bench'); return; }
+    ui.player = id; goToStep('action');
+  },
+  'bench-back': () => { ui.benchPick = null; goToStep('player'); },
+  'bench-sub': ({ id }) => lateSubstitution(ui.benchPick, id || null),
   'back': () => { ui.player = null; goToStep('player'); },
   'back-action': () => goToStep('action'),
   'act': ({ data }) => record({ type: data.t, sub: data.s }),
