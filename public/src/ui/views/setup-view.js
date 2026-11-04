@@ -1,19 +1,20 @@
 // Previa del partido: elección de plantel, datos del partido, convocados y quinteto.
 
 import { esc, plural } from '../../shared/html.js';
-import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, colorsTooClose } from '../../shared/colors.js';
-import { activePlayers, teamVenues } from '../../domain/team.js';
-import { calledPlayers } from '../../domain/game-setup.js';
+import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, colorsTooClose, safeColor } from '../../shared/colors.js';
+import { activePlayers } from '../../domain/team.js';
+import { venuesOf, teamLabel } from '../../domain/club.js';
+import { calledPlayers, kitOf } from '../../domain/game-setup.js';
 import { state, ui } from '../state.js';
 import { TOAST_HTML } from '../toast.js';
-import { teamById } from '../selectors.js';
+import { teamById, resolvedTeams } from '../selectors.js';
 import { textField, colorField, competitionField, periodLengthField } from '../components/fields.js';
 import { teamCardHTML } from '../components/team-card.js';
 
 const HEADER = '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="go-home">‹ Mis partidos</button></p><h1>Nuevo partido</h1></div></header>';
 
 function teamPickerHTML() {
-  const teams = state.teams || [];
+  const teams = resolvedTeams();
   return '<div class="setup">' + HEADER + '<section class="card"><h2>¿Con qué plantel jugás?</h2><div class="tpick">' +
     teams.map((t) => teamCardHTML(t, 'pick-team')).join('') + '</div></section>' + TOAST_HTML + '</div>';
 }
@@ -31,9 +32,9 @@ function venueFieldHTML(venue) {
 /** De local: en qué estadio se juega (elegible si el plantel tiene más de uno). */
 function stadiumFieldHTML(s, t) {
   if (s.venue === 'away') return '';
-  const venues = teamVenues(t);
+  const venues = venuesOf(t);
   if (!venues.length) {
-    return '<div class="field full"><span class="flabel">Estadio</span><p class="lead hint">Cargá tus estadios en el plantel para que quede registrado dónde se jugó. <button class="linkback small" data-a="edit-team">Editar plantel</button></p></div>';
+    return '<div class="field full"><span class="flabel">Estadio</span><p class="lead hint">Cargá los estadios del club para que quede registrado dónde se jugó. <button class="linkback small" data-a="edit-club" data-id="' + esc(t.clubId || '') + '">Editar club</button></p></div>';
   }
   if (venues.length === 1) {
     const v = venues[0];
@@ -47,6 +48,24 @@ function stadiumFieldHTML(s, t) {
     }).join('') + '</div></div>';
 }
 
+/** Camiseta titular o alternativa del club (si tiene alternativa). */
+function kitFieldHTML(s, t) {
+  if (!t.altColor) return '';
+  const kit = kitOf(s, t);
+  const swatch = (c) => '<span class="kitsw" style="background:' + esc(safeColor(c, DEFAULT_TEAM_COLOR)) + '"></span>';
+  return '<div class="field"><span class="flabel" id="kit-l">Camiseta</span><div class="vpick kitpick" role="radiogroup" aria-labelledby="kit-l">' +
+    '<button role="radio" data-a="kit" data-v="main" aria-checked="' + (kit === 'main') + '" tabindex="' + (kit === 'alt' ? -1 : 0) + '">' + swatch(t.color) + '<b>Titular</b></button>' +
+    '<button role="radio" data-a="kit" data-v="alt" aria-checked="' + (kit === 'alt') + '" tabindex="' + (kit === 'alt' ? 0 : -1) + '">' + swatch(t.altColor) + '<b>Alternativa</b></button></div></div>';
+}
+
+/** Aviso de colores parecidos; si la alternativa del club se distingue del rival, la ofrece. */
+function clashChipHTML(s, t) {
+  const opp = s.oppColor || DEFAULT_OPPONENT_COLOR;
+  if (!colorsTooClose(s.teamColor || DEFAULT_TEAM_COLOR, opp)) return '';
+  const alt = t.altColor && kitOf(s, t) !== 'alt' && !colorsTooClose(t.altColor, opp);
+  return '<span class="chip warn">Los colores de los equipos son muy parecidos' + (alt ? ' <button class="linkback small" data-a="kit" data-v="alt">Usar la alternativa</button>' : '') + '</span>';
+}
+
 function attackFieldHTML(attack) {
   return '<div class="field"><span class="flabel" id="attack-l">En el 1er tiempo atacamos hacia</span><div class="seg" role="radiogroup" aria-labelledby="attack-l">' +
     radio('attack', 'left', attack === 'left', '← Izquierda') + radio('attack', 'right', attack === 'right', 'Derecha →') + '</div></div>';
@@ -55,9 +74,8 @@ function attackFieldHTML(attack) {
 function matchCardHTML(s, t) {
   const teams = state.teams || [];
   const venue = s.venue === 'away' ? 'away' : 'home';
-  const clash = colorsTooClose(s.teamColor || DEFAULT_TEAM_COLOR, s.oppColor || DEFAULT_OPPONENT_COLOR);
-  return '<section class="card"><div class="roster-head"><h2>Partido</h2>' + (clash ? '<span class="chip warn">Los colores de los equipos son muy parecidos</span>' : '') + '</div><div class="setup-grid">' +
-    colorField('f-team', 'Mi equipo', null, t.name, 'teamColor', s.teamColor || DEFAULT_TEAM_COLOR, 'de mi equipo', teams.length > 1 ? '<button class="linkback small" data-a="change-team">Cambiar plantel</button>' : '') +
+  return '<section class="card"><div class="roster-head"><h2>Partido</h2>' + clashChipHTML(s, t) + '</div><div class="setup-grid">' +
+    colorField('f-team', 'Mi equipo', null, teamLabel(t), 'teamColor', s.teamColor || DEFAULT_TEAM_COLOR, 'de mi equipo', teams.length > 1 ? '<button class="linkback small" data-a="change-team">Cambiar plantel</button>' : '') + kitFieldHTML(s, t) +
     colorField('f-opp', 'Rival', 'opponent', s.opponent, 'oppColor', s.oppColor || DEFAULT_OPPONENT_COLOR, 'del rival') +
     venueFieldHTML(venue) + stadiumFieldHTML(s, t) + attackFieldHTML(s.attack === 'left' ? 'left' : 'right') +
     textField('f-coach', 'Entrenador (DT)', 'coach', s.coach) + competitionField(s.competition) +

@@ -19,7 +19,7 @@ function deleteGame(id) {
 
 export const homeActions = {
   'new-setup': () => newSetup(),
-  'new-team': () => editTeam(null, 'home'),
+  'new-team': ({ id }) => editTeam(null, 'home', id || null),
   // También se usa desde la previa: ahí edita el plantel elegido y vuelve a la previa.
   'edit-team': ({ id }) => {
     if (state.view === 'setup') { persistView(); editTeam(state.setup.teamId, 'setup'); }

@@ -1,7 +1,7 @@
 // Controlador de la previa del partido.
 
 import {
-  blankSetup, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, createGame, SETUP_VERSION
+  blankSetup, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, createGame, chooseKit, SETUP_VERSION
 } from '../../domain/game-setup.js';
 import { loadSetupDraft, clearSetupDraft } from '../../infrastructure/platform/setup-draft-storage.js';
 import { app, state, ui } from '../state.js';
@@ -26,12 +26,13 @@ function restoredDraft() {
  * @param {string} [teamId] plantel preelegido
  */
 export function newSetup(teamId) {
-  if (state.teams === null) return;
+  if (state.teams === null || state.clubs === null) return;
   if (!state.teams.length) { editTeam(null, 'setup'); return; }
   const draft = restoredDraft();
   state.setup = draft && (!teamId || draft.teamId === teamId || !draft.teamId) ? draft : blankSetup();
   const s = state.setup;
   const tid = teamId || s.teamId || (state.teams.length === 1 ? state.teams[0].id : null);
+  // (el plantel se usa siempre resuelto con su club: teamById)
   if (tid && tid !== s.teamId) applyTeamToSetup(s, teamById(tid));
   else reconcileSelection(s, teamById(s.teamId));
   state.view = 'setup';
@@ -75,6 +76,7 @@ export const setupActions = {
   'change-team': update((s) => { s.teamId = null; }),
   'venue': update((s, { data }) => { s.venue = data.v; }),
   'stadium': update((s, { data }) => { s.venueId = data.v; }),
+  'kit': update((s, { data }) => chooseKit(s, teamById(s.teamId), data.v)),
   'attack': update((s, { data }) => { s.attack = data.v === 'left' ? 'left' : 'right'; }),
   'call': update((s, { id }) => toggleCalled(s, id)),
   'starter': ({ id }) => {

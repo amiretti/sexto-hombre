@@ -22,6 +22,11 @@ export function sortGames(list) {
   return list.filter((g) => !g.deleted).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 }
 
+/** Clubes visibles, por nombre. */
+export function sortClubs(list) {
+  return list.filter((c) => !c.deleted).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es'));
+}
+
 /** Planteles visibles, por nombre. */
 export function sortTeams(list) {
   return list.filter((t) => !t.deleted).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es'));

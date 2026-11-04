@@ -13,12 +13,14 @@ export const app = {
 
 /** Estado de la app (qué pantalla, quién, qué datos). */
 export const state = {
-  view: 'boot', // boot | login | denied | home | setup | team | loading | locked | game
+  view: 'boot', // boot | login | denied | home | setup | club | team | loading | locked | game
   user: null,
   profile: null,
   games: null,  // null = cargando
   gamesErr: '',
-  teams: null,  // null = cargando
+  clubs: null,  // null = cargando
+  teams: null,  // null = cargando (documentos tal cual; para usarlos con su club ver selectors)
+  clubEdit: null,
   teamEdit: null,
   setup: null,
   lockInfo: null, // partido abierto en otro dispositivo: {gameId, holder, team, opponent}
@@ -46,7 +48,7 @@ export function resetUi() {
     // formularios
     setupErr: '',
     colorOpen: null,
-    after: 'home'     // a dónde volver al cerrar el plantel
+    after: 'home'     // a dónde volver al cerrar el club o el plantel
   });
 }
 resetUi();
@@ -62,6 +64,7 @@ export function isDemo() {
 
 /** Formulario activo (plantel o previa), para los inputs con data-f. */
 export function activeForm() {
+  if (state.view === 'club') return state.clubEdit;
   if (state.view === 'team') return state.teamEdit;
   if (state.view === 'setup') return state.setup;
   return null;

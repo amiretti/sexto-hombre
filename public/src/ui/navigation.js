@@ -7,9 +7,13 @@ import { isSunMode, setSunMode } from '../infrastructure/platform/theme.js';
 import { hydrateGame } from '../domain/game.js';
 import { saveSetupDraft } from '../infrastructure/platform/setup-draft-storage.js';
 import { keepScreenOn } from '../infrastructure/platform/device.js';
+import { migrateLegacyTeams } from '../application/club-migration.js';
+import { reportSaveError } from './toast.js';
 
 let unwatch = null;
 let authSeq = 0;
+/** Planteles ya asignados a un club en esta sesión (migración de datos viejos). */
+const migrated = new Set();
 
 /** Guarda lo que haya que guardar de la pantalla actual (borrador de previa o partido). */
 export function persistView() {
@@ -28,14 +32,31 @@ function watchUserData() {
   const offTeams = app.store.watchTeams(uid, (list, err) => {
     if (err) { state.teams = state.teams || []; state.gamesErr = 'No se pudieron leer los planteles (' + (err.code || err.message) + ').'; }
     else state.teams = list;
-    if (state.view === 'home') render();
+    onClubsOrTeams();
   });
-  unwatch = () => { offGames(); offTeams(); };
+  const offClubs = app.store.watchClubs(uid, (list, err) => {
+    if (err) { state.clubs = state.clubs || []; state.gamesErr = 'No se pudieron leer los clubes (' + (err.code || err.message) + ').'; }
+    else state.clubs = list;
+    onClubsOrTeams();
+  });
+  unwatch = () => { offGames(); offTeams(); offClubs(); };
+}
+
+/** Con planteles y clubes leídos, los planteles viejos (sin club) pasan a su club. */
+function onClubsOrTeams() {
+  if (state.teams && state.clubs) {
+    const plan = migrateLegacyTeams(app.store, state.teams, state.clubs, migrated, reportSaveError);
+    // Se reflejan sin esperar al store (si ya avisó, no se duplican).
+    plan.clubs.forEach((c) => { if (!state.clubs.some((x) => x.id === c.id)) state.clubs = state.clubs.concat({ id: c.id, ...c.doc }); });
+    plan.teams.forEach((p) => { state.teams = state.teams.map((t) => (t.id === p.id ? { ...t, ...p.patch } : t)); });
+  }
+  if (state.view === 'home') render();
 }
 
 export function stopWatching() {
   if (unwatch) { unwatch(); unwatch = null; }
   state.teams = null;
+  state.clubs = null;
 }
 
 export function goHome() {

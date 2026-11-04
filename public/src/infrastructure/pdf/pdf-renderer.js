@@ -25,7 +25,7 @@ function swatch(doc, x, y, size, hex) {
 
 /** Local a la izquierda, visitante a la derecha. */
 function sides(r) {
-  const us = { name: r.team, color: r.teamColor, score: r.us, key: 'us' };
+  const us = { name: r.teamLabel || r.team, color: r.teamColor, score: r.us, key: 'us' };
   const them = { name: r.opponent, color: r.oppColor, score: r.them, key: 'them' };
   return r.away ? [them, us] : [us, them];
 }

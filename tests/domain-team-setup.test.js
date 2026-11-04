@@ -1,15 +1,18 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions, editableTeamDraft, teamVenues, toggleDefaultVenue } from '../public/src/domain/team.js';
+import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions, editableTeamDraft } from '../public/src/domain/team.js';
 import {
-  createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup, selectedVenue
+  createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup, selectedVenue, kitOf, chooseKit
 } from '../public/src/domain/game-setup.js';
 
-const draft = (players, extra = {}) => ({ id: 't1', name: 'Unión', color: '#111111', coach: ' DT ', competition: '', periodMin: '12', players, ...extra });
+const draft = (players, extra = {}) => ({ id: 't1', clubId: 'c1', category: ' Primera ', coach: ' DT ', competition: '', periodMin: '12', players, ...extra });
 const p = (id, num, name = 'X', active = true) => ({ id, num, name, active });
 
 test('buildTeamDocument validation', () => {
-  assert.equal(buildTeamDocument(draft([p('a', '1')], { name: ' ' })).error, 'Falta el nombre del equipo.');
+  assert.equal(buildTeamDocument(draft([p('a', '1')], { clubId: null })).error, 'Elegí el club del plantel.');
+  assert.equal(buildTeamDocument(draft([p('a', '1')], { category: ' ' })).error, 'Falta la categoría (Primera, U17, Femenino…).');
+  assert.equal(buildTeamDocument(draft([p('a', '1')]), [{ id: 'otro', clubId: 'c1', category: 'primera' }]).error, 'Ese club ya tiene un plantel «Primera».');
+  assert.equal(buildTeamDocument(draft([p('a', '1')]), [{ id: 'otro', clubId: 'c2', category: 'Primera' }, { id: 't1', clubId: 'c1', category: 'Primera' }]).error, undefined);
   assert.equal(buildTeamDocument(draft([{ id: 'a', num: '', name: '' }])).error, 'Cargá al menos un jugador.');
   assert.equal(buildTeamDocument(draft([p('a', 'x')])).error, 'Cada jugador necesita un número (0 a 99).');
   assert.equal(buildTeamDocument(draft([p('a', '7'), p('b', '7')])).error, 'El número 7 está repetido entre los jugadores activos.');
@@ -17,37 +20,23 @@ test('buildTeamDocument validation', () => {
 });
 
 test('buildTeamDocument output', () => {
-  const { doc } = buildTeamDocument(draft([p('a', ' 7 ', ' Ana '), { id: 'b', num: '', name: '' }], { isNew: true }), 99);
+  const { doc } = buildTeamDocument(draft([p('a', ' 7 ', ' Ana '), { id: 'b', num: '', name: '' }], { isNew: true }), [], 99);
   assert.deepEqual(doc, {
-    name: 'Unión', color: '#111111', coach: 'DT', competition: '', periodMin: '12', createdAt: 99,
-    players: [{ id: 'a', num: '7', name: 'Ana', active: true }], venues: [], defaultVenueId: null
+    clubId: 'c1', category: 'Primera', coach: 'DT', competition: '', periodMin: '12', createdAt: 99,
+    players: [{ id: 'a', num: '7', name: 'Ana', active: true }]
   });
-});
-
-test('buildTeamDocument venues', () => {
-  const base = [p('a', '7')];
-  const v = (id, name, location) => ({ id, name, location });
-  assert.equal(buildTeamDocument(draft(base, { venues: [v('v1', 'Estadio', ' ')] })).error, 'Cada estadio necesita nombre y ubicación.');
-  assert.equal(buildTeamDocument(draft(base, { venues: [v('v1', ' ', 'Calle 1')] })).error, 'Cada estadio necesita nombre y ubicación.');
-  assert.equal(buildTeamDocument(draft(base, { venues: [v('v1', 'Estadio', 'A'), v('v2', 'estadio ', 'B')] })).error, 'Hay dos estadios llamados «estadio».');
-  const { doc } = buildTeamDocument(draft(base, { venues: [v('v1', ' Principal ', ' Calle 1 '), v('v2', '', '')] }));
-  assert.deepEqual(doc.venues, [{ id: 'v1', name: 'Principal', location: 'Calle 1' }]);
-});
-
-test('editableTeamDraft always offers a venue row and does not touch the saved team', () => {
-  const saved = { id: 't', name: 'X', players: [] };
-  const d = editableTeamDraft(saved);
-  assert.equal(d.venues.length, 1);
-  assert.equal(saved.venues, undefined);
-  assert.deepEqual(teamVenues({ venues: [{ id: 'a', name: 'A' }, { id: 'b', name: ' ' }] }).map((x) => x.id), ['a']);
 });
 
 test('team helpers', () => {
   assert.equal(activePlayers({ players: [p('a', '1'), p('b', '2', 'X', false)] }).length, 1);
   assert.equal(activePlayers(null).length, 0);
-  assert.equal(seedTeamDraft(null, true).seeded, 'example');
+  assert.equal(seedTeamDraft(null, true, 'c1').seeded, 'example');
+  assert.equal(seedTeamDraft(null, true, 'c1').clubId, 'c1');
   assert.equal(seedTeamDraft(null, false).seeded, undefined);
-  assert.equal(seedTeamDraft({ lastSetup: { team: 'Viejo', players: [{ num: '3', name: 'Z' }] } }, true).name, 'Viejo');
+  assert.equal(seedTeamDraft({ lastSetup: { team: 'Viejo', players: [{ num: '3', name: 'Z' }] } }, true).category, 'Primera');
+  const saved = { id: 't', players: [] };
+  editableTeamDraft(saved).players.push(1);
+  assert.equal(saved.players.length, 0);
   assert.deepEqual(knownCompetitions([{ competition: 'B' }], [{ competition: 'A' }, { competition: 'B' }, {}]), ['A', 'B']);
 });
 
@@ -131,21 +120,39 @@ test('createGame: stadium when playing at home', () => {
   assert.equal(s3.venueId, 'v1');
 });
 
-test('default venue: kept only if it exists, proposed at home, can be changed', () => {
-  const d = draft([p('a', '7')], { venues: [{ id: 'v1', name: 'Principal', location: 'A' }, { id: 'v2', name: 'Auxiliar', location: 'B' }] });
-  toggleDefaultVenue(d, 'v2');
-  assert.equal(buildTeamDocument(d).doc.defaultVenueId, 'v2');
-  toggleDefaultVenue(d, 'v2');
-  assert.equal(d.defaultVenueId, null);
-  d.defaultVenueId = 'gone';
-  assert.equal(buildTeamDocument(d).doc.defaultVenueId, null);
-
-  const t = { ...team, venues: d.venues, defaultVenueId: 'v2' };
+test('default venue of the club is proposed at home and can be changed', () => {
+  const venues = [{ id: 'v1', name: 'Principal', location: 'A' }, { id: 'v2', name: 'Auxiliar', location: 'B' }];
+  const t = { ...team, venues, defaultVenueId: 'v2' };
   const s = blankSetup();
   applyTeamToSetup(s, t);
   assert.equal(s.venueId, 'v2');
   s.venueId = 'v1';               // se cambia para este partido
   reconcileSelection(s, t);
   assert.equal(s.venueId, 'v1');  // y no se pisa con el por defecto
-  assert.equal(seedTeamDraft(null, true).defaultVenueId, 'v-principal');
+});
+
+test('kit: titular or alternativa of the club', () => {
+  const t = { ...team, color: '#111111', altColor: '#ffffff' };
+  const s = blankSetup();
+  applyTeamToSetup(s, t);
+  assert.equal(kitOf(s, t), 'main');
+  chooseKit(s, t, 'alt');
+  assert.equal(s.teamColor, '#ffffff');
+  assert.equal(kitOf(s, t), 'alt');
+  s.teamColor = '#16834a';
+  assert.equal(kitOf(s, t), null);
+  chooseKit(s, { ...t, altColor: '' }, 'alt');
+  assert.equal(s.teamColor, '#16834a'); // sin alternativa no cambia
+});
+
+test('createGame keeps club and category', () => {
+  const t = { ...team, clubId: 'c1', category: 'U17' };
+  const s = blankSetup();
+  applyTeamToSetup(s, t);
+  s.opponent = 'Norte';
+  ['c', 'd', 'e'].forEach((id) => { s.sel[id].starter = true; });
+  const { game } = createGame(s, t);
+  assert.equal(game.team, 'Unión');
+  assert.equal(game.category, 'U17');
+  assert.equal(game.clubId, 'c1');
 });

@@ -1,7 +1,7 @@
 // Adaptador demo: sin login, datos en localStorage de este dispositivo.
 
 import { createPendingTracker } from './pending-tracker.js';
-import { clean, sortGames, sortTeams, sortEvents } from './serialization.js';
+import { clean, sortGames, sortTeams, sortClubs, sortEvents } from './serialization.js';
 
 const KEY = 'pb-demo-db-v1';
 const DEMO_USER = { uid: 'demo', email: 'demo@local', name: 'Modo demo', photo: '' };
@@ -15,6 +15,7 @@ export function createDemoStore(storage = globalThis.localStorage) {
     try { db = JSON.parse(storage.getItem(KEY) || 'null'); } catch (e) { /* datos corruptos: arrancamos vacío */ }
     db = db || { games: {}, events: {}, users: {} };
     db.teams = db.teams || {};
+    db.clubs = db.clubs || {};
     return db;
   };
   const write = (db) => {
@@ -38,6 +39,8 @@ export function createDemoStore(storage = globalThis.localStorage) {
     watchGames(uid, cb) { return watch(() => cb(sortGames(ownedList(read().games, uid)), false)); },
     watchTeams(uid, cb) { return watch(() => cb(sortTeams(ownedList(read().teams, uid)))); },
     saveTeam(id, data) { const db = read(); upsert(db.teams, id, data); return commit(db); },
+    watchClubs(uid, cb) { return watch(() => cb(sortClubs(ownedList(read().clubs, uid)))); },
+    saveClub(id, data) { const db = read(); upsert(db.clubs, id, data); return commit(db); },
     async loadGame(id) {
       const db = read(), g = db.games[id];
       if (!g) throw new Error('No se encontró el partido.');

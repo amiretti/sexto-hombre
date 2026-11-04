@@ -1,7 +1,7 @@
 // Adaptador Firebase (Auth + Firestore). El SDK se carga desde el CDN.
 
 import { createPendingTracker } from './pending-tracker.js';
-import { clean, userInfo, sortGames, sortTeams, sortEvents } from './serialization.js';
+import { clean, userInfo, sortGames, sortTeams, sortClubs, sortEvents } from './serialization.js';
 import { clearLocalAppData } from '../platform/local-data.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
@@ -98,6 +98,12 @@ export async function createFirebaseStore(config) {
     },
     saveTeam(id, data) {
       return pending.track(F.setDoc(F.doc(db, 'teams', id), owned(data), { merge: true }));
+    },
+    watchClubs(uid, cb) {
+      return watchOwned('clubs', uid, (list) => cb(sortClubs(list)), (err) => cb(null, err));
+    },
+    saveClub(id, data) {
+      return pending.track(F.setDoc(F.doc(db, 'clubs', id), owned(data), { merge: true }));
     },
     async loadGame(id) {
       const gs = await once(F.doc(db, 'games', id));

@@ -508,3 +508,20 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
   .vrow+.vrow{border-top:1px solid var(--rule);padding-top:8px}
   .vrow.headrow+.vrow{border-top:0;padding-top:0}
 }
+
+/* ---- clubes ---- */
+.club{display:grid;gap:10px;padding:14px 0;border-top:1px solid var(--rule)}
+.club:first-of-type{border-top:0;padding-top:4px}
+.club-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.club-head h3{margin:0;font-family:var(--f-display);font-size:1.3rem;color:var(--ink);text-transform:none;letter-spacing:0}
+.club-head .lead{margin:0;font-size:.85rem}
+.club-head .btn{margin-left:auto}
+.kit{display:inline-flex;border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+.kit span{width:14px;height:22px}
+.tcard.add{justify-content:center;border-style:dashed;color:var(--accent);font-weight:600}
+.kitpick{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.kitpick button{display:flex;align-items:center;gap:5px;min-height:44px;min-width:0;padding:4px 6px}
+.kitpick b{font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vpick.kitpick button[aria-checked="true"] b::before{content:none}
+.kitsw{flex:none;width:14px;height:14px;border-radius:4px;border:1px solid rgba(0,0,0,.3)}
+.vstatic .tsw{width:16px;height:16px;border-radius:4px;display:inline-block}

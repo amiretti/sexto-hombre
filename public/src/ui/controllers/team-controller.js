@@ -1,30 +1,34 @@
 // Controlador del editor de plantel.
 
-import { blankTeamDraft, seedTeamDraft, newDraftPlayer, newDraftVenue, editableTeamDraft, toggleDefaultVenue, buildTeamDocument } from '../../domain/team.js';
+import { blankTeamDraft, seedTeamDraft, newDraftPlayer, editableTeamDraft, buildTeamDocument } from '../../domain/team.js';
 import { app, state, ui, isDemo } from '../state.js';
 import { render } from '../render.js';
 import { focusId } from '../dom.js';
 import { reportSaveError } from '../toast.js';
-import { teamById, hasTeams } from '../selectors.js';
+import { rawTeamById, hasTeams, hasClubs } from '../selectors.js';
 import { goHome } from '../navigation.js';
 import { newSetup } from './setup-controller.js';
+import { editClub } from './club-controller.js';
 
 /**
- * Abre el editor de plantel.
+ * Abre el editor de plantel. Sin clubes, primero se carga el club.
  * @param {string|null} id    plantel a editar (null = nuevo)
  * @param {'home'|'setup'} [after] a dónde volver al cerrar
+ * @param {string|null} [clubId] club del plantel nuevo (por defecto, el primero)
  */
-export function editTeam(id, after) {
-  const team = id ? teamById(id) : null;
-  state.teamEdit = team ? editableTeamDraft(team) : (hasTeams() ? blankTeamDraft() : seedTeamDraft(state.profile, isDemo()));
+export function editTeam(id, after, clubId = null) {
+  const team = id ? rawTeamById(id) : null;
+  if (!team && !hasClubs()) { editClub(null, after); return; }
+  const club = clubId || (state.clubs[0] && state.clubs[0].id);
+  state.teamEdit = team ? editableTeamDraft(team) : (hasTeams() ? blankTeamDraft(club) : seedTeamDraft(state.profile, isDemo(), club));
   ui.after = after || 'home';
   ui.setupErr = '';
   ui.colorOpen = null;
   ui.confirm = null;
   state.view = 'team';
   render();
-  const name = document.getElementById('f-tname');
-  if (name && !name.value) name.focus();
+  const cat = document.getElementById('f-cat');
+  if (cat && !cat.value) cat.focus();
 }
 
 /** Vuelve a la pantalla de origen del editor. */
@@ -34,28 +38,19 @@ function leaveEditor(after, teamId) {
   else goHome();
 }
 
-/** Primer campo vacío de un estadio a medio cargar. */
-function firstIncompleteVenue(draft) {
-  for (const v of draft.venues || []) {
-    const name = String(v.name || '').trim(), loc = String(v.location || '').trim();
-    if ((name || loc) && !(name && loc)) return document.getElementById((name ? 'vl-' : 'vn-') + v.id);
-  }
-  return (draft.venues || [])[0] ? document.getElementById('vn-' + draft.venues[0].id) : null;
-}
-
 function saveTeamEdit() {
   const draft = state.teamEdit;
-  const result = buildTeamDocument(draft);
+  const result = buildTeamDocument(draft, state.teams || []);
   if (result.error) {
     ui.setupErr = result.error; render();
-    const field = /nombre del equipo/i.test(result.error) ? document.getElementById('f-tname') : /estadio/i.test(result.error) ? firstIncompleteVenue(draft) : null;
+    const field = /categor|ya tiene un plantel/i.test(result.error) ? document.getElementById('f-cat') : null;
     if (field) { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'setup-err'); field.focus(); }
     else { const msg = document.getElementById('setup-err'); if (msg) { msg.tabIndex = -1; msg.focus(); } }
     return;
   }
   const { doc } = result;
   app.store.saveTeam(draft.id, doc).catch(reportSaveError);
-  const saved = Object.assign({}, teamById(draft.id) || {}, doc, { id: draft.id });
+  const saved = Object.assign({}, rawTeamById(draft.id) || {}, doc, { id: draft.id });
   state.teams = (state.teams || []).filter((x) => x.id !== draft.id).concat(saved);
   leaveEditor(ui.after, draft.id);
 }
@@ -83,11 +78,11 @@ export const teamActions = {
   }),
   'team-save': inEditor(saveTeamEdit),
   'team-clear': inEditor(() => {
-    const blank = blankTeamDraft();
+    const blank = blankTeamDraft(state.teamEdit.clubId);
     blank.id = state.teamEdit.id;
     state.teamEdit = blank;
     render();
-    focusId('f-tname');
+    focusId('f-cat');
   }),
   'team-del': inEditor(deleteTeam),
   'tp-active': inEditor(({ id }) => {
@@ -99,22 +94,6 @@ export const teamActions = {
   'tp-rm': inEditor(({ id }) => {
     state.teamEdit.players = state.teamEdit.players.filter((x) => x.id !== id);
     render();
-  }),
-  'tv-add': inEditor(() => {
-    const v = newDraftVenue();
-    state.teamEdit.venues = (state.teamEdit.venues || []).concat(v);
-    render();
-    focusId('vn-' + v.id);
-  }),
-  'tv-default': inEditor(({ id }) => {
-    toggleDefaultVenue(state.teamEdit, id);
-    render();
-    focusId('vd-' + id);
-  }),
-  'tv-rm': inEditor(({ id }) => {
-    state.teamEdit.venues = (state.teamEdit.venues || []).filter((x) => x.id !== id);
-    render();
-    focusId(state.teamEdit.venues.length ? 'vn-' + state.teamEdit.venues[state.teamEdit.venues.length - 1].id : 'tv-add');
   }),
   'tp-add': inEditor(() => {
     const p = newDraftPlayer();
