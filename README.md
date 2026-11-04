@@ -93,6 +93,8 @@ public/
     shared/  domain/  application/  infrastructure/  ui/
   brand/  fonts/  icons/  vendor/
 tests/                   pruebas unitarias de domain, application y el store demo
+scripts/                 genera firebase-config.js desde variables de entorno (deploy fuera de Firebase Hosting)
+netlify.toml             deploy en Netlify: cabeceras, rutas y proxy del login
 firestore.rules          reglas de seguridad
 firebase.json            Hosting + Firestore
 ```
@@ -135,6 +137,14 @@ Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas d
 7. **En la tablet:** abrí `https://TU-PROYECTO.web.app` en Chrome (Android) o Safari (iPad) y elegí «Agregar a la pantalla de inicio». Instalada, abre en pantalla completa y sin señal.
 
 > La configuración web de Firebase identifica al proyecto, no lo protege: la app publicada la expone igual en el navegador. La seguridad la dan `firestore.rules`, la lista blanca, los dominios autorizados de Authentication y las restricciones de la API key en Google Cloud Console (limitarla a tus dominios).
+
+### Hosting alternativo: Netlify
+
+`netlify.toml` publica `public/` y en cada deploy genera `firebase-config.js` con `scripts/write-firebase-config.mjs`, a partir de estas variables de entorno: `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `FIREBASE_PROJECT_ID`, `FIREBASE_STORAGE_BUCKET`, `FIREBASE_MESSAGING_SENDER_ID` y `FIREBASE_APP_ID`.
+
+- `FIREBASE_AUTH_DOMAIN` tiene que ser el dominio de Netlify. Las rutas `/__/auth/*` se reenvían a `TU-PROYECTO.firebaseapp.com`, así el login por redirección funciona en Safari y en la app instalada. En `netlify.toml`, reemplazá `sexto-hombre` por el ID de tu proyecto.
+- Agregá el dominio de Netlify en Authentication → Dominios autorizados y `https://TU-SITIO.netlify.app/__/auth/handler` en los URI de redireccionamiento del cliente OAuth.
+- Las reglas de Firestore se siguen publicando con `firebase deploy --only firestore:rules`.
 
 ### Datos en Firestore
 

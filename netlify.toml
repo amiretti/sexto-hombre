@@ -1,0 +1,59 @@
+# Deploy en Netlify. No hay build de la app: solo se genera firebase-config.js desde variables de entorno.
+
+[build]
+  publish = "public"
+  command = "node scripts/write-firebase-config.mjs"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # La configuración web de Firebase queda pública en la app por diseño: que el escaneo de secretos no frene el deploy.
+  SECRETS_SCAN_OMIT_KEYS = "FIREBASE_API_KEY,FIREBASE_AUTH_DOMAIN,FIREBASE_PROJECT_ID,FIREBASE_STORAGE_BUCKET,FIREBASE_MESSAGING_SENDER_ID,FIREBASE_APP_ID"
+  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
+
+# Login de Firebase: las rutas /__/auth/* las sirve Firebase Hosting. Se reenvían al proyecto para que
+# el login por redirección (app instalada, Safari) funcione con authDomain = el dominio de Netlify.
+# Reemplazá sexto-hombre por el ID de tu proyecto si es otro.
+[[redirects]]
+  from = "/__/auth/*"
+  to = "https://sexto-hombre.firebaseapp.com/__/auth/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/__/firebase/*"
+  to = "https://sexto-hombre.firebaseapp.com/__/firebase/:splat"
+  status = 200
+  force = true
+
+# SPA: cualquier otra ruta abre la app.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://www.gstatic.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com; img-src 'self' data: blob: https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'; frame-src 'self' https://*.firebaseapp.com https://accounts.google.com https://apis.google.com; worker-src 'self'; manifest-src 'self'; frame-ancestors 'self'; base-uri 'none'; object-src 'none'; form-action 'none'"
+
+# Archivos de la app sin caché larga: así toman las actualizaciones (el service worker maneja el modo sin señal).
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+[[headers]]
+  for = "/*.webmanifest"
+  [headers.values]
+    Cache-Control = "no-cache"
