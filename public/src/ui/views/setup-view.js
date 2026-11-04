@@ -43,7 +43,7 @@ function stadiumFieldHTML(s, t) {
   return '<div class="field full"><span class="flabel" id="stadium-l">¿En qué estadio se juega?</span><div class="vpick" role="radiogroup" aria-labelledby="stadium-l" aria-required="true">' +
     venues.map((v, i) => {
       const on = v.id === s.venueId;
-      return '<button role="radio" data-a="stadium" data-v="' + esc(v.id) + '" aria-checked="' + on + '" tabindex="' + (on || (!chosen && i === 0) ? 0 : -1) + '"><b>' + esc(v.name) + '</b><span>' + esc(v.location) + '</span></button>';
+      return '<button role="radio" data-a="stadium" data-v="' + esc(v.id) + '" aria-checked="' + on + '" tabindex="' + (on || (!chosen && i === 0) ? 0 : -1) + '"><b>' + esc(v.name) + '</b><span>' + esc(v.location) + (v.id === t.defaultVenueId ? ' · por defecto' : '') + '</span></button>';
     }).join('') + '</div></div>';
 }
 

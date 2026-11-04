@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions, editableTeamDraft, teamVenues } from '../public/src/domain/team.js';
+import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions, editableTeamDraft, teamVenues, toggleDefaultVenue } from '../public/src/domain/team.js';
 import {
   createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup, selectedVenue
 } from '../public/src/domain/game-setup.js';
@@ -20,7 +20,7 @@ test('buildTeamDocument output', () => {
   const { doc } = buildTeamDocument(draft([p('a', ' 7 ', ' Ana '), { id: 'b', num: '', name: '' }], { isNew: true }), 99);
   assert.deepEqual(doc, {
     name: 'Unión', color: '#111111', coach: 'DT', competition: '', periodMin: '12', createdAt: 99,
-    players: [{ id: 'a', num: '7', name: 'Ana', active: true }], venues: []
+    players: [{ id: 'a', num: '7', name: 'Ana', active: true }], venues: [], defaultVenueId: null
   });
 });
 
@@ -129,4 +129,23 @@ test('createGame: stadium when playing at home', () => {
   assert.equal(s3.venueId, null);
   reconcileSelection(s3, one);
   assert.equal(s3.venueId, 'v1');
+});
+
+test('default venue: kept only if it exists, proposed at home, can be changed', () => {
+  const d = draft([p('a', '7')], { venues: [{ id: 'v1', name: 'Principal', location: 'A' }, { id: 'v2', name: 'Auxiliar', location: 'B' }] });
+  toggleDefaultVenue(d, 'v2');
+  assert.equal(buildTeamDocument(d).doc.defaultVenueId, 'v2');
+  toggleDefaultVenue(d, 'v2');
+  assert.equal(d.defaultVenueId, null);
+  d.defaultVenueId = 'gone';
+  assert.equal(buildTeamDocument(d).doc.defaultVenueId, null);
+
+  const t = { ...team, venues: d.venues, defaultVenueId: 'v2' };
+  const s = blankSetup();
+  applyTeamToSetup(s, t);
+  assert.equal(s.venueId, 'v2');
+  s.venueId = 'v1';               // se cambia para este partido
+  reconcileSelection(s, t);
+  assert.equal(s.venueId, 'v1');  // y no se pisa con el por defecto
+  assert.equal(seedTeamDraft(null, true).defaultVenueId, 'v-principal');
 });

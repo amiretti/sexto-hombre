@@ -26,6 +26,11 @@ export function teamVenues(team) {
   return ((team && team.venues) || []).filter((v) => v && v.id && String(v.name || '').trim());
 }
 
+/** Marca (o desmarca, si ya lo era) el estadio por defecto del borrador. Muta `draft`. */
+export function toggleDefaultVenue(draft, venueId) {
+  draft.defaultVenueId = draft.defaultVenueId === venueId ? null : venueId;
+}
+
 /** Copia editable de un plantel guardado: siempre con al menos una fila de estadio para completar. */
 export function editableTeamDraft(team) {
   const draft = JSON.parse(JSON.stringify(team));
@@ -69,9 +74,10 @@ export function seedTeamDraft(profile, demo) {
     return Object.assign(blankTeamDraft(), {
       seeded: 'example', name: ex.team, coach: ex.coach,
       venues: [
-        { id: shortId(), name: 'Estadio Unión Central', location: 'Av. San Martín 1450, Rafaela' },
-        { id: shortId(), name: 'Cancha auxiliar', location: 'Bv. Lehmann 300, Rafaela' }
+        { id: 'v-principal', name: 'Estadio Unión Central', location: 'Av. San Martín 1450, Rafaela' },
+        { id: 'v-auxiliar', name: 'Cancha auxiliar', location: 'Bv. Lehmann 300, Rafaela' }
       ],
+      defaultVenueId: 'v-principal',
       players: ex.players.map((p) => ({ id: p.id, num: p.num, name: p.name, active: true, fresh: true }))
     });
   }
@@ -110,7 +116,9 @@ export function buildTeamDocument(draft, now = Date.now()) {
     name: String(draft.name).trim(), color: draft.color || DEFAULT_TEAM_COLOR, coach: String(draft.coach || '').trim(),
     competition: String(draft.competition || '').trim(), periodMin: String(draft.periodMin || DEFAULT_PERIOD_MIN),
     players: players.map((p) => ({ id: p.id, num: String(p.num).trim(), name: String(p.name).trim(), active: p.active !== false })),
-    venues
+    venues,
+    // Estadio que se propone al jugar de local (si se borró, no queda ninguno por defecto).
+    defaultVenueId: venues.some((v) => v.id === draft.defaultVenueId) ? draft.defaultVenueId : null
   };
   if (draft.isNew) doc.createdAt = now;
   return { doc };

@@ -27,7 +27,7 @@ _La planilla del cuerpo técnico._
 - **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
 - **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico. Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
 - **Planteles guardados:** cargás a tus jugadores una vez. En cada partido elegís el rival, los convocados y el quinteto.
-- **Estadios:** cada plantel guarda sus canchas (nombre y ubicación). De local, si hay más de una (principal, auxiliar…), elegís en cuál se juega; queda en la lista de partidos y en la planilla.
+- **Estadios:** cada plantel guarda sus canchas (nombre y ubicación). Podés marcar una por defecto, que se propone en cada partido de local y se cambia si hace falta; queda en la lista de partidos y en la planilla.
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
 - **Modo sol:** tema de alto contraste para canchas abiertas o con mucha luz (fondo blanco, bordes gruesos, líneas oscuras). Se activa desde el inicio o el menú del partido y queda guardado en el dispositivo.
 - **Accesible:** se puede usar con teclado y lector de pantalla (WCAG 2.2 AA; axe-core sin violaciones en claro, oscuro y modo sol).
@@ -161,7 +161,7 @@ Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas d
 |---|---|
 | `allowlist/{correo}` | Correos habilitados (se cargan a mano) |
 | `users/{uid}` | Perfil del usuario |
-| `teams/{id}` | Plantel: nombre, color, DT, competición, duración por defecto, jugadores (`id`, `num`, `name`, `active`), estadios (`id`, `name`, `location`) y último quinteto |
+| `teams/{id}` | Plantel: nombre, color, DT, competición, duración por defecto, jugadores (`id`, `num`, `name`, `active`), estadios (`id`, `name`, `location`), estadio por defecto (`defaultVenueId`) y último quinteto |
 | `games/{id}` | Partido: plantel de origen, local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado y resumen del tanteador |
 | `games/{id}/events/{id}` | Una jugada por documento, con ID generado en el dispositivo, `seq`, `rev` y `deleted` |
 

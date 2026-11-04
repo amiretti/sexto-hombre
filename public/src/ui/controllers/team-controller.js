@@ -1,6 +1,6 @@
 // Controlador del editor de plantel.
 
-import { blankTeamDraft, seedTeamDraft, newDraftPlayer, newDraftVenue, editableTeamDraft, buildTeamDocument } from '../../domain/team.js';
+import { blankTeamDraft, seedTeamDraft, newDraftPlayer, newDraftVenue, editableTeamDraft, toggleDefaultVenue, buildTeamDocument } from '../../domain/team.js';
 import { app, state, ui, isDemo } from '../state.js';
 import { render } from '../render.js';
 import { focusId } from '../dom.js';
@@ -105,6 +105,11 @@ export const teamActions = {
     state.teamEdit.venues = (state.teamEdit.venues || []).concat(v);
     render();
     focusId('vn-' + v.id);
+  }),
+  'tv-default': inEditor(({ id }) => {
+    toggleDefaultVenue(state.teamEdit, id);
+    render();
+    focusId('vd-' + id);
   }),
   'tv-rm': inEditor(({ id }) => {
     state.teamEdit.venues = (state.teamEdit.venues || []).filter((x) => x.id !== id);

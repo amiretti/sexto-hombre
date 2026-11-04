@@ -25,10 +25,15 @@ export function applyTeamToSetup(setup, team) {
   reconcileVenue(setup, team);
 }
 
-/** Si el plantel tiene un solo estadio, es ese; si el elegido ya no existe, se vuelve a elegir. Muta `setup`. */
+/**
+ * Si no hay un estadio elegido (o ya no existe) se propone el por defecto del plantel o, si tiene uno solo, ese.
+ * Muta `setup`.
+ */
 function reconcileVenue(setup, team) {
   const venues = teamVenues(team);
-  if (!venues.some((v) => v.id === setup.venueId)) setup.venueId = venues.length === 1 ? venues[0].id : null;
+  if (venues.some((v) => v.id === setup.venueId)) return;
+  const byDefault = venues.find((v) => v.id === (team && team.defaultVenueId));
+  setup.venueId = byDefault ? byDefault.id : venues.length === 1 ? venues[0].id : null;
 }
 
 /** Estadio donde se juega: solo de local y si el plantel tiene estadios cargados. null si no corresponde. */
