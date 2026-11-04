@@ -437,3 +437,37 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .gdel{border:1px solid transparent;background:none;color:var(--muted);border-radius:8px;min-width:44px;min-height:44px;font-size:1rem;cursor:pointer;margin-left:6px}
 .gdel:hover{border-color:var(--rule)}
 .gdel.armed{border-color:var(--bad);color:var(--bad-ink);font-size:.8rem;font-weight:700;padding:0 10px}
+
+/* ---- #23: celular en vivo ---- */
+.tabbr,.oppbar{display:none}
+@media (max-width:760px){
+  /* tablero compacto: siglas, tanteos y reloj en una franja; los botones del rival en su propia fila */
+  .tfull{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .tabbr{display:inline}
+  .board{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);row-gap:4px;padding-block:6px}
+  .side .score,.side.away .score{font-size:2rem}
+  .side .sub.oppctl{display:none}
+  .clock{font-size:2rem}
+  .clock-ctl button{min-height:40px;min-width:44px;padding:0 6px}
+  .oppbar{display:flex;grid-column:1/-1;justify-content:center;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;color:var(--board-muted)}
+  .oppbar .oppb{min-height:44px;min-width:52px}
+  .oppbar .oppb.minus{margin-left:12px}
+  .rotate{font-size:.8rem}
+  /* pasos 2 y 3 como hoja inferior sobre la cancha: sin scrollear después de cada toque */
+  .panel[data-step]:not([data-step="loc"]){position:fixed;left:0;right:0;bottom:0;z-index:15;max-height:min(74vh,640px);overflow:auto;
+    border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.35);padding:12px 12px calc(14px + env(safe-area-inset-bottom,0px))}
+  .toast{left:8px;right:8px;transform:none;max-width:none}
+  .court-tip{display:none!important}
+  .attack-ind{top:4px;bottom:auto;min-height:36px;padding:.2em .8em;font-size:.8rem}
+}
+@media (max-height:520px) and (min-width:761px){
+  /* celular apaisado: los pasos 2 y 3 ocupan el costado derecho a altura completa */
+  .panel[data-step]:not([data-step="loc"]){position:fixed;top:0;right:0;bottom:0;z-index:15;width:min(480px,58vw);
+    border-radius:14px 0 0 14px;box-shadow:-10px 0 30px rgba(0,0,0,.35);padding:10px max(12px,env(safe-area-inset-right,0px)) 10px 12px}
+  .panel[data-step]:not([data-step="loc"]) .agrid,.panel[data-step]:not([data-step="loc"]) .agrid.three{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+  .panel[data-step]:not([data-step="loc"]) .abtn{min-height:40px;padding:3px 4px;font-size:.82rem}
+  .panel[data-step]:not([data-step="loc"]) .abtn small{display:none}
+  .panel[data-step]:not([data-step="loc"]) .steps{display:none}
+  .panel[data-step]:not([data-step="loc"]) h3{font-size:.68rem}
+  .oppb{min-height:40px}
+}

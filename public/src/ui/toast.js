@@ -27,7 +27,8 @@ export function toast(text, warn = false, undoEventId = null, action = null) {
     (undoEventId ? '<button data-a="undo-id" data-id="' + esc(undoEventId) + '">Deshacer</button>' : '');
   // En el partido va justo debajo del tablero (no tapa reloj ni barra de herramientas).
   const board = document.querySelector('.board');
-  el.style.top = board && innerWidth > 760 ? Math.round(board.getBoundingClientRect().bottom + 8) + 'px' : '';
+  el.style.top = board ? Math.round(Math.max(8, board.getBoundingClientRect().bottom + 8)) + 'px' : '';
+  el.style.bottom = board ? 'auto' : '';
   // Centrado sobre la cancha: el panel (asistencia, pasos) queda libre.
   const col = document.querySelector('.court-col');
   if (col && innerWidth > 760) { const r = col.getBoundingClientRect(); el.style.left = Math.round(r.left + r.width / 2) + 'px'; } else el.style.left = '';

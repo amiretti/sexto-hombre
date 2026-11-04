@@ -249,6 +249,7 @@ const STEPS = {
 export function renderPanel() {
   const step = STEPS[ui.step];
   const panel = $('#panel');
+  panel.dataset.step = ui.step;
   // Si el foco estaba en el panel, queda en el mismo control o pasa al primero del paso nuevo.
   rerenderKeepingFocus(panel, () => { panel.innerHTML = step ? step(currentGame()) : ''; },
     () => firstFocusable(panel.querySelector('.agroup, .pgrid, .assistbar, .quick, .agrid') || panel));
