@@ -5,6 +5,7 @@ import { $ } from './dom.js';
 import { loginHTML, deniedHTML } from './views/auth-view.js';
 import { homeHTML } from './views/home-view.js';
 import { teamHTML } from './views/team-view.js';
+import { clubHTML } from './views/club-view.js';
 import { setupHTML } from './views/setup-view.js';
 import { lockedHTML } from './views/locked-view.js';
 import { gameShellHTML, renderGame } from './views/game/game-view.js';
@@ -19,12 +20,13 @@ const SCREENS = {
   home: homeHTML,
   setup: setupHTML,
   team: teamHTML,
+  club: clubHTML,
   locked: lockedHTML
 };
 
 const TITLES = {
   boot: 'Cargando', loading: 'Abriendo el partido', login: 'Ingresar', denied: 'Cuenta no habilitada',
-  home: 'Mis partidos', setup: 'Nuevo partido', team: 'Plantel', locked: 'Partido abierto en otro dispositivo'
+  home: 'Mis partidos', setup: 'Nuevo partido', team: 'Plantel', club: 'Club', locked: 'Partido abierto en otro dispositivo'
 };
 
 /** Título de la pestaña (lo anuncian los lectores de pantalla al cambiar de pantalla). */

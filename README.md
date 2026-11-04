@@ -26,8 +26,9 @@ _La planilla del cuerpo técnico._
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
 - **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
 - **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico. Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
-- **Planteles guardados:** cargás a tus jugadores una vez. En cada partido elegís el rival, los convocados y el quinteto.
-- **Estadios:** cada plantel guarda sus canchas (nombre y ubicación). Podés marcar una por defecto, que se propone en cada partido de local y se cambia si hace falta; queda en la lista de partidos y en la planilla.
+- **Clubes y planteles:** el club guarda el nombre, los colores (titular y alternativo) y los estadios; cada club tiene uno o más planteles (Primera, U17, Femenino…) con sus jugadores. En cada partido elegís el plantel, el rival, los convocados y el quinteto.
+- **Camiseta:** se propone la titular del club; si se parece al color del rival, pasás a la alternativa con un toque.
+- **Estadios:** cada club guarda sus canchas (nombre y ubicación). Podés marcar una por defecto, que se propone en cada partido de local y se cambia si hace falta; queda en la lista de partidos y en la planilla.
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
 - **Modo sol:** tema de alto contraste para canchas abiertas o con mucha luz (fondo blanco, bordes gruesos, líneas oscuras). Se activa desde el inicio o el menú del partido y queda guardado en el dispositivo.
 - **Accesible:** se puede usar con teclado y lector de pantalla (WCAG 2.2 AA; axe-core sin violaciones en claro, oscuro y modo sol).
@@ -50,7 +51,7 @@ Ejemplo de la planilla que se comparte: [`docs/planilla-ejemplo.pdf`](docs/plani
 
 ## Probarla en 1 minuto (modo demo)
 
-No hace falta Firebase ni instalar nada. En modo demo los datos quedan en el navegador y se carga un plantel de ejemplo.
+No hace falta Firebase ni instalar nada. En modo demo los datos quedan en el navegador y se cargan un club y un plantel de ejemplo.
 
 ```bash
 git clone https://github.com/amiretti/sexto-hombre.git
@@ -87,7 +88,7 @@ flowchart LR
 | Capa | Qué contiene | Depende de |
 |---|---|---|
 | `shared/` | ids y fechas, escape de HTML, colores | nada |
-| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, estadísticas y exclusiones, plantel, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
+| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, estadísticas y exclusiones, club, plantel, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
 | `application/` | sesión del partido (registrar jugadas, consecuencias, guardado con debounce), reporte para el PDF, exportación CSV | `domain` y el **puerto** `store` |
 | `infrastructure/` | `store/` (Firebase o demo con la misma interfaz), `pdf/` (render y Web Share), `platform/` (wake lock, portapapeles, service worker, borrador local) | `shared` |
 | `ui/` | estado, router de pantallas, despachador único de eventos, vistas (HTML) y controladores (acciones `data-a`) | todo lo anterior |
@@ -112,7 +113,7 @@ firebase.json            Hosting + Firestore
 
 - **El store es un puerto.** `createStore()` devuelve la implementación de Firebase o la demo (localStorage) según la configuración o `?demo=1`. El resto de la app no sabe cuál está usando.
 - **Las vistas devuelven HTML como string.** Un despachador central escucha `document` y deriva cada clic a la acción registrada por su `data-a`. Cada pantalla registra sus propias acciones.
-- **Nada se borra físicamente.** Borrar una jugada, un partido o un plantel lo marca con `deleted: true`.
+- **Nada se borra físicamente.** Borrar una jugada, un partido, un plantel o un club lo marca con `deleted: true`.
 - **El PDF se genera de forma sincrónica**, porque `navigator.share` tiene que llamarse dentro del mismo toque del usuario.
 
 ## Desarrollo
@@ -161,9 +162,12 @@ Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas d
 |---|---|
 | `allowlist/{correo}` | Correos habilitados (se cargan a mano) |
 | `users/{uid}` | Perfil del usuario |
-| `teams/{id}` | Plantel: nombre, color, DT, competición, duración por defecto, jugadores (`id`, `num`, `name`, `active`), estadios (`id`, `name`, `location`), estadio por defecto (`defaultVenueId`) y último quinteto |
-| `games/{id}` | Partido: plantel de origen, local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado y resumen del tanteador |
+| `clubs/{id}` | Club: nombre, color titular (`color`) y alternativo (`altColor`), estadios (`id`, `name`, `location`) y estadio por defecto (`defaultVenueId`) |
+| `teams/{id}` | Plantel: club (`clubId`), categoría, DT, competición, duración por defecto, jugadores (`id`, `num`, `name`, `active`) y último quinteto |
+| `games/{id}` | Partido: plantel y club de origen, categoría, local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado y resumen del tanteador |
 | `games/{id}/events/{id}` | Una jugada por documento, con ID generado en el dispositivo, `seq`, `rev` y `deleted` |
+
+Los planteles creados antes de que existieran los clubes se migran solos al abrir la app: se agrupan por nombre en un club (con su color y sus estadios) y quedan con la categoría «Primera», que se puede editar. Los partidos ya jugados no cambian.
 
 ## Sin señal
 

@@ -49,7 +49,8 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
   const T = teamTotals(game);
   const st = staffFouls(game);
   return {
-    away: game.venue === 'away', team: game.team, opponent: game.opponent,
+    away: game.venue === 'away', team: game.team, opponent: game.opponent, category: game.category || '',
+    teamLabel: game.category ? game.team + ' (' + game.category + ')' : game.team,
     teamColor: game.teamColor || DEFAULT_TEAM_COLOR, oppColor: game.oppColor || DEFAULT_OPPONENT_COLOR,
     coach: game.coach, competition: game.competition,
     stadium: game.stadium && game.stadium.name ? { name: String(game.stadium.name), location: String(game.stadium.location || '') } : null,

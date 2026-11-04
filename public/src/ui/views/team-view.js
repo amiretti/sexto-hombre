@@ -1,12 +1,12 @@
 // Edición de un plantel.
 
 import { esc, plural } from '../../shared/html.js';
-import { DEFAULT_TEAM_COLOR } from '../../shared/colors.js';
-import { activePlayers, MAX_PLAYERS_PER_TEAM, MAX_VENUES_PER_TEAM } from '../../domain/team.js';
+import { DEFAULT_TEAM_COLOR, safeColor } from '../../shared/colors.js';
+import { activePlayers, MAX_PLAYERS_PER_TEAM, CATEGORY_SUGGESTIONS } from '../../domain/team.js';
 import { state, ui } from '../state.js';
 import { TOAST_HTML } from '../toast.js';
-import { hasTeams } from '../selectors.js';
-import { textField, colorField, competitionField, periodLengthField } from '../components/fields.js';
+import { hasTeams, clubById } from '../selectors.js';
+import { textField, competitionField, periodLengthField } from '../components/fields.js';
 
 function playerRowHTML(p) {
   const on = p.active !== false;
@@ -20,35 +20,33 @@ function headerHTML(t) {
   const back = ui.after === 'setup' && hasTeams() ? 'Volver al partido' : 'Mis partidos';
   const note = t.seeded === 'last' ? '<p class="note">Lo armamos con el plantel de tu último partido. Revisalo y guardalo.</p>'
     : t.seeded === 'example' ? '<p class="note">Cargamos un plantel de ejemplo. <button data-a="team-clear">Vaciar y cargar el mío</button></p>' : '';
+  const club = clubById(t.clubId);
+  const title = t.isNew ? 'Nuevo plantel' : [club && club.name, t.category].filter(Boolean).join(' · ') || 'Plantel';
   return '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="team-cancel">‹ ' + back + '</button></p><h1>' +
-    (t.isNew ? 'Nuevo plantel' : (esc(t.name) || 'Plantel')) + '</h1></div>' + note + '</header>';
+    esc(title) + '</h1></div>' + note + '</header>';
+}
+
+/** Club del plantel: fijo si hay uno solo, si no se puede mover a otro. */
+function clubFieldHTML(t) {
+  const clubs = state.clubs || [];
+  const club = clubById(t.clubId);
+  if (clubs.length <= 1) {
+    return '<div class="field"><span class="flabel">Club</span><p class="vstatic"><span class="tsw" style="background:' + esc(safeColor(club && club.color, DEFAULT_TEAM_COLOR)) + '"></span><b>' + esc(club ? club.name : '—') + '</b></p></div>';
+  }
+  return '<div class="field"><label for="f-club">Club</label><select id="f-club" data-f="clubId">' +
+    clubs.map((c) => '<option value="' + esc(c.id) + '"' + (c.id === t.clubId ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select></div>';
+}
+
+function categoryFieldHTML(value) {
+  return '<div class="field"><label for="f-cat">Categoría</label><input id="f-cat" data-f="category" list="cat-list" value="' + esc(value || '') +
+    '" placeholder="Ej.: Primera, U17, Femenino" autocomplete="off"><datalist id="cat-list">' + CATEGORY_SUGGESTIONS.map((c) => '<option value="' + esc(c) + '"></option>').join('') + '</datalist></div>';
 }
 
 function teamInfoCardHTML(t) {
-  return '<section class="card"><h2>Equipo</h2><div class="setup-grid">' +
-    colorField('f-tname', 'Nombre del equipo', 'name', t.name, 'color', t.color || DEFAULT_TEAM_COLOR, 'del equipo') + textField('f-coach', 'Entrenador (DT)', 'coach', t.coach) +
+  return '<section class="card"><h2>Plantel</h2><div class="setup-grid">' +
+    clubFieldHTML(t) + categoryFieldHTML(t.category) + textField('f-coach', 'Entrenador (DT)', 'coach', t.coach) +
     competitionField(t.competition) + periodLengthField(t.periodMin) +
-    '</div><p class="lead hint">El color, el DT, la competición y la duración se proponen en cada partido nuevo; ahí los podés cambiar.</p></section>';
-}
-
-function venueRowHTML(v, i, list, defaultId) {
-  const n = list.length > 1 ? ' ' + (i + 1) : '';
-  const on = v.id === defaultId;
-  // Con un solo estadio no hace falta marcarlo: se propone siempre.
-  const def = list.length > 1
-    ? '<button class="starter" id="vd-' + esc(v.id) + '" data-a="tv-default" data-id="' + esc(v.id) + '" aria-pressed="' + on + '" aria-label="' + esc('Por defecto al jugar de local: ' + (v.name || 'estadio' + n)) + '">' + (on ? '✓ Por defecto' : 'Usar por defecto') + '</button>'
-    : '<span></span>';
-  return '<div class="vrow"><input id="vn-' + esc(v.id) + '" data-vid="' + esc(v.id) + '" data-vf="name" value="' + esc(v.name) + '" placeholder="Ej.: Estadio principal" aria-label="Nombre del estadio' + n + '" autocomplete="off">' +
-    '<input id="vl-' + esc(v.id) + '" data-vid="' + esc(v.id) + '" data-vf="location" value="' + esc(v.location) + '" placeholder="Dirección y ciudad" aria-label="Ubicación del estadio' + n + '" autocomplete="off">' + def +
-    '<button class="rm" data-a="tv-rm" data-id="' + esc(v.id) + '" aria-label="' + esc('Quitar estadio ' + (v.name || n.trim() || '')) + '">×</button></div>';
-}
-
-function venuesCardHTML(t) {
-  const venues = t.venues || [];
-  return '<section class="card"><h2>Estadios</h2>' +
-    '<p class="lead hint">Dónde jugás de local. Si tenés más de una cancha (principal, auxiliar…), marcá la que se propone por defecto; en cada partido de local la podés cambiar.</p>' +
-    '<div class="roster">' + (venues.length ? '<div class="vrow headrow" aria-hidden="true"><span>Nombre</span><span>Ubicación</span><span></span><span></span></div>' : '') + venues.map((v, i, l) => venueRowHTML(v, i, l, t.defaultVenueId)).join('') + '</div>' +
-    '<div class="row"><button class="btn" id="tv-add" data-a="tv-add"' + (venues.length >= MAX_VENUES_PER_TEAM ? ' disabled' : '') + '>+ Agregar estadio</button></div></section>';
+    '</div><p class="lead hint">El DT, la competición y la duración se proponen en cada partido nuevo; ahí los podés cambiar. Los colores y los estadios son del club.</p></section>';
 }
 
 function rosterCardHTML(t) {
@@ -67,5 +65,5 @@ function footerHTML(t) {
 
 export function teamHTML() {
   const t = state.teamEdit;
-  return '<div class="setup">' + headerHTML(t) + teamInfoCardHTML(t) + venuesCardHTML(t) + rosterCardHTML(t) + footerHTML(t) + TOAST_HTML + '</div>';
+  return '<div class="setup">' + headerHTML(t) + teamInfoCardHTML(t) + rosterCardHTML(t) + footerHTML(t) + TOAST_HTML + '</div>';
 }

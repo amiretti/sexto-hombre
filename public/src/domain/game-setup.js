@@ -1,8 +1,10 @@
 // Previa del partido: convocatoria, quinteto y creación del partido.
+// `team` es siempre un plantel resuelto con su club (domain/club resolveTeam): nombre, colores y estadios.
 
 import { newId, todayISO } from '../shared/ids.js';
 import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../shared/colors.js';
-import { activePlayers, teamVenues, DEFAULT_PERIOD_MIN } from './team.js';
+import { activePlayers, DEFAULT_PERIOD_MIN } from './team.js';
+import { venuesOf } from './club.js';
 import { newClock } from './clock.js';
 
 export const SETUP_VERSION = 2;
@@ -30,7 +32,7 @@ export function applyTeamToSetup(setup, team) {
  * Muta `setup`.
  */
 function reconcileVenue(setup, team) {
-  const venues = teamVenues(team);
+  const venues = venuesOf(team);
   if (venues.some((v) => v.id === setup.venueId)) return;
   const byDefault = venues.find((v) => v.id === (team && team.defaultVenueId));
   setup.venueId = byDefault ? byDefault.id : venues.length === 1 ? venues[0].id : null;
@@ -39,7 +41,7 @@ function reconcileVenue(setup, team) {
 /** Estadio donde se juega: solo de local y si el plantel tiene estadios cargados. null si no corresponde. */
 export function selectedVenue(setup, team) {
   if (setup.venue === 'away') return null;
-  return teamVenues(team).find((v) => v.id === setup.venueId) || null;
+  return venuesOf(team).find((v) => v.id === setup.venueId) || null;
 }
 
 /** Suma a los jugadores nuevos del plantel (convocados) y quita a los que ya no están activos. Muta `setup`. */
@@ -50,6 +52,20 @@ export function reconcileSelection(setup, team) {
   activePlayers(team).forEach((p) => { ids[p.id] = 1; if (!setup.sel[p.id]) setup.sel[p.id] = { in: true, starter: false }; });
   Object.keys(setup.sel).forEach((k) => { if (!ids[k]) delete setup.sel[k]; });
   reconcileVenue(setup, team);
+}
+
+/** Camiseta que usamos según el color elegido: 'main', 'alt' o null (otro color). */
+export function kitOf(setup, team) {
+  const c = String(setup.teamColor || '').toLowerCase();
+  if (team && c === String(team.color || '').toLowerCase()) return 'main';
+  if (team && team.altColor && c === String(team.altColor).toLowerCase()) return 'alt';
+  return null;
+}
+
+/** Pasa a la camiseta titular o alternativa del club. Muta `setup`. */
+export function chooseKit(setup, team, kit) {
+  const color = kit === 'alt' ? team && team.altColor : team && team.color;
+  if (color) setup.teamColor = color;
 }
 
 export function toggleCalled(setup, playerId) {
@@ -85,7 +101,7 @@ export function createGame(setup, team, now = Date.now()) {
   const starters = starterIds(setup, team);
   if (!String(setup.opponent).trim()) return { error: 'Falta el nombre del rival.' };
   const stadium = selectedVenue(setup, team);
-  if (setup.venue !== 'away' && teamVenues(team).length && !stadium) return { error: 'Elegí en qué estadio se juega.' };
+  if (setup.venue !== 'away' && venuesOf(team).length && !stadium) return { error: 'Elegí en qué estadio se juega.' };
   if (players.length < 5) return { error: 'Convocá al menos 5 jugadores.' };
   if (starters.length !== 5) return { error: 'Elegí exactamente 5 titulares.' };
   const seen = {};
@@ -100,6 +116,7 @@ export function createGame(setup, team, now = Date.now()) {
     attackFirstHalf: setup.attack === 'left' ? 'left' : 'right',
     competition: String(setup.competition || '').trim(), createdAt: now, oppP: {},
     teamColor: setup.teamColor || team.color || DEFAULT_TEAM_COLOR, oppColor: setup.oppColor || DEFAULT_OPPONENT_COLOR,
+    clubId: team.clubId || null, category: String(team.category || ''),
     team: team.name, opponent: String(setup.opponent).trim(), coach: String(setup.coach || '').trim(), date: setup.date, periodMin,
     roster: players.map((p) => ({ id: p.id, num: String(p.num).trim(), name: String(p.name || '').trim() })),
     starters: starters.slice(), onCourt: starters.slice(),
