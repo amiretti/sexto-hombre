@@ -2,7 +2,7 @@
 
 import { esc, plural } from '../../shared/html.js';
 import { DEFAULT_TEAM_COLOR } from '../../shared/colors.js';
-import { activePlayers, MAX_PLAYERS_PER_TEAM } from '../../domain/team.js';
+import { activePlayers, MAX_PLAYERS_PER_TEAM, MAX_VENUES_PER_TEAM } from '../../domain/team.js';
 import { state, ui } from '../state.js';
 import { TOAST_HTML } from '../toast.js';
 import { hasTeams } from '../selectors.js';
@@ -31,6 +31,26 @@ function teamInfoCardHTML(t) {
     '</div><p class="lead hint">El color, el DT, la competición y la duración se proponen en cada partido nuevo; ahí los podés cambiar.</p></section>';
 }
 
+function venueRowHTML(v, i, list, defaultId) {
+  const n = list.length > 1 ? ' ' + (i + 1) : '';
+  const on = v.id === defaultId;
+  // Con un solo estadio no hace falta marcarlo: se propone siempre.
+  const def = list.length > 1
+    ? '<button class="starter" id="vd-' + esc(v.id) + '" data-a="tv-default" data-id="' + esc(v.id) + '" aria-pressed="' + on + '" aria-label="' + esc('Por defecto al jugar de local: ' + (v.name || 'estadio' + n)) + '">' + (on ? '✓ Por defecto' : 'Usar por defecto') + '</button>'
+    : '<span></span>';
+  return '<div class="vrow"><input id="vn-' + esc(v.id) + '" data-vid="' + esc(v.id) + '" data-vf="name" value="' + esc(v.name) + '" placeholder="Ej.: Estadio principal" aria-label="Nombre del estadio' + n + '" autocomplete="off">' +
+    '<input id="vl-' + esc(v.id) + '" data-vid="' + esc(v.id) + '" data-vf="location" value="' + esc(v.location) + '" placeholder="Dirección y ciudad" aria-label="Ubicación del estadio' + n + '" autocomplete="off">' + def +
+    '<button class="rm" data-a="tv-rm" data-id="' + esc(v.id) + '" aria-label="' + esc('Quitar estadio ' + (v.name || n.trim() || '')) + '">×</button></div>';
+}
+
+function venuesCardHTML(t) {
+  const venues = t.venues || [];
+  return '<section class="card"><h2>Estadios</h2>' +
+    '<p class="lead hint">Dónde jugás de local. Si tenés más de una cancha (principal, auxiliar…), marcá la que se propone por defecto; en cada partido de local la podés cambiar.</p>' +
+    '<div class="roster">' + (venues.length ? '<div class="vrow headrow" aria-hidden="true"><span>Nombre</span><span>Ubicación</span><span></span><span></span></div>' : '') + venues.map((v, i, l) => venueRowHTML(v, i, l, t.defaultVenueId)).join('') + '</div>' +
+    '<div class="row"><button class="btn" id="tv-add" data-a="tv-add"' + (venues.length >= MAX_VENUES_PER_TEAM ? ' disabled' : '') + '>+ Agregar estadio</button></div></section>';
+}
+
 function rosterCardHTML(t) {
   const active = activePlayers(t).length;
   return '<section class="card"><div class="roster-head"><h2>Jugadores</h2><span class="chip">' + active + ' ' + plural(active, 'activo') + '</span></div>' +
@@ -47,5 +67,5 @@ function footerHTML(t) {
 
 export function teamHTML() {
   const t = state.teamEdit;
-  return '<div class="setup">' + headerHTML(t) + teamInfoCardHTML(t) + rosterCardHTML(t) + footerHTML(t) + TOAST_HTML + '</div>';
+  return '<div class="setup">' + headerHTML(t) + teamInfoCardHTML(t) + venuesCardHTML(t) + rosterCardHTML(t) + footerHTML(t) + TOAST_HTML + '</div>';
 }

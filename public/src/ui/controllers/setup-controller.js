@@ -45,6 +45,7 @@ export function newSetup(teamId) {
 /** Lleva el foco al campo del error de la previa (o al mensaje). */
 function focusInvalid(error) {
   const field = /rival/i.test(error) ? document.getElementById('f-opp') : null;
+  if (/estadio/i.test(error)) { const first = document.querySelector('[data-a="stadium"]'); if (first) { first.focus(); return; } }
   if (field) { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'setup-err'); field.focus(); return; }
   const msg = document.getElementById('setup-err');
   if (msg) { msg.tabIndex = -1; msg.focus(); }
@@ -73,6 +74,7 @@ export const setupActions = {
   },
   'change-team': update((s) => { s.teamId = null; }),
   'venue': update((s, { data }) => { s.venue = data.v; }),
+  'stadium': update((s, { data }) => { s.venueId = data.v; }),
   'attack': update((s, { data }) => { s.attack = data.v === 'left' ? 'left' : 'right'; }),
   'call': update((s, { id }) => toggleCalled(s, id)),
   'starter': ({ id }) => {

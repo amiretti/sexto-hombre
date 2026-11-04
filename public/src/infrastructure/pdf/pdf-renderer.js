@@ -35,7 +35,11 @@ function drawHeader(doc, r, W) {
   try { doc.addImage(LOGO_PNG, 'PNG', MARGIN, MARGIN - 3, LH * LOGO_RATIO, LH); }
   catch (e) { doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(...INK); doc.text('SEXTO HOMBRE', MARGIN, MARGIN + 2); }
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...MUTED);
-  const meta = ['Planilla de juego', r.dateText, r.competition].filter(Boolean).join('  ·  ');
+  const metaWith = (place) => ['Planilla de juego', r.dateText, r.competition, place].filter(Boolean).join('  ·  ');
+  const st = r.stadium;
+  // Estadio con su ubicación si entra al lado del logo; si no, solo el nombre.
+  let meta = metaWith(st && (st.location ? st.name + ' (' + st.location + ')' : st.name));
+  if (st && doc.getTextWidth(meta) > W - 2 * MARGIN - 40) meta = metaWith(st.name);
   doc.text(meta, W - MARGIN, MARGIN + 2, { align: 'right' });
   doc.setDrawColor(...RULE); doc.setLineWidth(0.3); doc.line(MARGIN, MARGIN + 7, W - MARGIN, MARGIN + 7);
 }

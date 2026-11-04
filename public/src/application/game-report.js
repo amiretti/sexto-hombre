@@ -52,6 +52,7 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
     away: game.venue === 'away', team: game.team, opponent: game.opponent,
     teamColor: game.teamColor || DEFAULT_TEAM_COLOR, oppColor: game.oppColor || DEFAULT_OPPONENT_COLOR,
     coach: game.coach, competition: game.competition,
+    stadium: game.stadium && game.stadium.name ? { name: String(game.stadium.name), location: String(game.stadium.location || '') } : null,
     date: game.date, dateText: formatDate(game.date), statusText: statusText(game, ms),
     us: ourScore(game), them: opponentScore(game),
     periods: pointsByPeriod(game).map((x) => ({ label: periodShort(x.p), us: x.us, them: x.them })),

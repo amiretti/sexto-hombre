@@ -1,7 +1,6 @@
 // Controlador del editor de plantel.
 
-import { deepClone } from '../../shared/ids.js';
-import { blankTeamDraft, seedTeamDraft, newDraftPlayer, buildTeamDocument } from '../../domain/team.js';
+import { blankTeamDraft, seedTeamDraft, newDraftPlayer, newDraftVenue, editableTeamDraft, toggleDefaultVenue, buildTeamDocument } from '../../domain/team.js';
 import { app, state, ui, isDemo } from '../state.js';
 import { render } from '../render.js';
 import { focusId } from '../dom.js';
@@ -17,7 +16,7 @@ import { newSetup } from './setup-controller.js';
  */
 export function editTeam(id, after) {
   const team = id ? teamById(id) : null;
-  state.teamEdit = team ? deepClone(team) : (hasTeams() ? blankTeamDraft() : seedTeamDraft(state.profile, isDemo()));
+  state.teamEdit = team ? editableTeamDraft(team) : (hasTeams() ? blankTeamDraft() : seedTeamDraft(state.profile, isDemo()));
   ui.after = after || 'home';
   ui.setupErr = '';
   ui.colorOpen = null;
@@ -35,12 +34,21 @@ function leaveEditor(after, teamId) {
   else goHome();
 }
 
+/** Primer campo vacío de un estadio a medio cargar. */
+function firstIncompleteVenue(draft) {
+  for (const v of draft.venues || []) {
+    const name = String(v.name || '').trim(), loc = String(v.location || '').trim();
+    if ((name || loc) && !(name && loc)) return document.getElementById((name ? 'vl-' : 'vn-') + v.id);
+  }
+  return (draft.venues || [])[0] ? document.getElementById('vn-' + draft.venues[0].id) : null;
+}
+
 function saveTeamEdit() {
   const draft = state.teamEdit;
   const result = buildTeamDocument(draft);
   if (result.error) {
     ui.setupErr = result.error; render();
-    const field = /nombre del equipo/i.test(result.error) ? document.getElementById('f-tname') : null;
+    const field = /nombre del equipo/i.test(result.error) ? document.getElementById('f-tname') : /estadio/i.test(result.error) ? firstIncompleteVenue(draft) : null;
     if (field) { field.setAttribute('aria-invalid', 'true'); field.setAttribute('aria-describedby', 'setup-err'); field.focus(); }
     else { const msg = document.getElementById('setup-err'); if (msg) { msg.tabIndex = -1; msg.focus(); } }
     return;
@@ -91,6 +99,22 @@ export const teamActions = {
   'tp-rm': inEditor(({ id }) => {
     state.teamEdit.players = state.teamEdit.players.filter((x) => x.id !== id);
     render();
+  }),
+  'tv-add': inEditor(() => {
+    const v = newDraftVenue();
+    state.teamEdit.venues = (state.teamEdit.venues || []).concat(v);
+    render();
+    focusId('vn-' + v.id);
+  }),
+  'tv-default': inEditor(({ id }) => {
+    toggleDefaultVenue(state.teamEdit, id);
+    render();
+    focusId('vd-' + id);
+  }),
+  'tv-rm': inEditor(({ id }) => {
+    state.teamEdit.venues = (state.teamEdit.venues || []).filter((x) => x.id !== id);
+    render();
+    focusId(state.teamEdit.venues.length ? 'vn-' + state.teamEdit.venues[state.teamEdit.venues.length - 1].id : 'tv-add');
   }),
   'tp-add': inEditor(() => {
     const p = newDraftPlayer();
