@@ -77,7 +77,7 @@ function foulsCell(s) {
 
 function boxRow(G, p) {
   const s = playerStats(G, p.id);
-  return '<tr class="' + (s.out ? 'out' : '') + '"><td class="n">' + esc(p.num) + '</td><td class="l">' + esc(p.name || '—') + (G.onCourt.includes(p.id) ? ' <span class="chip">en cancha</span>' : '') + (s.out ? ' <span class="chip bad">' + s.outWhy + '</span>' : '') + '</td>' +
+  return '<tr class="' + (s.out ? 'out' : '') + '"><td class="n">' + esc(p.num) + '</td><td class="l">' + esc(p.name || '—') + (G.onCourt.includes(p.id) ? ' <span class="oncourt" title="En cancha"><span class="visually-hidden">en cancha</span></span>' : '') + (s.out ? ' <span class="chip bad">' + s.outWhy + '</span>' : '') + '</td>' +
     '<td class="p">' + s.pts + '</td><td>' + s.m2 + '/' + s.a2 + '</td><td>' + s.m3 + '/' + s.a3 + '</td><td>' + s.ftm + '/' + s.fta + '</td><td>' + s.ro + '</td><td>' + s.rd + '</td><td>' + (s.ro + s.rd) + '</td>' +
     '<td>' + s.ast + '</td><td>' + s.stl + '</td><td>' + s.blk + '</td><td>' + s.tov + '</td><td>' + foulsCell(s) + '</td><td>' + s.fd + '</td></tr>';
 }
@@ -90,7 +90,7 @@ function boxFooter(T) {
 function boxSheet(G) {
   const tf = [1, 2, 3, 4].map((p) => periodShort(p) + ': ' + teamFouls(G, p)).join(' · ');
   return sheet('Planilla · ' + esc(G.team) + ' ' + ourScore(G) + ' – ' + opponentScore(G) + ' ' + esc(G.opponent), '<button class="btn share" data-a="share">Compartir PDF</button><button class="btn" data-a="csv-box">Copiar CSV</button>',
-    '<div class="tablewrap"><table class="box"><thead><tr><th>Nº</th><th class="l">Jugador</th><th>PTS</th><th>T2</th><th>T3</th><th>TL</th><th>RO</th><th>RD</th><th>RT</th><th>AS</th><th>RB</th><th>TP</th><th>PE</th><th>FC</th><th>FR</th></tr></thead><tbody>' +
+    '<p class="swipe-hint">Deslizá la tabla para ver todas las columnas →</p><div class="tablewrap" tabindex="0" role="region" aria-label="Planilla por jugador"><table class="box"><caption class="visually-hidden">Planilla por jugador</caption><thead><tr><th scope="col"><abbr title="Número">Nº</abbr></th><th scope="col" class="l">Jugador</th><th scope="col"><abbr title="Puntos">PTS</abbr></th><th scope="col"><abbr title="Dobles convertidos/intentados">T2</abbr></th><th scope="col"><abbr title="Triples convertidos/intentados">T3</abbr></th><th scope="col"><abbr title="Tiros libres convertidos/intentados">TL</abbr></th><th scope="col"><abbr title="Rebotes ofensivos">RO</abbr></th><th scope="col"><abbr title="Rebotes defensivos">RD</abbr></th><th scope="col"><abbr title="Rebotes totales">RT</abbr></th><th scope="col"><abbr title="Asistencias">AS</abbr></th><th scope="col"><abbr title="Robos">RB</abbr></th><th scope="col"><abbr title="Tapones">TP</abbr></th><th scope="col"><abbr title="Pérdidas">PE</abbr></th><th scope="col"><abbr title="Faltas cometidas">FC</abbr></th><th scope="col"><abbr title="Faltas recibidas">FR</abbr></th></tr></thead><tbody>' +
     G.roster.map((p) => boxRow(G, p)).join('') + '</tbody>' + boxFooter(teamTotals(G)) + '</table></div>' +
     '<div class="staffline"><span class="chip">Faltas de equipo · ' + tf + '</span><span class="chip' + (staffFouls(G).out ? ' bad' : '') + '">' + staffSummary(G) + '</span></div>' +
     '<p class="lead" style="font-size:.8rem">T2/T3/TL: convertidos/intentos · RO/RD/RT: rebotes · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas.</p>');
