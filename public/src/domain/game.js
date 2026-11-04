@@ -10,6 +10,7 @@ import { findPlayer } from './describe.js';
 /** Completa un partido recién leído del store con valores por defecto. Muta `game`. */
 export function hydrateGame(game, events) {
   game.events = events;
+  delete game.lock; // lo maneja application/game-lock
   game.oppP = game.oppP || {};
   game.status = game.status || 'live';
   game.seq = Math.max(game.seq || 1, events.reduce((a, e) => Math.max(a, (e.seq || 0) + 1), 1));
@@ -19,7 +20,7 @@ export function hydrateGame(game, events) {
 /** Documento del partido para guardar (sin jugadas, con resumen del tanteador). */
 export function gameDocument(game) {
   const doc = {};
-  Object.keys(game).forEach((k) => { if (k !== 'events' && k !== 'id') doc[k] = game[k]; });
+  Object.keys(game).forEach((k) => { if (k !== 'events' && k !== 'id' && k !== 'lock') doc[k] = game[k]; });
   doc.summary = { us: ourScore(game), them: opponentScore(game) };
   return doc;
 }

@@ -172,7 +172,7 @@ Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos 
 
 ## Límites conocidos (Fase 0)
 
-- **Un dispositivo por partido.** Si se abre el mismo partido en dos tablets a la vez, una puede pisar el reloj y los jugadores en cancha de la otra.
+- **Un dispositivo por partido.** El partido se carga desde un solo dispositivo (o pestaña) a la vez: si está abierto en otro, la app avisa y ofrece «Abrir acá igual», que hace que el otro deje de guardar. El bloqueo se renueva cada 30 s y vence solo a los 90 s si el dispositivo se apaga. No hay sincronización en vivo entre dispositivos.
 - **El tanteador del rival es manual.** El pase a suplementario depende de que esté bien cargado.
 - **Las reglas de Firestore no se probaron contra el emulador.** Antes de un uso real conviene verificar que un correo fuera de la lista no ve nada y que un usuario habilitado no puede leer los partidos de otro.
 - La interfaz está solo en español (Argentina).

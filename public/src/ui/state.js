@@ -6,12 +6,14 @@ export const app = {
   /** Puerto de datos (infrastructure/store). */
   store: null,
   /** Sesión del partido en curso (application/game-session). */
-  session: null
+  session: null,
+  /** Bloqueo de partido por dispositivo (application/game-lock). */
+  lock: null
 };
 
 /** Estado de la app (qué pantalla, quién, qué datos). */
 export const state = {
-  view: 'boot', // boot | login | denied | home | setup | team | loading | game
+  view: 'boot', // boot | login | denied | home | setup | team | loading | locked | game
   user: null,
   profile: null,
   games: null,  // null = cargando
@@ -19,6 +21,7 @@ export const state = {
   teams: null,  // null = cargando
   teamEdit: null,
   setup: null,
+  lockInfo: null, // partido abierto en otro dispositivo: {gameId, holder, team, opponent}
   pending: 0
 };
 

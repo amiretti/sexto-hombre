@@ -122,6 +122,8 @@ export function createGameSession({ store, onSaveError }) {
     /** Empieza a llevar `g` (o null para soltar el partido actual, guardándolo antes). */
     open(g) { if (game && game !== g) persistNow(); game = g; },
     close() { if (game) persistNow(); game = null; },
+    /** Suelta el partido SIN guardar (otro dispositivo tomó el control). */
+    abandon() { clearTimeout(timer); game = null; },
     persistNow,
     schedulePersist,
     addEvent,
