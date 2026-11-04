@@ -10,10 +10,10 @@ import { textField, colorField, competitionField, periodLengthField } from '../c
 
 function playerRowHTML(p) {
   const on = p.active !== false;
-  return '<div class="rrow' + (on ? '' : ' off') + '"><input class="n" inputmode="numeric" maxlength="2" aria-label="Número" id="n-' + p.id + '" data-pid="' + p.id + '" data-pf="num" value="' + esc(p.num) + '">' +
-    '<input aria-label="Nombre" id="m-' + p.id + '" data-pid="' + p.id + '" data-pf="name" value="' + esc(p.name) + '" placeholder="Nombre y apellido">' +
-    '<button class="starter" data-a="tp-active" data-id="' + p.id + '" aria-pressed="' + on + '">' + (on ? 'Activo' : 'De baja') + '</button>' +
-    (p.fresh ? '<button class="rm" data-a="tp-rm" data-id="' + p.id + '" aria-label="Quitar jugador">×</button>' : '<span></span>') + '</div>';
+  return '<div class="rrow' + (on ? '' : ' off') + '"><input class="n" inputmode="numeric" maxlength="2" aria-label="Número" id="n-' + esc(p.id) + '" data-pid="' + esc(p.id) + '" data-pf="num" value="' + esc(p.num) + '">' +
+    '<input aria-label="Nombre" id="m-' + esc(p.id) + '" data-pid="' + esc(p.id) + '" data-pf="name" value="' + esc(p.name) + '" placeholder="Nombre y apellido">' +
+    '<button class="starter" data-a="tp-active" data-id="' + esc(p.id) + '" aria-pressed="' + on + '">' + (on ? 'Activo' : 'De baja') + '</button>' +
+    (p.fresh ? '<button class="rm" data-a="tp-rm" data-id="' + esc(p.id) + '" aria-label="Quitar jugador">×</button>' : '<span></span>') + '</div>';
 }
 
 function headerHTML(t) {

@@ -1,7 +1,7 @@
 // Tablero: tanteador, reloj, faltas de equipo y puntos del rival.
 
 import { esc } from '../../../shared/html.js';
-import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../../../shared/colors.js';
+import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, safeColor } from '../../../shared/colors.js';
 import { remainingMs, formatSeconds, periodShort, periodLong } from '../../../domain/clock.js';
 import { ourScore, opponentScore, teamFouls, isEnded } from '../../../domain/stats.js';
 import { $ } from '../../dom.js';
@@ -27,12 +27,12 @@ function clockControls(G, r, ended) {
 
 function ourSide(G, pos) {
   const tf = teamFouls(G, G.period);
-  return '<div class="side ' + pos + '"><span class="score">' + ourScore(G) + '</span><span class="tname"><span class="cbar" style="background:' + esc(G.teamColor || DEFAULT_TEAM_COLOR) + '"></span>' + esc(G.team) + '</span>' +
+  return '<div class="side ' + pos + '"><span class="score">' + ourScore(G) + '</span><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.teamColor, DEFAULT_TEAM_COLOR)) + '"></span>' + esc(G.team) + '</span>' +
     '<span class="sub">Faltas eq. <span class="tfdots' + (tf >= 4 ? ' pen' : '') + '">' + foulDots(tf) + '</span>' + penaltyTag(tf) + '</span></div>';
 }
 
 function theirSide(G, pos) {
-  return '<div class="side ' + pos + '"><span class="tname"><span class="cbar" style="background:' + esc(G.oppColor || DEFAULT_OPPONENT_COLOR) + '"></span>' + esc(G.opponent) + '</span><span class="score">' + opponentScore(G) + '</span>' +
+  return '<div class="side ' + pos + '"><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.oppColor, DEFAULT_OPPONENT_COLOR)) + '"></span>' + esc(G.opponent) + '</span><span class="score">' + opponentScore(G) + '</span>' +
     '<span class="sub"><button class="oppb" data-a="opp" data-d="1">+1</button><button class="oppb" data-a="opp" data-d="2">+2</button><button class="oppb" data-a="opp" data-d="3">+3</button><button class="oppb" data-a="opp" data-d="-1" aria-label="Restar un punto al rival">−</button></span></div>';
 }
 

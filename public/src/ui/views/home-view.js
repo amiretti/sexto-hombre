@@ -2,7 +2,7 @@
 
 import { esc } from '../../shared/html.js';
 import { formatDate } from '../../shared/ids.js';
-import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../../shared/colors.js';
+import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, safeColor } from '../../shared/colors.js';
 import { state, ui, isDemo } from '../state.js';
 import { TOAST_HTML } from '../toast.js';
 import { brandLine } from '../components/brand.js';
@@ -21,8 +21,8 @@ function sideHTML(name, color, score, right) {
 
 function gameItemHTML(game) {
   const sm = game.summary || { us: 0, them: 0 }, armed = ui.confirm === 'gdel-' + game.id;
-  const us = [game.team, game.teamColor || DEFAULT_TEAM_COLOR, sm.us];
-  const them = [game.opponent, game.oppColor || DEFAULT_OPPONENT_COLOR, sm.them];
+  const us = [game.team, safeColor(game.teamColor, DEFAULT_TEAM_COLOR), Number(sm.us) || 0];
+  const them = [game.opponent, safeColor(game.oppColor, DEFAULT_OPPONENT_COLOR), Number(sm.them) || 0];
   const [left, right] = game.venue === 'away' ? [them, us] : [us, them];
   return '<li class="gitem"><button class="gopen" data-a="open-game" data-id="' + esc(game.id) + '">' +
     '<span class="gmeta">' + esc(formatDate(game.date)) + (game.competition ? ' · ' + esc(game.competition) : '') + '</span>' +

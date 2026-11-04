@@ -31,7 +31,7 @@ function options(values, selected, label = (v) => v, value = null) {
 function editForm(G, d) {
   let h = '<div class="edit">';
   if (d.type !== 'SUB') {
-    h += '<label>Quién<select id="e-who">' + G.roster.map((p) => '<option value="' + p.id + '"' + (d.who === p.id ? ' selected' : '') + '>#' + esc(p.num) + ' ' + esc(p.name) + '</option>').join('') +
+    h += '<label>Quién<select id="e-who">' + G.roster.map((p) => '<option value="' + esc(p.id) + '"' + (d.who === p.id ? ' selected' : '') + '>#' + esc(p.num) + ' ' + esc(p.name) + '</option>').join('') +
       '<option value="coach"' + (d.who === 'coach' ? ' selected' : '') + '>DT</option><option value="bench"' + (d.who === 'bench' ? ' selected' : '') + '>Banca</option></select></label>';
     h += '<label>Acción<select id="e-type">' + options(isStaff(d.who) ? STAFF_EVENT_TYPES : EDITABLE_EVENT_TYPES, d.type, (t) => EVENT_LABELS[t], (t) => t) + '</select></label>';
     if (d.type === 'TOV' || d.type === 'PF') {
@@ -55,7 +55,7 @@ function historyRow(G, e) {
   const pts = eventPoints(e);
   let h = '<li class="hrow"><span class="per2">' + periodShort(e.period) + '</span><span class="t">' + formatSeconds(e.t) + '</span><span class="who">' + esc(e.type === 'SUB' ? 'Cambio' : whoLabel(G, e.who, false)) + '</span>' +
     '<span class="what"><span class="tag ' + eventCategory(e) + '"></span>' + esc(e.type === 'SUB' ? '' : EVENT_LABELS[e.type]) + (d || z ? '<small>' + esc([d, z].filter(Boolean).join(' · ')) + '</small>' : '') + '</span>' +
-    '<span class="pts">' + (pts ? '+' + pts : '') + '</span><span class="hact"><button class="btn" data-a="edit" data-id="' + e.id + '">Editar</button><button class="btn danger' + (armed ? ' armed' : '') + '" data-a="del" data-id="' + e.id + '">' + (armed ? '¿Borrar?' : 'Borrar') + '</button></span>';
+    '<span class="pts">' + (pts ? '+' + pts : '') + '</span><span class="hact"><button class="btn" data-a="edit" data-id="' + esc(e.id) + '">Editar</button><button class="btn danger' + (armed ? ' armed' : '') + '" data-a="del" data-id="' + esc(e.id) + '">' + (armed ? '¿Borrar?' : 'Borrar') + '</button></span>';
   if (ui.draft && ui.draft.id === e.id) h += editForm(G, ui.draft);
   return h + '</li>';
 }
@@ -99,7 +99,7 @@ function subsSheet(G) {
   const sel = ui.subSel, need = requiredOnCourt(G);
   const toggle = (p) => {
     const s = playerStats(G, p.id), on = sel.includes(p.id);
-    return '<button class="stog" data-a="sub-tog" data-id="' + p.id + '" aria-pressed="' + on + '"' + (s.out && !on ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + ' faltas' + (s.out ? ' · ' + s.outWhy : '') + '</small></span></button>';
+    return '<button class="stog" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '"' + (s.out && !on ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + ' faltas' + (s.out ? ' · ' + s.outWhy : '') + '</small></span></button>';
   };
   return sheet('Cambios · ' + periodShort(G.period) + ' ' + clockNow(G), '<span class="chip ' + (sel.length === need ? 'ok' : 'bad') + '">' + sel.length + ' de ' + need + ' en cancha</span>',
     '<p class="lead">Marcá quiénes quedan en cancha. El cambio se registra con el tiempo actual del reloj.</p><div class="slist">' + G.roster.map(toggle).join('') +
@@ -138,7 +138,7 @@ function finalDialog(G) {
 
 function forcedDialog(G) {
   const F = ui.forced, fp = findPlayer(G, F.out), cands = benchCandidates(G);
-  const candidate = (p) => '<button class="stog" data-a="forced-pick" data-id="' + p.id + '"><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + playerStats(G, p.id).fouls + ' faltas</small></span></button>';
+  const candidate = (p) => '<button class="stog" data-a="forced-pick" data-id="' + esc(p.id) + '"><span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + playerStats(G, p.id).fouls + ' faltas</small></span></button>';
   return '<section class="sheet small" role="dialog" aria-label="Cambio obligatorio"><div class="sheet-head"><div class="forced-head"><span class="eyebrow">Reloj detenido · ' + periodShort(G.period) + ' ' + clockNow(G) + '</span>' +
     '<strong>#' + esc(fp.num) + ' ' + esc(fp.name || '') + ' · ' + esc(F.why) + '</strong></div></div><div class="sheet-body">' +
     (cands.length ? '<p class="lead">Tiene que salir. Elegí quién entra:</p><div class="slist">' + cands.map(candidate).join('') + '</div>'

@@ -150,6 +150,8 @@ Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas d
 
 Firestore usa caché persistente: cada jugada se guarda al instante en el dispositivo y se envía sola cuando vuelve la conexión. La barra muestra «Guardado» o «N sin enviar». El service worker guarda la app, que abre sin señal después de haberse abierto una vez con conexión.
 
+Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos locales de la app, pensando en tablets compartidas. Si quedan cambios sin enviar, la app avisa antes, porque se perderían.
+
 ## Compartir por WhatsApp
 
 «Compartir PDF» genera la planilla en el dispositivo y abre el menú de compartir del sistema, donde se elige WhatsApp. Una web no puede mandarle un archivo directo a WhatsApp, por eso pasa por ese menú. En una computadora sin menú de compartir, el PDF se descarga. Al finalizar el partido, la app ofrece compartirlo.

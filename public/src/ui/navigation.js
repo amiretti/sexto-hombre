@@ -2,6 +2,7 @@
 
 import { app, state, ui, resetUi, currentGame } from './state.js';
 import { render } from './render.js';
+import { toast } from './toast.js';
 import { hydrateGame } from '../domain/game.js';
 import { saveSetupDraft } from '../infrastructure/platform/setup-draft-storage.js';
 import { keepScreenOn } from '../infrastructure/platform/device.js';
@@ -95,6 +96,16 @@ export const navigationActions = {
     ui.authErr = '';
     app.store.signIn().catch((e) => { ui.authErr = 'No se pudo ingresar: ' + (e.code || e.message); render(); });
   },
-  'logout': () => { stopWatching(); app.store.signOut(); },
+  'logout': () => {
+    // Al salir se borran los datos del dispositivo: lo que no llegó al servidor se perdería.
+    if (state.pending > 0 && ui.confirm !== 'logout') {
+      ui.confirm = 'logout';
+      toast('Hay ' + state.pending + ' cambios sin enviar. Si salís ahora se pierden. Tocá «Salir» de nuevo para salir igual.', true);
+      return;
+    }
+    stopWatching();
+    app.session.close();
+    app.store.signOut().finally(() => location.reload());
+  },
   'retry-allow': () => onUser(state.user)
 };

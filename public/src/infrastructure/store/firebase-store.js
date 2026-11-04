@@ -2,6 +2,7 @@
 
 import { createPendingTracker } from './pending-tracker.js';
 import { clean, userInfo, sortGames, sortTeams, sortEvents } from './serialization.js';
+import { clearLocalAppData } from '../platform/local-data.js';
 
 const SDK = 'https://www.gstatic.com/firebasejs/10.12.2/';
 const REDIRECT_FALLBACK = ['auth/popup-blocked', 'auth/operation-not-supported-in-this-environment', 'auth/cancelled-popup-request'];
@@ -55,7 +56,22 @@ export async function createFirebaseStore(config) {
         throw e;
       }
     },
-    signOut() { return A.signOut(auth); },
+    /**
+     * Cierra la sesión y borra lo que quedó en el dispositivo (tablets compartidas):
+     * caché de Firestore en IndexedDB y datos locales de la app. Después hay que recargar la página,
+     * porque la instancia de Firestore queda terminada.
+     */
+    async signOut() {
+      await A.signOut(auth);
+      try {
+        await F.terminate(db);
+        await F.clearIndexedDbPersistence(db);
+      } catch (e) {
+        // Falla si la app está abierta en otra pestaña: la caché se borra al cerrar sesión ahí.
+        console.warn('No se pudo borrar la caché local de Firestore', e);
+      }
+      clearLocalAppData();
+    },
     async isAllowed(user) {
       try {
         const ok = (await F.getDoc(F.doc(db, 'allowlist', user.email.toLowerCase()))).exists();

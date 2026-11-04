@@ -44,7 +44,7 @@ function foulDots(G, pid) {
 
 function playerCard(G, id) {
   const p = findPlayer(G, id), s = playerStats(G, id);
-  return '<button class="pcard' + (s.out ? ' out' : '') + '" data-a="pick" data-id="' + id + '"' + (s.out ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span>' +
+  return '<button class="pcard' + (s.out ? ' out' : '') + '" data-a="pick" data-id="' + esc(id) + '"' + (s.out ? ' disabled' : '') + '><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span>' +
     foulDots(G, id) + (s.out ? '<span class="outtag">' + (s.fouls >= 5 && s.outWhy === '5 faltas' ? '5 faltas' : 'Descalif.') + '</span>' : '') + '</button>';
 }
 

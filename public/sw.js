@@ -2,13 +2,13 @@
 // - Archivos propios: primero la red (para tomar actualizaciones), si no hay red, la copia guardada.
 // - Firebase SDK (CDN): la copia guardada y se actualiza en segundo plano. Las fuentes las sirve la app (fonts/).
 // - Firestore, login y el resto de las APIs de Google no pasan por acá.
-const VERSION = 'sexto-hombre-v5';
+const VERSION = 'sexto-hombre-v6';
 // Módulos de la app (src/). Al agregar o quitar un archivo, actualizar esta lista y VERSION.
 const MODULES = [
   'src/application/csv-export.js', 'src/application/game-report.js', 'src/application/game-session.js', 'src/domain/catalog.js',
   'src/domain/clock.js', 'src/domain/court.js', 'src/domain/describe.js', 'src/domain/game-setup.js',
   'src/domain/game.js', 'src/domain/stats.js', 'src/domain/team.js', 'src/infrastructure/pdf/pdf-logo.js',
-  'src/infrastructure/pdf/pdf-renderer.js', 'src/infrastructure/pdf/share.js', 'src/infrastructure/platform/device.js', 'src/infrastructure/platform/setup-draft-storage.js',
+  'src/infrastructure/pdf/pdf-renderer.js', 'src/infrastructure/pdf/share.js', 'src/infrastructure/platform/device.js', 'src/infrastructure/platform/local-data.js', 'src/infrastructure/platform/setup-draft-storage.js',
   'src/infrastructure/store/demo-store.js', 'src/infrastructure/store/firebase-store.js', 'src/infrastructure/store/index.js', 'src/infrastructure/store/pending-tracker.js',
   'src/infrastructure/store/serialization.js', 'src/shared/colors.js', 'src/shared/html.js', 'src/shared/ids.js',
   'src/ui/components/brand.js', 'src/ui/components/fields.js', 'src/ui/components/team-card.js', 'src/ui/controllers/form-controller.js',

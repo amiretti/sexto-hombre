@@ -3,6 +3,9 @@
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
 
+/** Coordenada numérica segura para insertar en el SVG (los datos vienen del store). */
+const n = (v) => Number(v) || 0;
+
 const HALF = '<rect class="c-key" x="0" y="505" width="580" height="490"/>' +
   '<g class="c-lines"><rect x="0" y="505" width="580" height="490"/><circle cx="580" cy="750" r="180"/>' +
   '<path d="M0 90 L299 90 A675 675 0 0 1 299 1410 L0 1410"/><path d="M157.5 625 A125 125 0 0 1 157.5 875"/></g>' +
@@ -15,12 +18,12 @@ export const COURT_SVG = '<svg id="court" viewBox="-60 -60 2920 1620" preserveAs
   '<g id="dots"></g><g id="pend"></g></svg>';
 
 function madeDot(e) {
-  return '<circle class="dot-m" cx="' + e.x + '" cy="' + e.y + '" r="30"/>';
+  return '<circle class="dot-m" cx="' + n(e.x) + '" cy="' + n(e.y) + '" r="30"/>';
 }
 
 function missDot(e) {
-  return '<g class="dot-x"><line x1="' + (e.x - 24) + '" y1="' + (e.y - 24) + '" x2="' + (e.x + 24) + '" y2="' + (e.y + 24) + '"/>' +
-    '<line x1="' + (e.x - 24) + '" y1="' + (e.y + 24) + '" x2="' + (e.x + 24) + '" y2="' + (e.y - 24) + '"/></g>';
+  return '<g class="dot-x"><line x1="' + (n(e.x) - 24) + '" y1="' + (n(e.y) - 24) + '" x2="' + (n(e.x) + 24) + '" y2="' + (n(e.y) + 24) + '"/>' +
+    '<line x1="' + (n(e.x) - 24) + '" y1="' + (n(e.y) + 24) + '" x2="' + (n(e.x) + 24) + '" y2="' + (n(e.y) - 24) + '"/></g>';
 }
 
 function shotMarks(game) {
@@ -31,13 +34,13 @@ function shotMarks(game) {
     else if (e.type === '2X' || e.type === '3X') h += missDot(e);
   });
   const last = game.events.filter((e) => e.x != null).slice(-1)[0];
-  if (last) h += '<circle class="dot-last" cx="' + last.x + '" cy="' + last.y + '" r="58"/>';
+  if (last) h += '<circle class="dot-last" cx="' + n(last.x) + '" cy="' + n(last.y) + '" r="58"/>';
   return h;
 }
 
 function pendingMark(p) {
   if (!(p && p.x != null)) return '';
-  return '<circle class="pend-ring" cx="' + p.x + '" cy="' + p.y + '" r="70"/><circle class="pend-core" cx="' + p.x + '" cy="' + p.y + '" r="22"/>';
+  return '<circle class="pend-ring" cx="' + n(p.x) + '" cy="' + n(p.y) + '" r="70"/><circle class="pend-core" cx="' + n(p.x) + '" cy="' + n(p.y) + '" r="22"/>';
 }
 
 export function renderDots() {

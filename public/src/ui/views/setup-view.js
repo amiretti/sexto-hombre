@@ -39,8 +39,8 @@ function matchCardHTML(s, t) {
 function callRowHTML(p, sel) {
   const c = sel[p.id] || {}, on = !!c.in;
   return '<div class="crow' + (on ? '' : ' off') + '"><span class="cn">' + esc(p.num) + '</span><span class="cname">' + esc(p.name || '—') + '</span>' +
-    '<button class="starter callb" data-a="call" data-id="' + p.id + '" aria-pressed="' + on + '">' + (on ? 'Convocado' : 'No va') + '</button>' +
-    '<button class="starter" data-a="starter" data-id="' + p.id + '" aria-pressed="' + !!(on && c.starter) + '"' + (on ? '' : ' disabled') + '>' + (on && c.starter ? 'Titular' : 'Suplente') + '</button></div>';
+    '<button class="starter callb" data-a="call" data-id="' + esc(p.id) + '" aria-pressed="' + on + '">' + (on ? 'Convocado' : 'No va') + '</button>' +
+    '<button class="starter" data-a="starter" data-id="' + esc(p.id) + '" aria-pressed="' + !!(on && c.starter) + '"' + (on ? '' : ' disabled') + '>' + (on && c.starter ? 'Titular' : 'Suplente') + '</button></div>';
 }
 
 function rosterCardHTML(s, t) {

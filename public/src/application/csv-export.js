@@ -6,9 +6,13 @@ import { zoneName } from '../domain/court.js';
 import { playerStats, eventPoints, eventsChronological } from '../domain/stats.js';
 import { findPlayer, whoLabel, eventDetail } from '../domain/describe.js';
 
+/** Texto que una planilla de cálculo interpretaría como fórmula (CSV injection). */
+const FORMULA_START = /^[=+\-@\t\r]/;
+
 function csvCell(v) {
-  const s = String(v == null ? '' : v);
-  return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  let s = String(v == null ? '' : v);
+  if (typeof v !== 'number' && FORMULA_START.test(s)) s = "'" + s;
+  return /[",\n\r;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 
 function toCsv(rows) {

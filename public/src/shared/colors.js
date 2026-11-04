@@ -10,6 +10,16 @@ export const SWATCH_NAMES = {
 };
 export const SWATCHES = Object.keys(SWATCH_NAMES);
 
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
+
+/**
+ * Color válido '#rrggbb' o `fallback`. Usar siempre antes de insertar un color en HTML/CSS:
+ * los colores vienen del store y esc() no impide inyectar propiedades CSS con ';'.
+ */
+export function safeColor(hex, fallback) {
+  return HEX_COLOR.test(String(hex || '')) ? hex : fallback;
+}
+
 /** '#rrggbb' → [r, g, b]. Valores inválidos devuelven `fallback`. */
 export function hexToRgb(hex, fallback = [0, 0, 0]) {
   const h = String(hex || '').replace('#', '');
