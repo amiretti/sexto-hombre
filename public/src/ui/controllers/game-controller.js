@@ -30,6 +30,27 @@ function resetPlayFlow() {
   ui.step = 'loc';
   ui.pending = null;
   ui.player = null;
+  ui.assistFor = null;
+}
+
+const isFieldGoalMade = (type) => type === '2M' || type === '3M';
+
+/** Después de un gol: pregunta por la asistencia (o vuelve a ubicación si no hay a quién asignarla). */
+function askAssistOrReset(scorer, moment) {
+  const others = currentGame().onCourt.filter((id) => id !== scorer);
+  resetPlayFlow();
+  if (!others.length) return;
+  ui.assistFor = { scorer, moment: { ...moment, x: null, y: null } };
+  ui.step = 'assist';
+}
+
+function recordAssist(playerId) {
+  const a = ui.assistFor;
+  if (!a) return;
+  const r = session().recordPlay(a.moment, { type: 'AST', who: playerId });
+  resetPlayFlow();
+  renderGame();
+  if (r.error) toast(r.error, true); else toast('Asistencia: ' + whoLabel(currentGame(), playerId), false, r.event.id);
 }
 
 function goToStep(step) {
@@ -45,9 +66,12 @@ function startPlayAt(x, y, step) {
 }
 
 function record(action) {
-  const result = session().recordPlay(ui.pending, { ...action, who: action.who || ui.player });
+  const moment = ui.pending, who = action.who || ui.player, afterFoulAssist = ui.assistFor;
+  const result = session().recordPlay(moment, { ...action, who });
   if (result.error) { toast(result.error, true); return; }
   resetPlayFlow();
+  if (isFieldGoalMade(action.type)) askAssistOrReset(who, moment);
+  else if (action.type === 'FT' && afterFoulAssist) { ui.assistFor = afterFoulAssist; ui.step = 'assist'; }
   if (result.forced) {
     ui.forced = result.forced;
     ui.overlay = 'forced';
@@ -71,6 +95,7 @@ function recordFoulDrawn(kind) {
   if (and1) {
     const basket = session().recordPlay(moment, { type: kind === 'and1-3' ? '3M' : '2M', who });
     if (basket.error) { toast(basket.error, true); return; }
+    ui.assistFor = { scorer: who, moment: { ...moment, x: null, y: null } };
   }
   const r = session().recordPlay(moment, { type: 'FD', sub, who });
   if (r.error) { toast(r.error, true); return; }
@@ -246,7 +271,12 @@ const handlers = {
   'opp': ({ data }) => { adjustOpponentScore(currentGame(), +data.d); persistView(); renderBoard(); },
   'noloc': () => startPlayAt(null, null, 'player'),
   'staff': () => startPlayAt(null, null, 'staff'),
-  'cancel': () => { resetPlayFlow(); renderPanel(); renderDots(); },
+  'cancel': () => {
+    const pendingAssist = ui.step === 'ft' && ui.ft.afterFoul ? ui.assistFor : null;
+    resetPlayFlow();
+    if (pendingAssist) { ui.assistFor = pendingAssist; ui.step = 'assist'; }
+    renderPanel(); renderDots();
+  },
   'pick': ({ id }) => { ui.player = id; goToStep('action'); },
   'back': () => { ui.player = null; goToStep('player'); },
   'back-action': () => goToStep('action'),
@@ -255,6 +285,8 @@ const handlers = {
   'foul': () => goToStep('foul'),
   'foul-drawn': () => goToStep('fdrawn'),
   'fd-kind': ({ data }) => recordFoulDrawn(data.s),
+  'assist-pick': ({ id }) => recordAssist(id),
+  'assist-none': () => { resetPlayFlow(); renderPanel(); },
   'attack-flip': () => {
     const G = currentGame();
     flipAttackingSide(G);
@@ -337,6 +369,7 @@ function onCourtClick(event) {
   const q = pt.matrixTransform(ctm.inverse());
   const spot = clampToCourt(q.x, q.y);
   if (!spot) return true;
+  if (ui.step === 'assist') resetPlayFlow();
   if (ui.pending && ui.step !== 'loc' && ui.step !== 'staff') { ui.pending.x = spot.x; ui.pending.y = spot.y; }
   else { ui.pending = captureMoment(currentGame(), spot.x, spot.y); ui.step = 'player'; }
   renderPanel();
@@ -357,7 +390,7 @@ function onGameKey(event) {
   if (event.key === 'Escape') {
     if (ui.overlay === 'forced') return true;
     if (ui.overlay) { ui.overlay = null; ui.draft = null; renderOverlay(); }
-    else if (ui.step !== 'loc') { ui.step = 'loc'; ui.pending = null; renderPanel(); renderDots(); }
+    else if (ui.step !== 'loc') { resetPlayFlow(); renderPanel(); renderDots(); }
   }
   return true;
 }

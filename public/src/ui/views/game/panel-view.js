@@ -168,7 +168,21 @@ function staffStep(G) {
     '<button class="abtn tech wide" data-a="act-staff" data-w="bench" data-t="DF">Descalificante a la banca</button></div>';
 }
 
+/** Tras un gol: ¿hubo asistencia? Muestra a los compañeros en cancha. */
+function assistStep(G) {
+  const a = ui.assistFor;
+  const mates = G.onCourt.filter((id) => id !== a.scorer);
+  const card = (id) => {
+    const p = findPlayer(G, id);
+    return '<button class="pcard" data-a="assist-pick" data-id="' + esc(id) + '"><span class="pnum">' + esc(p.num) + '</span><span class="pname">' + esc(shortName(p.name) || 'Jugador') + '</span></button>';
+  };
+  return stepsBar(3) + titleBar('Gol de ' + esc(whoLabel(G, a.scorer)) + ' · ¿Hubo asistencia?', 'assist-none', 'Sin asistencia') +
+    '<div class="pgrid">' + mates.map(card).join('') + '</div>' +
+    '<p class="lead" style="font-size:.82rem">Tocá la cancha para seguir con la próxima jugada.</p>';
+}
+
 const STEPS = {
+  assist: assistStep,
   loc: locationStep,
   player: playerStep,
   action: actionStep,
