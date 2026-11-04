@@ -46,3 +46,13 @@ test('clearLocalAppData borra solo las claves de la app', () => {
   try { clearLocalAppData(); } finally { globalThis.localStorage = previous; }
   assert.deepEqual([...data.keys()], ['otra-app']);
 });
+
+test('clearLocalAppData conserva las preferencias del dispositivo (tema, chicharra)', () => {
+  const data = new Map([['pb-setup-u1', '{}'], ['pb-theme', 'sun'], ['pb-buzzer', 'off'], ['pb-allowed-u1', '1']]);
+  const fake = { getItem: (k) => data.get(k) ?? null, removeItem: (k) => data.delete(k), setItem: (k, v) => data.set(k, v) };
+  const proxy = new Proxy(fake, { ownKeys: () => [...data.keys()], getOwnPropertyDescriptor: () => ({ enumerable: true, configurable: true }) });
+  const previous = globalThis.localStorage;
+  globalThis.localStorage = proxy;
+  try { clearLocalAppData(); } finally { globalThis.localStorage = previous; }
+  assert.deepEqual([...data.keys()].sort(), ['pb-buzzer', 'pb-theme']);
+});

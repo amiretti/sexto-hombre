@@ -471,3 +471,19 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
   .panel[data-step]:not([data-step="loc"]) h3{font-size:.68rem}
   .oppb{min-height:40px}
 }
+
+/* ---- #24: modo sol (alto contraste para usar al aire libre) ---- */
+:root[data-theme="sun"]{
+  --bg:#ffffff; --panel:#ffffff; --ink:#000000; --muted:#262b33; --rule:#5c6470;
+  --accent:#0a33a0; --accent-ink:#ffffff; --accent-soft:#d6e0fb;
+  --board:#000000; --board-2:#1c1c1c; --board-ink:#ffffff; --board-muted:#e2e6ec; --clock:#ffc233;
+  --good:#075e2d; --good-soft:#c6ecd4; --bad:#9e150b; --bad-soft:#f8cfc9; --warn:#6e3f00; --warn-soft:#f7dca8; --bad-ink:#8a1208; --warn-ink:#ffffff;
+  --floor:#ecc78f; --floor-key:#c2783a; --floor-line:#111111; --floor-out:#1b2f52; color-scheme:light}
+:root[data-theme="sun"] body{font-weight:500}
+:root[data-theme="sun"] .abtn,:root[data-theme="sun"] .btn,:root[data-theme="sun"] .pcard,:root[data-theme="sun"] .stog,
+:root[data-theme="sun"] .starter,:root[data-theme="sun"] input,:root[data-theme="sun"] select,:root[data-theme="sun"] .panel,:root[data-theme="sun"] .card{border-width:2px}
+:root[data-theme="sun"] .abtn small,:root[data-theme="sun"] .lead,:root[data-theme="sun"] h3{color:var(--ink)}
+:root[data-theme="sun"] .tfdots i,:root[data-theme="sun"] .fd i{border-color:#9aa3ae}
+:root[data-theme="sun"] .c-lines{stroke-width:10}
+:root[data-theme="sun"] .btn.ghost{border-color:var(--rule)}
+[data-a="sun-toggle"][aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
