@@ -21,13 +21,27 @@
  * @property {(cb: (n: number) => void) => Function} onPending          escrituras sin confirmar
  */
 
-import { firebaseConfig } from '../../../firebase-config.js';
 import { createFirebaseStore } from './firebase-store.js';
 import { createDemoStore } from './demo-store.js';
+
+/**
+ * firebase-config.js no se versiona (ver firebase-config.example.js).
+ * Si no existe, la app arranca en modo demo.
+ */
+async function loadFirebaseConfig() {
+  try {
+    const mod = await import('../../../firebase-config.js');
+    return mod.firebaseConfig || null;
+  } catch (e) {
+    return null;
+  }
+}
 
 /** @returns {Promise<Store>} */
 export async function createStore() {
   const forceDemo = /[?&]demo(=1)?(&|$)/.test(location.search);
-  if (!forceDemo && firebaseConfig && firebaseConfig.apiKey) return createFirebaseStore(firebaseConfig);
+  if (forceDemo) return createDemoStore();
+  const config = await loadFirebaseConfig();
+  if (config && config.apiKey) return createFirebaseStore(config);
   return createDemoStore();
 }

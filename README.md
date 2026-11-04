@@ -87,7 +87,7 @@ flowchart LR
 public/
   index.html             carga la app
   app.js                 punto de entrada: arma las dependencias y registra los controladores
-  firebase-config.js     configuración web del proyecto de Firebase
+  firebase-config.example.js   plantilla de la configuración de Firebase (firebase-config.js no se versiona)
   sw.js                  service worker (lista de módulos en MODULES)
   src/
     shared/  domain/  application/  infrastructure/  ui/
@@ -121,20 +121,20 @@ Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas d
 1. **Creá un proyecto** en la [consola de Firebase](https://console.firebase.google.com). Alcanza el plan Spark, que es gratis.
 2. **Authentication → Método de acceso → Google:** habilitalo y elegí el correo de soporte.
 3. **Firestore Database → Crear base de datos:** en modo producción, en la región más cercana. Para Argentina conviene `southamerica-east1` (São Paulo).
-4. **Configuración del proyecto → Tus apps → Web (`</>`):** registrá la app y reemplazá el objeto de `public/firebase-config.js` con el tuyo.
+4. **Configuración del proyecto → Tus apps → Web (`</>`):** registrá la app, copiá `public/firebase-config.example.js` como `public/firebase-config.js` y completalo con tu configuración. Ese archivo está en `.gitignore`, así que no se sube al repo. Si falta, la app arranca en modo demo.
    - En `authDomain` poné el dominio desde el que vas a servir la app, `TU-PROYECTO.web.app`. Así el login por redirección, que es el que usa la app instalada, funciona en Safari y en navegadores que bloquean cookies de terceros.
    - En Google Cloud Console → APIs y servicios → Credenciales, abrí el cliente OAuth «Web client (auto created by Google Service)». En «URI de redireccionamiento autorizados» agregá `https://TU-PROYECTO.web.app/__/auth/handler`.
 5. **Desplegá:**
    ```bash
    npm i -g firebase-tools
    firebase login
-   firebase use --add          # elegí tu proyecto (o editá .firebaserc)
+   firebase use --add          # elegí tu proyecto (crea .firebaserc; ver .firebaserc.example)
    firebase deploy --only firestore:rules,hosting
    ```
 6. **Habilitá a los usuarios (lista blanca):** en Firestore creá la colección `allowlist`. Por cada persona, agregá un documento cuyo ID sea su correo **en minúsculas**, por ejemplo `asistente@ejemplo.com`. El contenido puede quedar vacío. Quien entre con una cuenta que no está en la lista va a ver «Tu cuenta no está habilitada».
 7. **En la tablet:** abrí `https://TU-PROYECTO.web.app` en Chrome (Android) o Safari (iPad) y elegí «Agregar a la pantalla de inicio». Instalada, abre en pantalla completa y sin señal.
 
-> Los valores de `firebase-config.js` no son secretos: identifican al proyecto. La seguridad la dan `firestore.rules`, la lista blanca y los dominios autorizados de Authentication.
+> La configuración web de Firebase identifica al proyecto, no lo protege: la app publicada la expone igual en el navegador. La seguridad la dan `firestore.rules`, la lista blanca, los dominios autorizados de Authentication y las restricciones de la API key en Google Cloud Console (limitarla a tus dominios).
 
 ### Datos en Firestore
 

@@ -5,3 +5,7 @@ node_modules/
 Thumbs.db
 .vscode/
 .idea/
+
+# Configuración del proyecto de Firebase (no se versiona; ver los .example)
+public/firebase-config.js
+.firebaserc

@@ -2,7 +2,7 @@
 // - Archivos propios: primero la red (para tomar actualizaciones), si no hay red, la copia guardada.
 // - Firebase SDK (CDN): la copia guardada y se actualiza en segundo plano. Las fuentes las sirve la app (fonts/).
 // - Firestore, login y el resto de las APIs de Google no pasan por acá.
-const VERSION = 'sexto-hombre-v4';
+const VERSION = 'sexto-hombre-v5';
 // Módulos de la app (src/). Al agregar o quitar un archivo, actualizar esta lista y VERSION.
 const MODULES = [
   'src/application/csv-export.js', 'src/application/game-report.js', 'src/application/game-session.js', 'src/domain/catalog.js',
@@ -19,7 +19,7 @@ const MODULES = [
   'src/ui/views/game/panel-view.js', 'src/ui/views/game/tools-view.js', 'src/ui/views/home-view.js', 'src/ui/views/setup-view.js',
   'src/ui/views/team-view.js'
 ];
-const SHELL = ['./', 'index.html', 'styles.css', 'app.js', 'firebase-config.js', ...MODULES,
+const SHELL = ['./', 'index.html', 'styles.css', 'app.js', ...MODULES,
   'brand/logo.svg', 'brand/logo-small.svg',
   'fonts.css', 'fonts/saira-condensed-latin-500-normal.woff2', 'fonts/saira-condensed-latin-600-normal.woff2', 'fonts/saira-condensed-latin-700-normal.woff2', 'fonts/saira-condensed-latin-800-normal.woff2', 'fonts/ibm-plex-sans-latin-400-normal.woff2', 'fonts/ibm-plex-sans-latin-500-normal.woff2', 'fonts/ibm-plex-sans-latin-600-normal.woff2', 'fonts/ibm-plex-sans-latin-700-normal.woff2',
   'vendor/jspdf.umd.min.js', 'vendor/jspdf.plugin.autotable.min.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/favicon-32.png'];
