@@ -627,6 +627,10 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .digits,.clock-time{font-family:var(--f-digital);font-weight:700;font-size:.66em;letter-spacing:.02em;line-height:1}
 .side .score{padding-block:.06em}
 
+/* Cerrar aviso */
+.toast .toast-x{background:none;min-width:38px;padding:0;font-size:1.3rem;line-height:1;opacity:.75;margin-left:-6px}
+.toast .toast-x:hover,.toast .toast-x:focus-visible{opacity:1}
+@media (max-width:760px){.toast{padding:6px 6px 6px 14px;gap:10px;font-size:.88rem}.toast>span{flex:1;min-width:0}}
 /* ---------- Inicio: menú de secciones y resumen ---------- */
 .hnav{display:flex;gap:4px;border-bottom:1px solid var(--rule);margin-top:-8px}
 .hnav button{display:inline-flex;align-items:center;gap:8px;border:0;background:none;color:var(--muted);font:inherit;font-weight:600;padding:10px 14px;min-height:44px;border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}

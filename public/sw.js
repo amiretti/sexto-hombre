@@ -2,7 +2,7 @@
 // - Archivos propios: primero la red (para tomar actualizaciones), si no hay red, la copia guardada.
 // - Firebase SDK (CDN): la copia guardada y se actualiza en segundo plano. Las fuentes las sirve la app (fonts/).
 // - Firestore, login y el resto de las APIs de Google no pasan por acá.
-const VERSION = 'sexto-hombre-v25';
+const VERSION = 'sexto-hombre-v26';
 // Módulos de la app (src/). Al agregar o quitar un archivo, actualizar esta lista y VERSION.
 const MODULES = [
   'src/application/csv-export.js', 'src/application/game-lock.js', 'src/application/game-report.js', 'src/application/game-session.js', 'src/application/legacy-migration.js', 'src/application/report-export.js', 'src/application/report-games.js', 'src/domain/catalog.js', 'src/domain/club.js', 'src/domain/competition.js', 'src/domain/player-progress.js', 'src/domain/shot-chart.js',
