@@ -34,7 +34,7 @@ export function isDarkTheme() {
 function paint(theme) {
   document.documentElement.dataset.theme = theme;
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = theme === 'dark' ? '#06080b' : '#10141a';
+  if (meta) meta.content = theme === 'dark' ? '#06080b' : '#fbfcfd';
 }
 
 /**
