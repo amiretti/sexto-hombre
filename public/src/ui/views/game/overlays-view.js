@@ -144,16 +144,43 @@ function syncSheet(G) {
     '<div class="row end"><button class="btn" data-a="close-ov">Cancelar</button><button class="btn primary big" data-a="sync-save">Sincronizar</button></div>', true);
 }
 
+/** Datos del encuentro como chips (se omiten los vacíos o «-»). */
+function matchMeta(G) {
+  const has = (v) => v && String(v).trim() && String(v).trim() !== '-';
+  return [has(G.date) && G.date, has(G.competition) && G.competition, 'Cuartos de ' + G.periodMin + ' min', has(G.coach) && 'DT ' + G.coach]
+    .filter(Boolean).map((t) => '<span class="chip">' + esc(t) + '</span>').join('');
+}
+
+function menuGroup(title, body) {
+  return '<section class="mgroup"><h3>' + title + '</h3>' + body + '</section>';
+}
+
+/** Fila de ajuste: texto a la izquierda, interruptor a la derecha. */
+function settingRow(label, hint, control) {
+  return '<div class="mrow"><span class="mlabel">' + label + (hint ? '<small>' + hint + '</small>' : '') + '</span>' + control + '</div>';
+}
+
+function buzzerSwitchHTML() {
+  const on = isBuzzerEnabled();
+  return '<button type="button" class="theme-switch" role="switch" data-a="buzzer-toggle" aria-checked="' + on + '" aria-label="Chicharra al terminar el tiempo">' +
+    '<span class="ts-track"><span class="ts-knob"></span></span></button>';
+}
+
 function menuSheet(G) {
   const armed = ui.confirm === 'finish', fin = G.status === 'final';
-  return sheet('Partido', '', '<p class="lead">' + esc(G.team) + ' vs ' + esc(G.opponent) + ' · ' + esc(G.date || '') + (G.competition ? ' · ' + esc(G.competition) : '') + ' · cuartos de ' + G.periodMin + ' min' + (G.coach ? ' · DT ' + esc(G.coach) : '') + '</p>' +
-    '<p class="lead">' + (isDemo() ? 'Modo demo: el partido se guarda solo en este dispositivo.' : 'Cada jugada se guarda en tu cuenta. Sin señal queda en el dispositivo y se envía sola cuando vuelve la conexión.') + '</p>' +
-    '<div class="row"><button class="btn share" data-a="share">Compartir planilla (PDF)</button><button class="btn" data-a="ov" data-o="box">Ver planilla</button><button class="btn" data-a="ov" data-o="history">Ver historial</button></div>' +
-    '<div class="row theme-row"><span>Tema</span>' + themeSwitchHTML() + '</div>' +
-    '<div class="row"><button class="btn" data-a="buzzer-toggle" aria-pressed="' + isBuzzerEnabled() + '">Chicharra al terminar el tiempo: ' + (isBuzzerEnabled() ? 'activada' : 'silenciada') + '</button></div>' +
-    '<div class="row end"><button class="btn" data-a="go-home">Volver a mis partidos</button>' +
-    (fin ? '<span class="chip ok">Partido finalizado</span>' : '<button class="btn danger' + (armed ? ' armed' : '') + '" data-a="finish">' + (armed ? 'Tocá de nuevo para finalizar' : 'Finalizar partido') + '</button>') + '</div>' +
-    '<p class="lead" style="font-size:.8rem">Finalizá el partido si no terminó con el reloj (por ejemplo, si no lo usaste). Podés seguir corrigiendo jugadas después.</p>', true);
+  const head = '<div class="mhead"><strong class="mmatch">' + esc(G.team) + ' <span>vs</span> ' + esc(G.opponent) + '</strong><div class="mmeta">' + matchMeta(G) + '</div></div>';
+  const planilla = menuGroup('Planilla', '<div class="mgrid"><button class="btn share wide" data-a="share">Compartir planilla (PDF)</button>' +
+    '<button class="btn" data-a="ov" data-o="box">Ver planilla</button><button class="btn" data-a="ov" data-o="history">Ver historial</button></div>');
+  const ajustes = menuGroup('Ajustes', '<div class="mset">' +
+    settingRow('Tema', 'Claro u oscuro', themeSwitchHTML()) +
+    settingRow('Chicharra', isBuzzerEnabled() ? 'Suena cuando el reloj llega a cero' : 'Silenciada', buzzerSwitchHTML()) + '</div>');
+  const partido = menuGroup('Partido', (fin
+    ? '<p class="mdone"><span class="chip ok">Partido finalizado</span> Podés seguir corrigiendo jugadas.</p>'
+    : '<button class="btn danger block' + (armed ? ' armed' : '') + '" data-a="finish">' + (armed ? 'Tocá de nuevo para finalizar' : 'Finalizar partido') + '</button>' +
+      '<p class="mhint">Usalo si el partido no terminó con el reloj (por ejemplo, si no lo usaste). Después podés seguir corrigiendo jugadas.</p>') +
+    '<button class="btn block" data-a="go-home">← Volver a mis partidos</button>');
+  const note = '<p class="mnote">' + (isDemo() ? 'Modo demo: el partido se guarda solo en este dispositivo.' : 'Cada jugada se guarda en tu cuenta. Sin señal queda en el dispositivo y se envía sola cuando vuelve la conexión.') + '</p>';
+  return sheet('Partido', '', head + planilla + ajustes + partido + note, true);
 }
 
 /* ---------- diálogos propios (final, cambio obligatorio) ---------- */
