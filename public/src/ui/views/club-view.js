@@ -9,7 +9,7 @@ import { hasTeams } from '../selectors.js';
 import { colorField } from '../components/fields.js';
 
 function headerHTML(c) {
-  const back = ui.after === 'setup' && hasTeams() ? 'Volver al partido' : 'Mis partidos';
+  const back = ui.after === 'setup' && hasTeams() ? 'Volver al partido' : 'Mi club';
   const note = c.seeded === 'last' ? '<p class="note">Lo armamos con el equipo de tu último partido. Revisalo y guardalo.</p>'
     : c.seeded === 'example' ? '<p class="note">Cargamos un club de ejemplo. <button data-a="club-clear">Vaciar y cargar el mío</button></p>' : '';
   return '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="club-cancel">‹ ' + back + '</button></p><h1>' +

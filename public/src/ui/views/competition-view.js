@@ -6,7 +6,7 @@ import { TOAST_HTML } from '../toast.js';
 import { textField, periodLengthField } from '../components/fields.js';
 
 function headerHTML(c) {
-  const back = ui.after === 'setup' ? 'Volver al partido' : 'Mis partidos';
+  const back = ui.after === 'setup' ? 'Volver al partido' : 'Competiciones';
   return '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="comp-cancel">‹ ' + back + '</button></p><h1>' +
     (c.isNew ? 'Nueva competición' : (esc(c.name) || 'Competición')) + '</h1></div></header>';
 }

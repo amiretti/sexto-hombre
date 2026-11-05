@@ -12,7 +12,7 @@ import { textField, colorField, periodLengthField } from '../components/fields.j
 import { competitionLabel } from '../../domain/competition.js';
 import { teamCardHTML } from '../components/team-card.js';
 
-const HEADER = '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="go-home">‹ Mis partidos</button></p><h1>Nuevo partido</h1></div></header>';
+const HEADER = '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="go-home">‹ Volver</button></p><h1>Nuevo partido</h1></div></header>';
 
 function teamPickerHTML() {
   const teams = resolvedTeams();

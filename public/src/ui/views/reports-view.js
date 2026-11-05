@@ -98,6 +98,6 @@ function bodyHTML() {
 
 export function reportsHTML() {
   const players = playersInGames(state.reportGames || []);
-  return '<div class="setup reports"><header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="go-home">‹ Mis partidos</button></p><h1 id="rep-h1" tabindex="-1">Informes</h1></div></header>' +
+  return '<div class="setup reports"><header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="go-home">‹ Volver</button></p><h1 id="rep-h1" tabindex="-1">Informes</h1></div></header>' +
     (state.reports.teamId ? filtersHTML(state.reports, players) : '') + bodyHTML() + TOAST_HTML + '</div>';
 }

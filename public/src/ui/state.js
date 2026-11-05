@@ -26,6 +26,8 @@ export const state = {
   teamEdit: null,
   reports: null,     // filtros del informe: {teamId, playerId, competitionId, from, to, tab, mode, stat}
   reportGames: null, // partidos del informe con sus jugadas (null = juntándolos)
+  homeTab: 'inicio', // sección del inicio: inicio | partidos | club | competiciones
+  dash: null,        // líderes del resumen: {key, leaders: null (calculando) | [...]} (domain/dashboard seasonLeaders)
   setup: null,
   lockInfo: null, // partido abierto en otro dispositivo: {gameId, holder, team, opponent}
   pending: 0

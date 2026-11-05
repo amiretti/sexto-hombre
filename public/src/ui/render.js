@@ -3,7 +3,7 @@
 import { state } from './state.js';
 import { $ } from './dom.js';
 import { loginHTML, deniedHTML } from './views/auth-view.js';
-import { homeHTML } from './views/home-view.js';
+import { homeHTML, HOME_TABS, homeTab } from './views/home-view.js';
 import { teamHTML } from './views/team-view.js';
 import { clubHTML } from './views/club-view.js';
 import { competitionHTML } from './views/competition-view.js';
@@ -30,7 +30,7 @@ const SCREENS = {
 
 const TITLES = {
   boot: 'Cargando', loading: 'Abriendo el partido', login: 'Ingresar', denied: 'Cuenta no habilitada',
-  home: 'Mis partidos', setup: 'Nuevo partido', team: 'Plantel', club: 'Club', competition: 'Competición', reports: 'Informes', locked: 'Partido abierto en otro dispositivo'
+  home: 'Inicio', setup: 'Nuevo partido', team: 'Plantel', club: 'Club', competition: 'Competición', reports: 'Informes', locked: 'Partido abierto en otro dispositivo'
 };
 
 /** Título de la pestaña (lo anuncian los lectores de pantalla al cambiar de pantalla). */
@@ -40,7 +40,8 @@ export function setPageTitle(text) {
 
 export function render() {
   const root = $('#app');
-  if (TITLES[state.view]) setPageTitle(TITLES[state.view]);
+  if (state.view === 'home') setPageTitle(HOME_TABS.find((t) => t.id === homeTab()).title);
+  else if (TITLES[state.view]) setPageTitle(TITLES[state.view]);
   const screen = SCREENS[state.view];
   if (screen) { root.innerHTML = screen(); return; }
   root.innerHTML = gameShellHTML();

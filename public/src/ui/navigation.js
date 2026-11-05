@@ -9,6 +9,15 @@ import { saveSetupDraft } from '../infrastructure/platform/setup-draft-storage.j
 import { keepScreenOn } from '../infrastructure/platform/device.js';
 import { migrateLegacyTeams, migrateLegacyCompetitions } from '../application/legacy-migration.js';
 import { reportSaveError } from './toast.js';
+import { refreshDashboard, clearDashboard } from './dashboard-loader.js';
+
+/** Re-dibuja el inicio cuando terminan de leerse los líderes. */
+const renderIfHome = () => { if (state.view === 'home') render(); };
+
+/** El resumen solo se calcula si se está mirando. */
+export function refreshHomeDashboard() {
+  if (state.view === 'home' && (state.homeTab || 'inicio') === 'inicio') refreshDashboard(renderIfHome);
+}
 
 let unwatch = null;
 let authSeq = 0;
@@ -28,6 +37,7 @@ function watchUserData() {
   const offGames = app.store.watchGames(uid, (list, fromCache, err) => {
     if (err) state.gamesErr = 'No se pudieron leer los partidos (' + (err.code || err.message) + ').';
     else { state.games = list; state.gamesErr = ''; }
+    refreshHomeDashboard();
     if (state.view === 'home') render();
   });
   const offTeams = app.store.watchTeams(uid, (list, err) => {
@@ -71,6 +81,7 @@ export function stopWatching() {
   state.competitions = null;
   state.reports = null;
   state.reportGames = null;
+  clearDashboard();
 }
 
 export function goHome() {
@@ -79,6 +90,7 @@ export function goHome() {
   state.view = 'home';
   resetUi();
   watchUserData();
+  refreshHomeDashboard();
   render();
 }
 
