@@ -25,11 +25,14 @@ _La planilla del cuerpo técnico._
 - **Tiempos muertos y pedidos de revisión** con un toque: detienen el reloj en el acto. Lleva la cuenta de tiempos muertos de cada equipo según FIBA (2 en el primer tiempo, 3 en el segundo, 1 por suplementario).
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
 - **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
-- **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico. Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
+- **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico, y una segunda página con el mapa de tiros del partido (convertidos y errados en media cancha, con la tabla por zona). Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
 - **Clubes y planteles:** el club guarda el nombre, los colores (titular y alternativo) y los estadios; cada club tiene uno o más planteles, cada uno con su categoría (Mini a Maxi) y rama (masculino, femenino o mixto) y sus jugadores. En cada partido elegís el plantel, el rival, los convocados y el quinteto.
 - **Competiciones:** ligas y torneos con temporada y duración del cuarto. Se eligen al crear cada partido (o «Amistoso»), proponen su duración y el plantel recuerda la última que usó. Se crean desde Mis partidos o desde la previa.
 - **Camiseta:** se propone la titular del club; si se parece al color del rival, pasás a la alternativa con un toque.
 - **Estadios:** cada club guarda sus canchas (nombre y ubicación). Podés marcar una por defecto, que se propone en cada partido de local y se cambia si hace falta; queda en la lista de partidos y en la planilla.
+- **Informes:** por plantel, con filtros de jugador (o todo el equipo), competición y fechas.
+  - *Mapa de tiros:* todos los tiros de campo llevados a una misma media cancha (se tiene en cuenta hacia dónde se atacaba en cada cuarto) y agrupados en 12 zonas. Se colorea por **volumen** (desde dónde se tira más) o por **acierto**: «normal» es un punto por tiro (50% en dobles, 33% en triples) y en rojo queda donde más se erra para lo que vale el tiro. Debajo, la tabla por zona.
+  - *Progreso:* gráfico de línea partido a partido de puntos, rebotes, asistencias, robos, tapones, pérdidas, faltas cometidas y recibidas, triples y porcentajes de tiro, con el promedio y la tabla de valores.
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
 - **Modo claro y oscuro:** interruptor con sol y luna en el inicio y en el menú del partido. Mientras no elijas, sigue al sistema; lo que elijas queda guardado en el dispositivo.
 - **Accesible:** se puede usar con teclado y lector de pantalla (WCAG 2.2 AA; axe-core sin violaciones en modo claro y oscuro).
@@ -89,8 +92,8 @@ flowchart LR
 | Capa | Qué contiene | Depende de |
 |---|---|---|
 | `shared/` | ids y fechas, escape de HTML, colores | nada |
-| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, estadísticas y exclusiones, club, plantel, competición, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
-| `application/` | sesión del partido (registrar jugadas, consecuencias, guardado con debounce), reporte para el PDF, exportación CSV | `domain` y el **puerto** `store` |
+| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, zonas del mapa de tiros, estadísticas y exclusiones, progreso por partido, club, plantel, competición, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
+| `application/` | sesión del partido (registrar jugadas, consecuencias, guardado con debounce), reporte para el PDF, partidos de los informes, exportación CSV | `domain` y el **puerto** `store` |
 | `infrastructure/` | `store/` (Firebase o demo con la misma interfaz), `pdf/` (render y Web Share), `platform/` (wake lock, portapapeles, service worker, borrador local) | `shared` |
 | `ui/` | estado, router de pantallas, despachador único de eventos, vistas (HTML) y controladores (acciones `data-a`) | todo lo anterior |
 
@@ -186,6 +189,8 @@ Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos 
 - **Un dispositivo por partido.** El partido se carga desde un solo dispositivo (o pestaña) a la vez: si está abierto en otro, la app avisa y ofrece «Abrir acá igual», que hace que el otro deje de guardar. El bloqueo se renueva cada 30 s y vence solo a los 90 s si el dispositivo se apaga. No hay sincronización en vivo entre dispositivos.
 - **El tanteador del rival es manual.** El pase a suplementario depende de que esté bien cargado.
 - **Las reglas de Firestore no se probaron contra el emulador.** Antes de un uso real conviene verificar que un correo fuera de la lista no ve nada y que un usuario habilitado no puede leer los partidos de otro.
+- **Informes sin minutos jugados.** La app no registra los minutos de cada jugador, así que el progreso muestra totales por partido (no promedios por minuto). Los tiros cargados sin ubicación cuentan en los totales pero no en las zonas.
+- **Los informes leen cada partido con sus jugadas.** La primera vez se piden al servidor (o a la caché del dispositivo); después quedan en memoria mientras el partido no cambie.
 - La interfaz está solo en español (Argentina).
 
 ## Créditos

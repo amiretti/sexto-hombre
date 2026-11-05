@@ -85,6 +85,7 @@ export function homeHTML() {
     '<header class="setup-head"><div>' + brandLine() + '<h1>Mis partidos</h1></div>' + userHTML(state.user) + '</header>' +
     (isDemo() ? '<p class="note">Modo demo: los datos quedan solo en este dispositivo. Configurá Firebase para guardar en la nube con tu cuenta de Google.</p>' : '') +
     (state.gamesErr ? '<p class="err">' + esc(state.gamesErr) + '</p>' : '') +
-    '<div class="row"><button class="btn primary big" data-a="new-setup"' + (state.teams === null || state.clubs === null ? ' disabled' : '') + '>+ Nuevo partido</button></div>' +
+    '<div class="row"><button class="btn primary big" data-a="new-setup"' + (state.teams === null || state.clubs === null ? ' disabled' : '') + '>+ Nuevo partido</button>' +
+    ((state.games || []).length && (state.teams || []).length ? '<button class="btn big" data-a="open-reports">Informes</button>' : '') + '</div>' +
     clubsSectionHTML() + competitionsSectionHTML() + '<h2 class="hsec">Partidos</h2>' + gamesListHTML() + TOAST_HTML + '</div>';
 }
