@@ -6,6 +6,7 @@
   --good:#16834a; --good-soft:#d9efe2; --bad:#c3372c; --bad-soft:#f7dfdc; --warn:#a86300; --warn-soft:#f9ead0; --bad-ink:#a52a20; --warn-ink:#fff;
   --floor:#e2bd86; --floor-key:#c27c3b; --floor-line:#fffaf1; --floor-out:#2a4672;
   --f-display:"Saira Condensed","Arial Narrow",Arial,sans-serif;
+  --f-digital:"DSEG7 Classic","Saira Condensed",monospace;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --r:10px;
 }
@@ -258,6 +259,8 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
   /* order:-1 → puntaje siempre arriba del nombre, sea local o visitante (el DOM los ordena distinto) */
   .side .score,.side.away .score{grid-row:auto;grid-column:auto;font-size:2.2rem;order:-1}
   .side .sub{justify-content:center!important}
+  /* arriba: el local tiene la fila de faltas y el visitante no; centrados quedaban a distinta altura */
+  .side{align-self:start}
   .clock{font-size:2.2rem;min-width:3.8em}
   .hint{display:none}
   .hrow{grid-template-columns:44px 56px minmax(0,1fr) auto;row-gap:2px}
@@ -619,3 +622,7 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .mhint{margin:-2px 0 4px;color:var(--muted);font-size:.8rem}
 .mdone{margin:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}
 .mnote{margin:4px 0 0;color:var(--muted);font-size:.78rem;text-align:center}
+
+/* Dígitos de 7 segmentos para tanteador y reloj (DSEG7 es más ancha que Saira: se achica respecto del contenedor) */
+.digits,.clock-time{font-family:var(--f-digital);font-weight:700;font-size:.66em;letter-spacing:.02em;line-height:1}
+.side .score{padding-block:.06em}
