@@ -52,6 +52,10 @@ _La planilla del cuerpo técnico._
 
 ## Capturas
 
+Datos de ejemplo del modo demo.
+
+### Tablet y computadora
+
 <table>
   <tr>
     <td width="50%"><img src="docs/screenshots/accion.png" alt="Elegir la acción: la app sugiere triple según la zona tocada"><br><sub><b>Cargar una jugada.</b> Ubicación, jugador y acción. Sugiere doble o triple según dónde tocaste.</sub></td>
@@ -59,7 +63,32 @@ _La planilla del cuerpo técnico._
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/historial.png" alt="Historial de jugadas con opciones para editar y borrar"><br><sub><b>Historial editable.</b> Se corrige o se borra cualquier jugada.</sub></td>
-    <td width="50%"><img src="docs/screenshots/previa.png" alt="Previa del partido: rival, colores, convocados y quinteto titular"><br><sub><b>Previa del partido.</b> Rival, colores, convocados y quinteto.</sub></td>
+    <td width="50%"><img src="docs/screenshots/menu-partido.png" alt="Hoja Partido con planilla, ajustes de tema y chicharra, y finalizar partido"><br><sub><b>Hoja «Partido».</b> Planilla, tema, chicharra y cierre del partido.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/previa.png" alt="Previa del partido: rival, camiseta, estadio, competición, convocados y quinteto titular"><br><sub><b>Previa del partido.</b> Rival, camiseta, estadio, competición, convocados y quinteto.</sub></td>
+    <td width="50%"><img src="docs/screenshots/inicio.png" alt="Inicio con el partido en curso, el récord de la temporada y los últimos resultados"><br><sub><b>Inicio.</b> Partido en curso, récord de la temporada y últimos resultados.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/informes-tiros.png" alt="Informe con el mapa de tiros por zonas coloreado por acierto"><br><sub><b>Mapa de tiros</b> por zonas, coloreado por acierto o por volumen.</sub></td>
+    <td width="50%"><img src="docs/screenshots/informes-progreso.png" alt="Gráfico de línea de los puntos de una jugadora partido a partido, con el promedio"><br><sub><b>Progreso</b> partido a partido, con el promedio.</sub></td>
+  </tr>
+</table>
+
+### Celular
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/m-inicio.png" alt="Inicio en el celular con el menú de secciones abajo"><br><sub><b>Inicio</b> con el menú de secciones abajo.</sub></td>
+    <td width="33%"><img src="docs/screenshots/m-accion.png" alt="Hoja de carga de la acción en el celular"><br><sub><b>Cargar una jugada</b> desde la hoja de abajo.</sub></td>
+    <td width="33%"><img src="docs/screenshots/m-informes.png" alt="Mapa de tiros y tabla por zona en el celular"><br><sub><b>Informes</b> en pantalla chica.</sub></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/m-partido.png" alt="Partido en el celular en horizontal, modo claro"><br><sub><b>En horizontal,</b> la cancha y el panel lado a lado.</sub></td>
+    <td width="50%"><img src="docs/screenshots/m-partido-oscuro.png" alt="Partido en el celular en horizontal, modo oscuro"><br><sub><b>Modo oscuro.</b></sub></td>
   </tr>
 </table>
 
