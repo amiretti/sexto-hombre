@@ -12,7 +12,7 @@ import {
   playerStats, ourScore, opponentScore, teamFouls, opponentTeamFouls, teamTurnovers, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
 } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
-import { benchCandidates } from '../../../domain/game.js';
+import { benchCandidates, NOTES_MAX } from '../../../domain/game.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame, isDemo } from '../../state.js';
 import { renderDots } from './court-svg.js';
@@ -102,7 +102,26 @@ function boxSheet(G) {
     '<p class="swipe-hint">Deslizá la tabla para ver todas las columnas →</p><div class="tablewrap" tabindex="0" role="region" aria-label="Planilla por jugador"><table class="box"><caption class="visually-hidden">Planilla por jugador</caption><thead><tr><th scope="col"><abbr title="Número">Nº</abbr></th><th scope="col" class="l">Jugador</th><th scope="col"><abbr title="Minutos jugados">MIN</abbr></th><th scope="col"><abbr title="Puntos">PTS</abbr></th><th scope="col"><abbr title="Dobles convertidos/intentados">T2</abbr></th><th scope="col"><abbr title="Triples convertidos/intentados">T3</abbr></th><th scope="col"><abbr title="Tiros libres convertidos/intentados">TL</abbr></th><th scope="col"><abbr title="Rebotes ofensivos">RO</abbr></th><th scope="col"><abbr title="Rebotes defensivos">RD</abbr></th><th scope="col"><abbr title="Rebotes totales">RT</abbr></th><th scope="col"><abbr title="Asistencias">AS</abbr></th><th scope="col"><abbr title="Robos">RB</abbr></th><th scope="col"><abbr title="Tapones">TP</abbr></th><th scope="col"><abbr title="Pérdidas">PE</abbr></th><th scope="col"><abbr title="Faltas cometidas">FC</abbr></th><th scope="col"><abbr title="Faltas recibidas">FR</abbr></th></tr></thead><tbody>' +
     G.roster.map((p) => boxRow(G, p)).join('') + '</tbody>' + boxFooter(teamTotals(G)) + '</table></div>' +
     '<div class="staffline"><span class="chip">Faltas de equipo · ' + tf + '</span><span class="chip">Faltas del rival · ' + rf + '</span>' + teamTovChip(G) + '<span class="chip' + (staffFouls(G).out ? ' bad' : '') + '">' + staffSummary(G) + '</span></div>' +
+    notesBlock(G) +
     '<p class="lead" style="font-size:.8rem">MIN minutos jugados · T2/T3/TL: convertidos/intentos · RO/RD/RT: rebotes · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas.</p>');
+}
+
+/* ---------- observaciones ---------- */
+
+/** Observaciones guardadas, para mostrar en la planilla. */
+function notesBlock(G) {
+  return G.notes ? '<div class="notes-view"><h3>Observaciones</h3><p>' + esc(G.notes) + '</p></div>' : '';
+}
+
+/** Campo de observaciones (lo escrito se guarda al cerrar). */
+function notesField(G) {
+  return '<label class="flabel" for="g-notes">Observaciones <small>opcional · se pueden editar después</small></label>' +
+    '<textarea id="g-notes" class="notes" rows="5" maxlength="' + NOTES_MAX + '" placeholder="Arbitraje, lesiones, incidencias, aspectos a trabajar…">' + esc(G.notes || '') + '</textarea>';
+}
+
+function notesSheet(G) {
+  return sheet('Observaciones', '', '<p class="lead">Salen en la planilla y en el PDF. Lo que escribas se guarda al cerrar.</p>' + notesField(G) +
+    '<div class="row end"><button class="btn primary big" data-a="notes-save">Guardar</button></div>', true);
 }
 
 /* ---------- cambios, reloj, menú ---------- */
@@ -183,7 +202,8 @@ function menuSheet(G) {
     settingRow('Tema', 'Claro u oscuro', themeSwitchHTML()) +
     settingRow('Chicharra', isBuzzerEnabled() ? 'Suena cuando el reloj llega a cero' : 'Silenciada', buzzerSwitchHTML()) + '</div>');
   const partido = menuGroup('Partido', (fin
-    ? '<p class="mdone"><span class="chip ok">Partido finalizado</span> Podés seguir corrigiendo jugadas.</p>'
+    ? '<p class="mdone"><span class="chip ok">Partido finalizado</span> Podés seguir corrigiendo jugadas.</p>' +
+      '<button class="btn block" data-a="ov" data-o="notes">' + (G.notes ? 'Editar observaciones' : 'Agregar observaciones') + '</button>'
     : '<button class="btn danger block' + (armed ? ' armed' : '') + '" data-a="finish">' + (armed ? 'Tocá de nuevo para finalizar' : 'Finalizar partido') + '</button>' +
       '<p class="mhint">Usalo si el partido no terminó con el reloj (por ejemplo, si no lo usaste). Después podés seguir corrigiendo jugadas.</p>') +
     '<button class="btn block" data-a="go-home">← Volver al inicio</button>');
@@ -197,8 +217,9 @@ function finalDialog(G) {
   const ot = overtimeCount(G.period);
   return '<section class="sheet small" role="dialog" aria-label="Final del partido"><div class="sheet-head"><div class="forced-head"><span class="eyebrow">Final del partido' + (ot ? ' · ' + ot + ' suplementario' + (ot > 1 ? 's' : '') : '') + '</span>' +
     '<strong class="final-score">' + esc(G.team) + ' ' + ourScore(G) + ' – ' + opponentScore(G) + ' ' + esc(G.opponent) + '</strong></div></div><div class="sheet-body">' +
-    '<p class="lead">¿Querés compartir la planilla? Se genera un PDF con los datos del encuentro y la planilla por jugador.</p>' +
-    '<div class="row end"><button class="btn" data-a="close-ov">Ahora no</button><button class="btn primary big" data-a="share" data-close="1">Compartir planilla</button></div></div></section>';
+    notesField(G) +
+    '<p class="lead">¿Querés compartir la planilla? Se genera un PDF con los datos del encuentro, la planilla por jugador y las observaciones.</p>' +
+    '<div class="row end"><button class="btn" data-a="notes-save">Guardar</button><button class="btn primary big" data-a="notes-share">Guardar y compartir</button></div></div></section>';
 }
 
 const foulsText = (n) => n + (n === 1 ? ' falta' : ' faltas');
@@ -224,6 +245,7 @@ const OVERLAYS = {
   sync: { html: syncSheet, scrim: CLOSABLE_SCRIM },
   menu: { html: menuSheet, scrim: CLOSABLE_SCRIM },
   final: { html: finalDialog, scrim: CLOSABLE_SCRIM },
+  notes: { html: notesSheet, scrim: CLOSABLE_SCRIM },
   forced: { html: forcedDialog, scrim: '<div class="scrim"></div>' }
 };
 

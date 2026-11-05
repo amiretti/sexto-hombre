@@ -122,6 +122,24 @@ function drawFoulsAndLegend(doc, r, W) {
   y += 5;
   doc.setFontSize(7.5); doc.setTextColor(...MUTED);
   doc.text(LEGEND, MARGIN, y, { maxWidth: W - 2 * MARGIN });
+  return y + doc.splitTextToSize(LEGEND, W - 2 * MARGIN).length * 3.4;
+}
+
+/** Observaciones del partido debajo de la leyenda; si no entran, siguen en otra página. */
+function drawNotes(doc, r, W, top) {
+  if (!r.notes) return;
+  const H = doc.internal.pageSize.getHeight(), bottom = H - 14, lineH = 4.2;
+  doc.setFontSize(9);
+  const lines = doc.splitTextToSize(r.notes, W - 2 * MARGIN);
+  let y = top + 4;
+  if (y + 5 + lineH * Math.min(lines.length, 3) > bottom) { doc.addPage(); y = MARGIN + 4; }
+  doc.setTextColor(...INK); doc.setFont('helvetica', 'bold'); doc.text('Observaciones:', MARGIN, y);
+  doc.setFont('helvetica', 'normal');
+  lines.forEach((line) => {
+    y += lineH;
+    if (y > bottom) { doc.addPage(); y = MARGIN + 4; }
+    doc.text(line, MARGIN, y);
+  });
 }
 
 const GOOD = [22, 131, 74], COURT_LINE = [120, 128, 140];
@@ -221,7 +239,7 @@ export function buildPdf(r) {
   const y = drawScoreboard(doc, r, W, L, R);
   drawPeriodsTable(doc, r, W, L, R, y);
   drawBoxScore(doc, r);
-  drawFoulsAndLegend(doc, r, W);
+  drawNotes(doc, r, W, drawFoulsAndLegend(doc, r, W));
   if (r.shotChart) drawShotChartPage(doc, r, W);
   drawPageFooters(doc, r, W);
 

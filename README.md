@@ -29,6 +29,7 @@ _La planilla del cuerpo técnico._
 - **Tiempos muertos y pedidos de revisión** con un toque: detienen el reloj en el acto. Lleva la cuenta de tiempos muertos de cada equipo según FIBA (2 en el primer tiempo, 3 en el segundo, 1 por suplementario).
 - **Pérdidas de equipo:** los 24 segundos y los 8 segundos para pasar la mitad se cargan con un toque, sin jugador ni ubicación (como en las estadísticas FIBA). Detienen el reloj y suman en la fila Equipo de la planilla.
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
+- **Observaciones del partido:** al finalizar (desde el menú o cuando el reloj llega al final) se abre un diálogo para escribirlas: arbitraje, lesiones, incidencias, aspectos a trabajar. Se editan después desde el menú «Partido» y salen en la planilla y en el PDF.
 - **Tablero tipo estadio:** tanteador y reloj con dígitos de 7 segmentos (DSEG7), que siguen el modo claro u oscuro. La hoja «Partido» (botón con engranaje) agrupa la planilla, los ajustes (tema y chicharra) y el cierre del partido.
 - **Minutos jugados:** mientras el jugador está en cancha suma tiempo de reloj; cuando sale, deja de sumar. Se calcula con el quinteto inicial, los cambios y el reloj, así que también aparece en los partidos ya jugados. Se ve en la planilla, en el PDF, en el CSV y al hacer cambios.
 - **Planilla en vivo** por jugador, con minutos, totales y porcentajes. Se exporta a CSV (historial y planilla).
@@ -173,7 +174,7 @@ firebase.json            Hosting + Firestore
 npm test          # Node 22 o más nuevo, sin npm install
 ```
 
-Son 128 tests. Cubren el dominio (reloj, cancha, dirección de ataque, tipo de planilla, estadísticas, minutos jugados, exclusiones, faltas de equipo y del rival, pérdidas de equipo, cambios, edición de jugadas, clubes, competiciones, mapa de tiros, progreso, resumen de la temporada, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el bloqueo por dispositivo, el reporte, la exportación de informes (incluido el ZIP del .xlsx), el CSV y el store demo.
+Son 130 tests. Cubren el dominio (reloj, cancha, dirección de ataque, tipo de planilla, estadísticas, minutos jugados, exclusiones, faltas de equipo y del rival, pérdidas de equipo, cambios, edición de jugadas, clubes, competiciones, mapa de tiros, progreso, resumen de la temporada, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el bloqueo por dispositivo, el reporte, la exportación de informes (incluido el ZIP del .xlsx), el CSV y el store demo.
 
 **Al agregar un módulo en `src/`**, sumalo a `MODULES` en `public/sw.js` y subí `VERSION`. Si no, la app instalada no lo va a tener sin señal.
 
@@ -216,7 +217,7 @@ Son 128 tests. Cubren el dominio (reloj, cancha, dirección de ataque, tipo de p
 | `clubs/{id}` | Club: nombre, color titular (`color`) y alternativo (`altColor`), estadios (`id`, `name`, `location`) y estadio por defecto (`defaultVenueId`) |
 | `competitions/{id}` | Competición: nombre, temporada (`season`) y duración del cuarto (`periodMin`) |
 | `teams/{id}` | Plantel: club (`clubId`), categoría y rama (`branch`: `m`, `f` o `x`), DT, última competición usada (`lastCompetitionId`), duración por defecto, jugadores (`id`, `num`, `name`, `active`) y último quinteto |
-| `games/{id}` | Partido: plantel y club de origen, categoría, competición (id y copia del nombre), local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado, tipo de planilla (`sheet`: `full` o `basic`; sin el campo, avanzada) y resumen del tanteador |
+| `games/{id}` | Partido: plantel y club de origen, categoría, competición (id y copia del nombre), local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado, tipo de planilla (`sheet`: `full` o `basic`; sin el campo, avanzada), observaciones (`notes`, hasta 2000 caracteres) y resumen del tanteador |
 | `games/{id}/events/{id}` | Una jugada por documento, con ID generado en el dispositivo, `seq`, `rev` y `deleted` |
 
 Los planteles creados antes de que existieran los clubes se migran solos al abrir la app: se agrupan por nombre en un club (con su color y sus estadios) y quedan con la categoría «Primera», que se puede editar. Las competiciones que estaban escritas en el plantel pasan a ser competiciones de la temporada actual, y las categorías escritas a mano se interpretan («U17 Femenino» queda como U17, rama femenina). Los partidos ya jugados no cambian.
