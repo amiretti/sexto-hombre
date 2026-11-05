@@ -2,6 +2,7 @@
 
 import { isFoul, isStaff, COACH, BENCH } from './catalog.js';
 import { REGULAR_PERIODS, remainingMs } from './clock.js';
+import { playingTime } from './playing-time.js';
 
 /** Puntos que suma una jugada a nuestro equipo. */
 export function eventPoints(e) {
@@ -39,7 +40,7 @@ export function isEnded(game, now = Date.now()) {
 
 export const EMPTY_PLAYER_STATS = Object.freeze({
   pts: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, ast: 0, stl: 0, blk: 0, tov: 0,
-  pf: 0, fd: 0, tf: 0, uf: 0, df: 0
+  pf: 0, fd: 0, tf: 0, uf: 0, df: 0, sec: 0
 });
 
 /** Razón por la que un jugador quedó afuera, '' si sigue habilitado. */
@@ -50,9 +51,10 @@ export function exclusionReason(s) {
   return '';
 }
 
-/** Planilla individual de un jugador. Incluye `fouls`, `out` y `outWhy`. */
-export function playerStats(game, playerId) {
+/** Planilla individual de un jugador. Incluye `fouls`, `out`, `outWhy` y `sec` (segundos jugados). */
+export function playerStats(game, playerId, now = Date.now()) {
   const s = { ...EMPTY_PLAYER_STATS };
+  s.sec = playingTime(game, now)[playerId] || 0;
   game.events.forEach((e) => {
     if (e.who !== playerId) return;
     switch (e.type) {
@@ -134,7 +136,7 @@ export function teamTurnovers(game) {
 
 /** Suma las estadísticas de todo el plantel del partido, más las pérdidas de equipo. */
 export function teamTotals(game) {
-  const T = { pts: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, ast: 0, stl: 0, blk: 0, tov: 0, fouls: 0, fd: 0 };
+  const T = { pts: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, ast: 0, stl: 0, blk: 0, tov: 0, fouls: 0, fd: 0, sec: 0 };
   game.roster.forEach((p) => { const s = playerStats(game, p.id); for (const k in T) T[k] += s[k]; });
   T.teamTov = teamTurnovers(game);
   T.tov += T.teamTov;

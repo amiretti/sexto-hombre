@@ -7,8 +7,8 @@ import {
 } from './pdf-renderer.js';
 
 /** Encabezados cortos para que entren las 14 estadísticas. */
-const SHORT = { pts: 'PTS', reb: 'RT', ast: 'AS', stl: 'RB', blk: 'TP', tov: 'PE', fouls: 'FC', fd: 'FR', ro: 'RO', rd: 'RD', m3: 'T3', fg: '%TC', p3: '%T3', ft: '%TL' };
-const LEGEND = 'PTS puntos · RT/RO/RD rebotes totales, ofensivos y defensivos · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas · T3 triples convertidos · %TC/%T3/%TL acierto en tiros de campo, triples y libres (— sin intentos).';
+const SHORT = { pts: 'PTS', min: 'MIN', reb: 'RT', ast: 'AS', stl: 'RB', blk: 'TP', tov: 'PE', fouls: 'FC', fd: 'FR', ro: 'RO', rd: 'RD', m3: 'T3', fg: '%TC', p3: '%T3', ft: '%TL' };
+const LEGEND = 'PTS puntos · MIN minutos jugados (solo por jugador) · RT/RO/RD rebotes totales, ofensivos y defensivos · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas · T3 triples convertidos · %TC/%T3/%TL acierto en tiros de campo, triples y libres (— sin intentos).';
 
 const num = (v) => (v == null ? '—' : String(Math.round(v * 10) / 10).replace('.', ','));
 

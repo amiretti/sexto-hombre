@@ -99,7 +99,8 @@ test('csv exports', () => {
   assert.equal(lines[2], '1°C,1:40,4,#4 Tomás Ferreyra,Triple convertido,,3,zona de triple,1000,750');
   const box = boxScoreCsv(g).split('\n');
   assert.equal(box.length, 8);
-  assert.equal(box[1], '4,Tomás Ferreyra,3,0,0,1,1,0,0,0,0,0,0,0,0,0,0');
+  assert.equal(box[0].startsWith('Numero,Jugador,MIN,PTS'), true);
+  assert.equal(box[1], '4,Tomás Ferreyra,0:00,3,0,0,1,1,0,0,0,0,0,0,0,0,0,0');
   assert.equal(historyCsv(makeGame({ coach: 'a,b', events: [ev('TF', 'coach')] })).split('\n')[1].includes('"DT · a,b"'), true);
 });
 
