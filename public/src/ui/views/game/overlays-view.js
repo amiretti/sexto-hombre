@@ -9,7 +9,7 @@ import { periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } fr
 import { zoneName } from '../../../domain/court.js';
 import { formatMinutes } from '../../../domain/playing-time.js';
 import {
-  playerStats, ourScore, opponentScore, teamFouls, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
+  playerStats, ourScore, opponentScore, teamFouls, opponentTeamFouls, teamTurnovers, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
 } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail, eventCategory, eventActor } from '../../../domain/describe.js';
 import { benchCandidates } from '../../../domain/game.js';
@@ -89,12 +89,19 @@ function boxFooter(T) {
     '<td>' + T.ro + '</td><td>' + T.rd + '</td><td>' + (T.ro + T.rd) + '</td><td>' + T.ast + '</td><td>' + T.stl + '</td><td>' + T.blk + '</td><td>' + T.tov + '</td><td>' + T.fouls + '</td><td>' + T.fd + '</td></tr></tfoot>';
 }
 
+/** Pérdidas de equipo (24 s / 8 s): suman en la fila Equipo, no en ningún jugador. */
+function teamTovChip(G) {
+  const n = teamTurnovers(G);
+  return n ? '<span class="chip">Pérdidas de equipo (24 s / 8 s) · ' + n + '</span>' : '';
+}
+
 function boxSheet(G) {
   const tf = [1, 2, 3, 4].map((p) => periodShort(p) + ': ' + teamFouls(G, p)).join(' · ');
+  const rf = [1, 2, 3, 4].map((p) => periodShort(p) + ': ' + opponentTeamFouls(G, p)).join(' · ');
   return sheet('Planilla · ' + esc(G.team) + ' ' + ourScore(G) + ' – ' + opponentScore(G) + ' ' + esc(G.opponent), '<button class="btn share" data-a="share">Compartir PDF</button><button class="btn" data-a="csv-box">Copiar CSV</button>',
     '<p class="swipe-hint">Deslizá la tabla para ver todas las columnas →</p><div class="tablewrap" tabindex="0" role="region" aria-label="Planilla por jugador"><table class="box"><caption class="visually-hidden">Planilla por jugador</caption><thead><tr><th scope="col"><abbr title="Número">Nº</abbr></th><th scope="col" class="l">Jugador</th><th scope="col"><abbr title="Minutos jugados">MIN</abbr></th><th scope="col"><abbr title="Puntos">PTS</abbr></th><th scope="col"><abbr title="Dobles convertidos/intentados">T2</abbr></th><th scope="col"><abbr title="Triples convertidos/intentados">T3</abbr></th><th scope="col"><abbr title="Tiros libres convertidos/intentados">TL</abbr></th><th scope="col"><abbr title="Rebotes ofensivos">RO</abbr></th><th scope="col"><abbr title="Rebotes defensivos">RD</abbr></th><th scope="col"><abbr title="Rebotes totales">RT</abbr></th><th scope="col"><abbr title="Asistencias">AS</abbr></th><th scope="col"><abbr title="Robos">RB</abbr></th><th scope="col"><abbr title="Tapones">TP</abbr></th><th scope="col"><abbr title="Pérdidas">PE</abbr></th><th scope="col"><abbr title="Faltas cometidas">FC</abbr></th><th scope="col"><abbr title="Faltas recibidas">FR</abbr></th></tr></thead><tbody>' +
     G.roster.map((p) => boxRow(G, p)).join('') + '</tbody>' + boxFooter(teamTotals(G)) + '</table></div>' +
-    '<div class="staffline"><span class="chip">Faltas de equipo · ' + tf + '</span><span class="chip' + (staffFouls(G).out ? ' bad' : '') + '">' + staffSummary(G) + '</span></div>' +
+    '<div class="staffline"><span class="chip">Faltas de equipo · ' + tf + '</span><span class="chip">Faltas del rival · ' + rf + '</span>' + teamTovChip(G) + '<span class="chip' + (staffFouls(G).out ? ' bad' : '') + '">' + staffSummary(G) + '</span></div>' +
     '<p class="lead" style="font-size:.8rem">MIN minutos jugados · T2/T3/TL: convertidos/intentos · RO/RD/RT: rebotes · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas.</p>');
 }
 

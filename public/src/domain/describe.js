@@ -28,6 +28,7 @@ export function eventActor(game, e, long = false) {
   if (e.type === 'SUB') return 'Cambio';
   if (e.type === 'TO') return e.team === 'them' ? game.opponent : game.team;
   if (e.type === 'REV') return 'Partido';
+  if (e.type === 'TTOV') return game.team;
   return whoLabel(game, e.who, long);
 }
 

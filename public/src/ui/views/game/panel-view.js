@@ -3,10 +3,10 @@
 import { repositionToast } from '../../toast.js';
 import { esc } from '../../../shared/html.js';
 import { rerenderKeepingFocus, firstFocusable } from '../../focus.js';
-import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
+import { EVENT_LABELS, TURNOVER_KINDS, TEAM_TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds, remainingMs } from '../../../domain/clock.js';
 import { isThreePointer, zoneName, attackingSide, courtHalf, SHOT_ZONES } from '../../../domain/court.js';
-import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsLeft, inLastTwoMinutes } from '../../../domain/stats.js';
+import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsLeft, inLastTwoMinutes, opponentTeamFouls, PENALTY_FOULS } from '../../../domain/stats.js';
 import { findPlayer, shortName, whoLabel, eventDetail, eventActor } from '../../../domain/describe.js';
 import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
@@ -84,7 +84,9 @@ function stoppageButtons(G) {
   };
   return '<h3 class="qtitle">Sin jugador · detienen el reloj</h3><div class="quick three">' +
     to('us', 'Tiempo muerto') + to('them', 'Tiempo muerto rival') +
-    '<button class="abtn stop" data-a="stoppage" data-t="REV">Pedido de revisión<small>video / árbitros</small></button></div>';
+    '<button class="abtn stop" data-a="stoppage" data-t="REV">Pedido de revisión<small>video / árbitros</small></button></div>' +
+    '<div class="quick two">' + Object.keys(TEAM_TURNOVER_KINDS).map((k) =>
+      '<button class="abtn stop" data-a="stoppage" data-t="TTOV" data-s="' + k + '">Pérdida · ' + TEAM_TURNOVER_KINDS[k] + '<small>del equipo</small></button>').join('') + '</div>';
 }
 
 /** Tras un gol: fila «¿Asistió?» sobre el paso Ubicación. Cualquier otra acción la descarta. */
@@ -145,7 +147,7 @@ function attackGroup(three) {
       actionButton('RO', 'Rebote<small>ofensivo</small>') +
       '<button class="abtn" data-a="foul-drawn">Falta recibida<small>¿en tiro?</small></button>' +
       '<button class="abtn" data-a="act" data-t="TOV" data-s="pasos">Pasos<small>caminata</small></button>' +
-      '<button class="abtn wide" data-a="tov">Pérdida…<small>mal pase, doble, 3 seg, 24 seg, campo atrás</small></button></div></div>';
+      '<button class="abtn wide" data-a="tov">Pérdida…<small>mal pase, doble, 3 seg, campo atrás</small></button></div></div>';
 }
 
 function defenseGroup() {
@@ -176,9 +178,15 @@ function foulDrawnStep(G) {
   const three = suggestsThree(G, ui.pending);
   const opt = (kind, label, sub, isThree, cls = '') =>
     '<button class="abtn' + cls + (isThree === undefined ? '' : hintClass(three, isThree)) + '" data-a="fd-kind" data-s="' + kind + '">' + label + '<small>' + sub + '</small></button>';
+  // Rival en penalización (4 faltas o más en el cuarto): la falta sin tiro da 2 libres.
+  const rf = opponentTeamFouls(G, ui.pending.period), pen = rf >= PENALTY_FOULS;
+  const noShot = pen
+    ? '<p class="lead pen-note" role="note">El rival lleva ' + rf + ' faltas en el cuarto: está en penalización.</p><div class="agroup"><div class="agrid">' +
+      '<button class="abtn wide sugg" data-a="fd-kind" data-s="bonus">Sin tiro · 2 libres<small>rival en penalización</small></button>' +
+      '<button class="abtn wide" data-a="fd-kind" data-s="none">Sin libres<small>falta en ataque del rival</small></button>'
+    : '<div class="agroup"><div class="agrid"><button class="abtn wide" data-a="fd-kind" data-s="none">No, sin tiro</button>';
   return stepsBar(3) + titleBar(esc(whoLabel(G, ui.player)) + ' · Falta recibida', 'back-action', '‹ Acciones') +
-    '<p class="lead">¿Fue en situación de tiro?</p><div class="agroup"><div class="agrid">' +
-    '<button class="abtn wide" data-a="fd-kind" data-s="none">No, sin tiro</button>' +
+    '<p class="lead">¿Fue en situación de tiro?</p>' + noShot +
     opt('shot2', 'En tiro de 2', '2 libres', false) + opt('shot3', 'En tiro de 3', '3 libres', true) +
     opt('and1-2', 'Encestó el doble', 'doble + 1 libre', false, ' make') + opt('and1-3', 'Encestó el triple', 'triple + 1 libre', true, ' make') +
     '</div></div>';
@@ -196,7 +204,7 @@ function foulStep(G) {
 
 function turnoverStep(G) {
   return stepsBar(3) + titleBar(esc(whoLabel(G, ui.player)) + ' · Pérdida', 'back-action', '‹ Acciones') +
-    '<div class="agrid">' + Object.keys(TURNOVER_KINDS).map((k) => '<button class="abtn" data-a="act" data-t="TOV" data-s="' + k + '">' + TURNOVER_KINDS[k] + '</button>').join('') + '</div>';
+    '<div class="agrid">' + Object.keys(TURNOVER_KINDS).filter((k) => !TEAM_TURNOVER_KINDS[k]).map((k) => '<button class="abtn" data-a="act" data-t="TOV" data-s="' + k + '">' + TURNOVER_KINDS[k] + '</button>').join('') + '</div>';
 }
 
 function freeThrowStep(G) {

@@ -2,7 +2,7 @@
 // Depende del puerto `store` (ver infrastructure/store) y no del DOM.
 
 import { newId } from '../shared/ids.js';
-import { EVENT_LABELS } from '../domain/catalog.js';
+import { EVENT_LABELS, normalizeSubtype, subtypeLabel } from '../domain/catalog.js';
 import { eventPoints, playerStats, teamFouls, staffFouls, timeoutsLeft, inLastTwoMinutes } from '../domain/stats.js';
 import { whoLabel, eventDetail, findPlayer } from '../domain/describe.js';
 import { pauseClock } from '../domain/clock.js';
@@ -94,9 +94,14 @@ export function createGameSession({ store, onSaveError }) {
    * @param {'TO'|'REV'} type
    * @param {'us'|'them'} [team] para los tiempos muertos
    */
-  function recordStoppage(type, team) {
+  function recordStoppage(type, team, sub) {
     pauseClock(game.clock);
     const moment = captureMoment(game);
+    if (type === 'TTOV') {
+      const kind = normalizeSubtype('TTOV', sub);
+      const e = addEvent(stoppageEvent(moment, type, null, kind));
+      return { event: e, message: EVENT_LABELS[type] + ' · ' + subtypeLabel('TTOV', kind) + ' · reloj detenido', warn: false };
+    }
     if (type !== 'TO') {
       const e = addEvent(stoppageEvent(moment, type));
       return { event: e, message: EVENT_LABELS[type] + ' · reloj detenido', warn: false };

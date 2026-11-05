@@ -88,6 +88,18 @@ export function teamFouls(game, period) {
   return game.events.filter((e) => isFoul(e.type) && Math.min(e.period, REGULAR_PERIODS) === key && !isStaff(e.who)).length;
 }
 
+/**
+ * Faltas de equipo del rival en el período: cada falta recibida por un jugador nuestro es una falta del rival.
+ * Los suplementarios cuentan como el 4° cuarto.
+ */
+export function opponentTeamFouls(game, period) {
+  const key = Math.min(period, REGULAR_PERIODS);
+  return game.events.filter((e) => e.type === 'FD' && Math.min(e.period, REGULAR_PERIODS) === key).length;
+}
+
+/** Con 4 faltas de equipo en el período, cada falta personal siguiente da 2 libres (FIBA). */
+export const PENALTY_FOULS = 4;
+
 /** Faltas del cuerpo técnico: c (técnicas DT), b (técnicas banca), d (descalificantes). */
 export function staffFouls(game) {
   let c = 0, b = 0, d = 0;
@@ -117,10 +129,17 @@ export function eventsChronological(game) {
   return game.events.slice().sort((a, b) => a.period - b.period || b.t - a.t || (a.seq || 0) - (b.seq || 0));
 }
 
-/** Suma las estadísticas de todo el plantel del partido. */
+/** Pérdidas de equipo (24 s, 8 s): no son de ningún jugador. */
+export function teamTurnovers(game) {
+  return game.events.filter((e) => e.type === 'TTOV').length;
+}
+
+/** Suma las estadísticas de todo el plantel del partido, más las pérdidas de equipo. */
 export function teamTotals(game) {
   const T = { pts: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, ast: 0, stl: 0, blk: 0, tov: 0, fouls: 0, fd: 0, sec: 0 };
   game.roster.forEach((p) => { const s = playerStats(game, p.id); for (const k in T) T[k] += s[k]; });
+  T.teamTov = teamTurnovers(game);
+  T.tov += T.teamTov;
   return T;
 }
 
