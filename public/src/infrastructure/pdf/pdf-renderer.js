@@ -109,6 +109,11 @@ function drawFoulsAndLegend(doc, r, W) {
     doc.setFont('helvetica', 'bold'); doc.text('Faltas del rival:', MARGIN, y);
     doc.setFont('helvetica', 'normal'); doc.text(r.oppFoulsText, MARGIN + 29, y);
   }
+  if (r.teamTurnovers) {
+    y += 5;
+    doc.setFont('helvetica', 'bold'); doc.text('Pérdidas de equipo:', MARGIN, y);
+    doc.setFont('helvetica', 'normal'); doc.text(r.teamTurnovers + ' (24 s / 8 s, sin jugador; suman en la fila Equipo)', MARGIN + 33, y);
+  }
   if (r.timeoutsText) {
     y += 5;
     doc.setFont('helvetica', 'bold'); doc.text('Tiempos muertos:', MARGIN, y);

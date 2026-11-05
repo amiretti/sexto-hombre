@@ -5,7 +5,7 @@ import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR } from '../shared/colors.js'
 import { formatDate } from '../shared/ids.js';
 import { REGULAR_PERIODS, periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../domain/clock.js';
 import {
-  playerStats, ourScore, opponentScore, pointsByPeriod, isEnded, teamFouls, opponentTeamFouls, staffFouls, teamTotals, timeoutsByWindow
+  playerStats, ourScore, opponentScore, pointsByPeriod, isEnded, teamFouls, opponentTeamFouls, teamTurnovers, staffFouls, teamTotals, timeoutsByWindow
 } from '../domain/stats.js';
 import { buildShotChart } from '../domain/shot-chart.js';
 
@@ -78,6 +78,7 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
     teamFoulsText: Array.from({ length: REGULAR_PERIODS }, (_, i) => periodShort(i + 1) + ' ' + teamFouls(game, i + 1)).join('   '),
     oppFoulsText: Array.from({ length: REGULAR_PERIODS }, (_, i) => periodShort(i + 1) + ' ' + opponentTeamFouls(game, i + 1)).join('   '),
     timeoutsText: timeoutsText(game),
+    teamTurnovers: teamTurnovers(game),
     staffText: 'DT ' + st.c + ' técnica' + (st.c === 1 ? '' : 's') + ' · Banca ' + st.b + (st.out ? ' · DT descalificado' : ''),
     generatedAt: now.toLocaleDateString('es-AR') + ' ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
     generatedBy,

@@ -31,9 +31,10 @@ export function captureMoment(game, x = null, y = null, now = Date.now()) {
 }
 
 /** Acción sin ubicación ni jugador (tiempo muerto, revisión). `team`: 'us' | 'them' para los tiempos muertos. */
-export function stoppageEvent(moment, type, team) {
+export function stoppageEvent(moment, type, team, sub) {
   const e = { period: moment.period, t: moment.t, x: null, y: null, who: null, type };
   if (team) e.team = team;
+  if (sub) e.sub = sub;
   return e;
 }
 

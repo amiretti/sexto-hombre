@@ -127,10 +127,17 @@ export function eventsChronological(game) {
   return game.events.slice().sort((a, b) => a.period - b.period || b.t - a.t || (a.seq || 0) - (b.seq || 0));
 }
 
-/** Suma las estadísticas de todo el plantel del partido. */
+/** Pérdidas de equipo (24 s, 8 s): no son de ningún jugador. */
+export function teamTurnovers(game) {
+  return game.events.filter((e) => e.type === 'TTOV').length;
+}
+
+/** Suma las estadísticas de todo el plantel del partido, más las pérdidas de equipo. */
 export function teamTotals(game) {
   const T = { pts: 0, m2: 0, a2: 0, m3: 0, a3: 0, ftm: 0, fta: 0, ro: 0, rd: 0, ast: 0, stl: 0, blk: 0, tov: 0, fouls: 0, fd: 0 };
   game.roster.forEach((p) => { const s = playerStats(game, p.id); for (const k in T) T[k] += s[k]; });
+  T.teamTov = teamTurnovers(game);
+  T.tov += T.teamTov;
   return T;
 }
 

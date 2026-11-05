@@ -26,6 +26,7 @@ _La planilla del cuerpo técnico._
 - **Reglas FIBA de exclusión:** 5 faltas, 2 técnicas, 2 antideportivas, técnica más antideportiva o descalificante. Si el jugador está en cancha, el reloj se detiene y se pide el **cambio obligatorio**. También avisa la 4ª falta de equipo (penalización).
 - **Cambios** con registro de quién entra y quién sale.
 - **Tiempos muertos y pedidos de revisión** con un toque: detienen el reloj en el acto. Lleva la cuenta de tiempos muertos de cada equipo según FIBA (2 en el primer tiempo, 3 en el segundo, 1 por suplementario).
+- **Pérdidas de equipo:** los 24 segundos y los 8 segundos para pasar la mitad se cargan con un toque, sin jugador ni ubicación (como en las estadísticas FIBA). Detienen el reloj y suman en la fila Equipo de la planilla.
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
 - **Tablero tipo estadio:** tanteador y reloj con dígitos de 7 segmentos (DSEG7), que siguen el modo claro u oscuro. La hoja «Partido» (botón con engranaje) agrupa la planilla, los ajustes (tema y chicharra) y el cierre del partido.
 - **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).

@@ -4,13 +4,19 @@ export const EVENT_LABELS = {
   '2M': 'Doble convertido', '2X': 'Doble errado', '3M': 'Triple convertido', '3X': 'Triple errado', 'FT': 'Tiros libres',
   'RO': 'Rebote ofensivo', 'RD': 'Rebote defensivo', 'AST': 'Asistencia', 'STL': 'Robo', 'BLK': 'Tapón', 'TOV': 'Pérdida',
   'PF': 'Falta personal', 'FD': 'Falta recibida', 'TF': 'Falta técnica', 'UF': 'Falta antideportiva', 'DF': 'Falta descalificante',
-  'SUB': 'Cambio', 'TO': 'Tiempo muerto', 'REV': 'Pedido de revisión'
+  'SUB': 'Cambio', 'TO': 'Tiempo muerto', 'REV': 'Pedido de revisión', 'TTOV': 'Pérdida de equipo'
 };
 
 export const TURNOVER_KINDS = {
   pase: 'Mal pase', manejo: 'Pérdida de balón', pasos: 'Pasos / caminata', doble: 'Doble dribling', fuera: 'Pelota afuera',
   '3s': '3 segundos', '5s': '5 segundos', '8s': '8 segundos', '24s': '24 segundos', atras: 'Campo atrás', otra: 'Otra'
 };
+
+/**
+ * Pérdidas del equipo, sin jugador ni ubicación (FIBA): se agota la posesión de 24 s o no se pasa la mitad en 8 s.
+ * Las de jugador ya cargadas con 8 s o 24 s se siguen leyendo, pero ya no se ofrecen.
+ */
+export const TEAM_TURNOVER_KINDS = { '24s': '24 segundos', '8s': '8 segundos' };
 
 export const PERSONAL_FOUL_KINDS = {
   none: 'Sin tiro', shot2: 'En tiro de 2 · 2 libres', shot3: 'En tiro de 3 · 3 libres',
@@ -25,7 +31,8 @@ export const FOUL_DRAWN_KINDS = {
 const SUBTYPES = {
   TOV: { kinds: TURNOVER_KINDS, fallback: 'otra' },
   PF: { kinds: PERSONAL_FOUL_KINDS, fallback: 'none' },
-  FD: { kinds: FOUL_DRAWN_KINDS, fallback: 'none' }
+  FD: { kinds: FOUL_DRAWN_KINDS, fallback: 'none' },
+  TTOV: { kinds: TEAM_TURNOVER_KINDS, fallback: '24s' }
 };
 
 /** true si el tipo de jugada lleva detalle (subtipo). */
@@ -51,7 +58,7 @@ export const FREE_THROWS_FOR = { none: 0, bonus: 2, shot2: 2, shot3: 3, and1: 1 
 export const EDITABLE_EVENT_TYPES = ['2M', '2X', '3M', '3X', 'FT', 'RO', 'RD', 'AST', 'STL', 'BLK', 'TOV', 'PF', 'FD', 'TF', 'UF', 'DF'];
 
 /** Acciones del partido que no son de un jugador (sin ubicación ni jugador). */
-const TEAM_EVENT_TYPES = new Set(['SUB', 'TO', 'REV']);
+const TEAM_EVENT_TYPES = new Set(['SUB', 'TO', 'REV', 'TTOV']);
 export function isTeamEvent(type) {
   return TEAM_EVENT_TYPES.has(type);
 }

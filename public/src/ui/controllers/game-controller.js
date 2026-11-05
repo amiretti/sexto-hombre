@@ -364,7 +364,7 @@ const handlers = {
     mEl.value = Math.floor(t / 60); sEl.value = String(Math.floor(t % 60)).padStart(2, '0');
   },
   'stoppage': ({ data }) => {
-    const r = session().recordStoppage(data.t, data.team);
+    const r = session().recordStoppage(data.t, data.team, data.s);
     resetPlayFlow();
     renderGame();
     // Durante un tiempo muerto es el momento típico de hacer cambios.
