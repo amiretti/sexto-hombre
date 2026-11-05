@@ -1,6 +1,6 @@
 // Controlador de la pantalla del partido: traduce toques y teclas en casos de uso y redibuja.
 
-import { EVENT_LABELS, FREE_THROWS_FOR, isLiveBallAction } from '../../domain/catalog.js';
+import { EVENT_LABELS, FREE_THROWS_FOR, isLiveBallAction, isBasicSheet, BASIC_ACTIONS } from '../../domain/catalog.js';
 import { periodLengthSec, periodLong, toggleClock, adjustClock, remainingMs, runClockFrom, formatSeconds } from '../../domain/clock.js';
 import { clampToCourt, flipAttackingSide, attackingSide, SHOT_ZONES, zonePoint } from '../../domain/court.js';
 import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes, opponentTeamFouls, PENALTY_FOULS } from '../../domain/stats.js';
@@ -35,6 +35,25 @@ function resetPlayFlow() {
   ui.player = null;
   ui.assistFor = null;
   ui.benchPick = null;
+  ui.basic = null;
+}
+
+/** Planilla básica: se tocó un botón de la botonera; el momento se toma ahora y falta elegir al jugador. */
+function startBasicPlay(key) {
+  if (!BASIC_ACTIONS[key]) return;
+  ui.assistFor = null;
+  ui.pending = captureMoment(currentGame());
+  ui.basic = key;
+  ui.step = 'player';
+  renderPanel();
+}
+
+/** Planilla básica: ya está el jugador. La falta recibida pregunta los libres; el resto se registra. */
+function finishBasicPlay() {
+  const def = BASIC_ACTIONS[ui.basic];
+  if (!def) { resetPlayFlow(); renderPanel(); return; }
+  if (!def.action) { goToStep('fdrawn'); return; }
+  record({ ...def.action });
 }
 
 const isFieldGoalMade = (type) => type === '2M' || type === '3M';
@@ -134,7 +153,8 @@ function record(action) {
  */
 function recordFoulDrawn(kind) {
   const moment = ui.pending, who = ui.player;
-  const and1 = kind.startsWith('and1');
+  // and1-2 / and1-3: además se registra el gol. 'and1' solo (planilla básica): el gol se carga aparte.
+  const and1 = kind === 'and1-2' || kind === 'and1-3';
   const sub = and1 ? 'and1' : kind;
   if (and1) {
     const basket = session().recordPlay(moment, { type: kind === 'and1-3' ? '3M' : '2M', who });
@@ -266,8 +286,10 @@ function lateSubstitution(inId, outId) {
   session().addEvent(substitutionEventAt(ui.pending, change));
   ui.benchPick = null;
   ui.player = inId;
-  ui.step = 'action';
   persistView();
+  // Planilla básica: se registra la acción ya elegida (record redibuja; la falta recibida pasa a los libres).
+  if (ui.basic) { finishBasicPlay(); if (ui.step === 'fdrawn') renderGame(); return; }
+  ui.step = 'action';
   renderGame();
   toast(outId ? 'Cambio registrado: entra ' + whoLabel(G, inId) + ' por ' + whoLabel(G, outId) : 'Entra ' + whoLabel(G, inId));
 }
@@ -379,8 +401,10 @@ const handlers = {
   },
   'pick': ({ id }) => {
     if (!currentGame().onCourt.includes(id)) { ui.benchPick = id; goToStep('bench'); return; }
-    ui.player = id; goToStep('action');
+    ui.player = id;
+    if (ui.basic) finishBasicPlay(); else goToStep('action');
   },
+  'bact': ({ data }) => startBasicPlay(data.k),
   'bench-back': () => { ui.benchPick = null; goToStep('player'); },
   'bench-sub': ({ id }) => lateSubstitution(ui.benchPick, id || null),
   'back': () => { ui.player = null; goToStep('player'); },

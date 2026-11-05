@@ -14,6 +14,7 @@ _La planilla del cuerpo técnico._
 
 ### Durante el partido
 
+- **Dos tipos de planilla, a elección en la previa.** La **avanzada** usa la cancha: ubicación de cada jugada, mapa de tiros y el detalle de faltas y pérdidas. La **básica** es solo una botonera, sin cancha: simple, doble y triple (convertido o errado), rebote en ataque o en defensa, tapón, robo, pérdida, falta cometida y falta recibida (con cuántos libres). Se toca la acción y después el jugador; tras un gol pregunta la asistencia igual que la avanzada. Las dos llevan el reloj, los cambios, los minutos, las faltas de equipo y del rival, la planilla y el PDF (la básica, sin la página del mapa). La previa propone la que usó el plantel la última vez y no se cambia una vez empezado el partido.
 - **Cancha interactiva.** Tocás dónde ocurrió la jugada, elegís el jugador y la acción. El tiempo de reloj se toma al tocar. La app sugiere doble o triple según la zona.
 - **Sabe hacia dónde atacás.** En la previa elegís el aro del primer tiempo; se invierte solo en el 3° cuarto y un indicador sobre la cancha lo muestra (se toca para corregirlo). Si tocás en campo rival aparecen primero las acciones de ataque; en campo propio, las de defensa.
 - **Asistencia al toque:** después de cada doble o triple convertido pregunta si hubo asistencia y muestra a los compañeros en cancha.
@@ -172,7 +173,7 @@ firebase.json            Hosting + Firestore
 npm test          # Node 22 o más nuevo, sin npm install
 ```
 
-Son 122 tests. Cubren el dominio (reloj, cancha, dirección de ataque, estadísticas, minutos jugados, exclusiones, faltas de equipo y del rival, pérdidas de equipo, cambios, edición de jugadas, clubes, competiciones, mapa de tiros, progreso, resumen de la temporada, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el bloqueo por dispositivo, el reporte, la exportación de informes (incluido el ZIP del .xlsx), el CSV y el store demo.
+Son 128 tests. Cubren el dominio (reloj, cancha, dirección de ataque, tipo de planilla, estadísticas, minutos jugados, exclusiones, faltas de equipo y del rival, pérdidas de equipo, cambios, edición de jugadas, clubes, competiciones, mapa de tiros, progreso, resumen de la temporada, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el bloqueo por dispositivo, el reporte, la exportación de informes (incluido el ZIP del .xlsx), el CSV y el store demo.
 
 **Al agregar un módulo en `src/`**, sumalo a `MODULES` en `public/sw.js` y subí `VERSION`. Si no, la app instalada no lo va a tener sin señal.
 
@@ -215,7 +216,7 @@ Son 122 tests. Cubren el dominio (reloj, cancha, dirección de ataque, estadíst
 | `clubs/{id}` | Club: nombre, color titular (`color`) y alternativo (`altColor`), estadios (`id`, `name`, `location`) y estadio por defecto (`defaultVenueId`) |
 | `competitions/{id}` | Competición: nombre, temporada (`season`) y duración del cuarto (`periodMin`) |
 | `teams/{id}` | Plantel: club (`clubId`), categoría y rama (`branch`: `m`, `f` o `x`), DT, última competición usada (`lastCompetitionId`), duración por defecto, jugadores (`id`, `num`, `name`, `active`) y último quinteto |
-| `games/{id}` | Partido: plantel y club de origen, categoría, competición (id y copia del nombre), local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado y resumen del tanteador |
+| `games/{id}` | Partido: plantel y club de origen, categoría, competición (id y copia del nombre), local o visitante, estadio (copia de nombre y ubicación, solo de local), equipos y colores, convocados (copia del plantel al empezar), en cancha, período, reloj, puntos del rival por período, estado, tipo de planilla (`sheet`: `full` o `basic`; sin el campo, avanzada) y resumen del tanteador |
 | `games/{id}/events/{id}` | Una jugada por documento, con ID generado en el dispositivo, `seq`, `rev` y `deleted` |
 
 Los planteles creados antes de que existieran los clubes se migran solos al abrir la app: se agrupan por nombre en un club (con su color y sus estadios) y quedan con la categoría «Primera», que se puede editar. Las competiciones que estaban escritas en el plantel pasan a ser competiciones de la temporada actual, y las categorías escritas a mano se interpretan («U17 Femenino» queda como U17, rama femenina). Los partidos ya jugados no cambian.
@@ -237,7 +238,8 @@ Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos 
 - **Las faltas del rival salen de las faltas recibidas.** Si una falta del rival no se carga como falta recibida (o es una técnica de un jugador rival), no suma para la penalización.
 - **Las reglas de Firestore no se probaron contra el emulador.** Antes de un uso real conviene verificar que un correo fuera de la lista no ve nada y que un usuario habilitado no puede leer los partidos de otro.
 - **Los minutos dependen del reloj.** Si el reloj no se usa, cada cuarto terminado cuenta completo para los que estaban en cancha. El progreso muestra totales por partido (no promedios por minuto).
-- **Tiros sin ubicación:** cuentan en los totales pero no en las zonas del mapa.
+- **Tiros sin ubicación:** cuentan en los totales pero no en las zonas del mapa. Los partidos con planilla básica no entran en el mapa de tiros de los informes.
+- **La planilla básica no distingue tipos de falta ni de pérdida.** Toda falta cometida cuenta como personal (no detecta técnicas ni antideportivas) y las pérdidas quedan «sin detalle».
 - **Los informes leen cada partido con sus jugadas.** La primera vez se piden al servidor (o a la caché del dispositivo); después quedan en memoria mientras el partido no cambie.
 - La interfaz está solo en español (Argentina).
 

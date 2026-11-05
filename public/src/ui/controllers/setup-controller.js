@@ -62,7 +62,7 @@ function startGame() {
   showGame(result.game);
   app.session.persistNow();
   app.lock.acquire(result.game.id);
-  app.store.saveTeam(team.id, { lastStarters: result.starters, lastCompetitionId: competition ? competition.id : null }).catch(() => {});
+  app.store.saveTeam(team.id, { lastStarters: result.starters, lastCompetitionId: competition ? competition.id : null, lastSheet: result.game.sheet }).catch(() => {});
   clearSetupDraft(uid());
 }
 
@@ -80,6 +80,7 @@ export const setupActions = {
   'venue': update((s, { data }) => { s.venue = data.v; }),
   'stadium': update((s, { data }) => { s.venueId = data.v; }),
   'kit': update((s, { data }) => chooseKit(s, teamById(s.teamId), data.v)),
+  'sheet': update((s, { data }) => { s.sheet = data.v === 'basic' ? 'basic' : 'full'; }),
   'attack': update((s, { data }) => { s.attack = data.v === 'left' ? 'left' : 'right'; }),
   'call': update((s, { id }) => toggleCalled(s, id)),
   'starter': ({ id }) => {

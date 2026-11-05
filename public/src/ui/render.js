@@ -1,6 +1,7 @@
 // Router de pantallas: dibuja la vista que corresponde a `state.view`.
 
-import { state } from './state.js';
+import { state, currentGame } from './state.js';
+import { isBasicSheet } from '../domain/catalog.js';
 import { $ } from './dom.js';
 import { loginHTML, deniedHTML } from './views/auth-view.js';
 import { homeHTML, HOME_TABS, homeTab } from './views/home-view.js';
@@ -44,6 +45,6 @@ export function render() {
   else if (TITLES[state.view]) setPageTitle(TITLES[state.view]);
   const screen = SCREENS[state.view];
   if (screen) { root.innerHTML = screen(); return; }
-  root.innerHTML = gameShellHTML();
+  root.innerHTML = gameShellHTML(isBasicSheet(currentGame()));
   renderGame();
 }

@@ -11,7 +11,7 @@ import { newClock } from './clock.js';
 export const SETUP_VERSION = 2;
 
 export function blankSetup() {
-  return { v: SETUP_VERSION, teamId: null, opponent: '', oppColor: DEFAULT_OPPONENT_COLOR, venue: 'home', venueId: null, attack: 'right', date: todayISO(), sel: {} };
+  return { v: SETUP_VERSION, teamId: null, opponent: '', oppColor: DEFAULT_OPPONENT_COLOR, venue: 'home', venueId: null, attack: 'right', sheet: 'full', date: todayISO(), sel: {} };
 }
 
 /**
@@ -24,6 +24,8 @@ export function applyTeamToSetup(setup, team, competitions = []) {
   setup.teamColor = team.color || DEFAULT_TEAM_COLOR;
   setup.coach = team.coach || '';
   setup.periodMin = String(team.periodMin || DEFAULT_PERIOD_MIN);
+  // Se propone el tipo de planilla que usó el plantel la última vez.
+  setup.sheet = team.lastSheet === 'basic' ? 'basic' : 'full';
   chooseCompetition(setup, (competitions || []).find((c) => c.id === team.lastCompetitionId && !c.deleted) || null, team);
   setup.sel = {};
   activePlayers(team).forEach((p) => { setup.sel[p.id] = { in: true, starter: lastStarters.includes(p.id) }; });
@@ -128,7 +130,7 @@ export function createGame(setup, team, now = Date.now(), competition = null) {
   const periodMin = +setup.periodMin || 10;
   const game = {
     id: newId(), status: 'live', teamId: team.id, venue: setup.venue === 'away' ? 'away' : 'home',
-    attackFirstHalf: setup.attack === 'left' ? 'left' : 'right',
+    attackFirstHalf: setup.attack === 'left' ? 'left' : 'right', sheet: setup.sheet === 'basic' ? 'basic' : 'full',
     // Copia del nombre: si después se edita la competición, el partido conserva cómo se llamaba.
     competitionId: competition ? competition.id : null, competition: competitionLabel(competition), createdAt: now, oppP: {},
     teamColor: setup.teamColor || team.color || DEFAULT_TEAM_COLOR, oppColor: setup.oppColor || DEFAULT_OPPONENT_COLOR,

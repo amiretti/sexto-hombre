@@ -703,3 +703,11 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 /* Informes: exportar */
 .rexport{gap:8px}
 .rexport .lead{font-size:.8rem;flex:1 1 220px}
+
+/* ---------- planilla básica: botonera sin cancha ---------- */
+.game.basic .stage{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+.game.basic .bshots .abtn{min-height:62px;font-size:1.02rem}
+.agrid.bmore{grid-template-columns:repeat(auto-fit,minmax(108px,1fr))}
+.game.basic .bmore .abtn{min-height:56px}
+.sheetpick button span{font-size:.85rem}
+.sheet-note{font-size:.85rem;margin:8px 0 0}
