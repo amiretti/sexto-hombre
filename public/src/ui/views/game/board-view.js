@@ -40,7 +40,7 @@ function clockControls(G, r, ended) {
 
 function ourSide(G, pos) {
   const tf = teamFouls(G, G.period);
-  return '<div class="side ' + pos + '"><span class="score">' + ourScore(G) + '</span><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.teamColor, DEFAULT_TEAM_COLOR)) + '"></span>' + teamName(G.team) + '</span>' +
+  return '<div class="side ' + pos + '"><span class="score"><span class="digits">' + ourScore(G) + '</span></span><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.teamColor, DEFAULT_TEAM_COLOR)) + '"></span>' + teamName(G.team) + '</span>' +
     '<span class="sub">Faltas eq. <span class="tfdots' + (tf >= 4 ? ' pen' : '') + '" role="img" aria-label="' + tf + (tf === 1 ? ' falta' : ' faltas') + ' de equipo">' + foulDots(tf) + '</span>' + penaltyTag(tf) + '</span></div>';
 }
 
@@ -50,7 +50,7 @@ function opponentButtons() {
 }
 
 function theirSide(G, pos) {
-  return '<div class="side ' + pos + '"><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.oppColor, DEFAULT_OPPONENT_COLOR)) + '"></span>' + teamName(G.opponent) + '</span><span class="score">' + opponentScore(G) + '</span>' +
+  return '<div class="side ' + pos + '"><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.oppColor, DEFAULT_OPPONENT_COLOR)) + '"></span>' + teamName(G.opponent) + '</span><span class="score"><span class="digits">' + opponentScore(G) + '</span></span>' +
     '<span class="sub oppctl">' + opponentButtons() + '</span></div>';
 }
 
