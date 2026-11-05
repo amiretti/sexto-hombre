@@ -694,3 +694,7 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .lcard li b{font-family:var(--f-display);font-weight:800;font-size:1.2rem;font-variant-numeric:tabular-nums}
 .lcard li.first b{font-size:1.6rem;color:var(--accent)}
 .lcard li.first .lnum{border-color:var(--accent);color:var(--accent)}
+
+/* Informes: exportar */
+.rexport{gap:8px}
+.rexport .lead{font-size:.8rem;flex:1 1 220px}

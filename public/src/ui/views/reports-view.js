@@ -92,7 +92,9 @@ function bodyHTML() {
   if (games === null) return '<section class="card"><p class="lead" role="status">Juntando los partidos…</p></section>';
   const count = '<p class="lead" role="status">' + (games.length === 1 ? '1 partido' : games.length + ' partidos') + ' en el informe.</p>';
   if (!games.length) return '<section class="card">' + count + '<p class="lead">No hay partidos de este plantel con estos filtros.</p></section>';
-  return '<section class="card">' + tabsHTML(f.tab) + count +
+  const exportBar = '<div class="row rexport"><button class="btn share" data-a="rep-export" data-v="pdf">Exportar PDF</button><button class="btn" data-a="rep-export" data-v="xlsx">Exportar Excel</button>' +
+    '<span class="lead">Incluye el resumen por partido de todas las estadísticas y los tiros por zona.</span></div>';
+  return '<section class="card">' + exportBar + tabsHTML(f.tab) + count +
     '<div id="rp-panel" role="tabpanel" aria-labelledby="rt-' + f.tab + '" class="rpanel">' + (f.tab === 'progress' ? progressPanelHTML(games, f) : shotsPanelHTML(games, f)) + '</div></section>';
 }
 

@@ -12,7 +12,7 @@ const LEGEND = 'T2/T3/TL: convertidos/intentos (%).  RO/RD/RT: rebotes ofensivos
 const BOX_HEAD = ['Nº', 'Jugador', 'PTS', 'T2', 'T3', 'TL', 'RO', 'RD', 'RT', 'AS', 'RB', 'TP', 'PE', 'FC', 'FR'];
 const BOX_KEYS = ['pts', 't2', 't3', 'tl', 'ro', 'rd', 'rt', 'as', 'rb', 'tp', 'pe', 'fc', 'fr'];
 
-function slug(s) {
+export function slug(s) {
   return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'equipo';
 }
 
@@ -124,7 +124,20 @@ function drawShotChartPage(doc, r, W) {
   drawHeader(doc, r, W);
   doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
   doc.text('Mapa de tiros  ·  ' + (r.teamLabel || r.team), MARGIN, MARGIN + 17);
-  const s = 0.1, ox = MARGIN, oy = MARGIN + 24; // 1 cm de cancha = 0,1 mm
+  const ox = MARGIN, oy = MARGIN + 24;
+  drawShotCourt(doc, sc, ox, oy);
+  drawZonesTable(doc, sc.zones.map((z) => [z.label, z.cell, z.pct, z.share]), ['Total', sc.total, '', ''], ox + 1500 * COURT_SCALE + 12, oy);
+}
+
+/** 1 cm de cancha = 0,1 mm: la media cancha ocupa 150 × 140 mm. */
+export const COURT_SCALE = 0.1;
+
+/**
+ * Media cancha (aro arriba) con los tiros y la leyenda debajo.
+ * @param {{shots: {x, y, made}[], unlocated: number}} sc
+ */
+export function drawShotCourt(doc, sc, ox, oy) {
+  const s = COURT_SCALE;
   const P = (x, y) => [ox + (1500 - y) * s, oy + x * s];
   const seg = (a, b) => { const p = P(...a), q = P(...b); doc.line(p[0], p[1], q[0], q[1]); };
   doc.setDrawColor(...COURT_LINE); doc.setLineWidth(0.4);
@@ -155,11 +168,14 @@ function drawShotChartPage(doc, r, W) {
   doc.setFillColor(...GOOD); doc.circle(ox + 2, ly - 1, 1.4, 'F'); doc.text('Convertido', ox + 5, ly);
   doc.setDrawColor(...BAD); doc.line(ox + 27, ly - 2.2, ox + 29.4, ly + 0.2); doc.line(ox + 27, ly + 0.2, ox + 29.4, ly - 2.2); doc.text('Errado', ox + 32, ly);
   if (sc.unlocated) doc.text((sc.unlocated === 1 ? '1 tiro sin ubicación (cuenta' : sc.unlocated + ' tiros sin ubicación (cuentan') + ' en el total).', ox + 50, ly);
-  const tx = ox + 1500 * s + 12;
+}
+
+/** Tabla de tiros por zona a la derecha de la cancha. */
+export function drawZonesTable(doc, body, foot, tx, oy) {
   doc.autoTable({
     startY: oy, head: [['Zona', 'Conv./Int.', 'Acierto', 'De los tiros']],
-    body: sc.zones.map((z) => [z.label, z.cell, z.pct, z.share]),
-    foot: [['Total', sc.total, '', '']],
+    body,
+    foot: [foot],
     theme: 'striped', margin: { left: tx, right: MARGIN },
     styles: { font: 'helvetica', fontSize: 9, halign: 'center', cellPadding: 1.7, textColor: INK },
     headStyles: { fillColor: HEAD, textColor: WHITE, fontStyle: 'bold' },
@@ -169,7 +185,7 @@ function drawShotChartPage(doc, r, W) {
   });
 }
 
-function drawPageFooters(doc, r, W) {
+export function drawPageFooters(doc, r, W) {
   const pages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
@@ -202,3 +218,6 @@ export function buildPdf(r) {
   const filename = `Planilla_${slug(L.name)}-vs-${slug(R.name)}_${r.date || 'partido'}.pdf`;
   return { blob: doc.output('blob'), filename, title: `${L.name} ${L.score} - ${R.score} ${R.name}` };
 }
+
+/** Paleta y margen compartidos con el PDF del informe. */
+export { INK, MUTED, RULE, HEAD, ZEBRA, WHITE, FOOT_FILL, MARGIN };
