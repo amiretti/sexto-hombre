@@ -3,17 +3,18 @@
 import { app, state, ui, resetUi, currentGame } from './state.js';
 import { render } from './render.js';
 import { toast } from './toast.js';
-import { isSunMode, setSunMode } from '../infrastructure/platform/theme.js';
+import { toggleTheme } from '../infrastructure/platform/theme.js';
 import { hydrateGame } from '../domain/game.js';
 import { saveSetupDraft } from '../infrastructure/platform/setup-draft-storage.js';
 import { keepScreenOn } from '../infrastructure/platform/device.js';
-import { migrateLegacyTeams } from '../application/club-migration.js';
+import { migrateLegacyTeams, migrateLegacyCompetitions } from '../application/legacy-migration.js';
 import { reportSaveError } from './toast.js';
 
 let unwatch = null;
 let authSeq = 0;
 /** Planteles ya asignados a un club en esta sesión (migración de datos viejos). */
 const migrated = new Set();
+const migratedCompetitions = new Set();
 
 /** Guarda lo que haya que guardar de la pantalla actual (borrador de previa o partido). */
 export function persistView() {
@@ -39,7 +40,12 @@ function watchUserData() {
     else state.clubs = list;
     onClubsOrTeams();
   });
-  unwatch = () => { offGames(); offTeams(); offClubs(); };
+  const offCompetitions = app.store.watchCompetitions(uid, (list, err) => {
+    if (err) { state.competitions = state.competitions || []; state.gamesErr = 'No se pudieron leer las competiciones (' + (err.code || err.message) + ').'; }
+    else state.competitions = list;
+    onClubsOrTeams();
+  });
+  unwatch = () => { offGames(); offTeams(); offClubs(); offCompetitions(); };
 }
 
 /** Con planteles y clubes leídos, los planteles viejos (sin club) pasan a su club. */
@@ -50,6 +56,11 @@ function onClubsOrTeams() {
     plan.clubs.forEach((c) => { if (!state.clubs.some((x) => x.id === c.id)) state.clubs = state.clubs.concat({ id: c.id, ...c.doc }); });
     plan.teams.forEach((p) => { state.teams = state.teams.map((t) => (t.id === p.id ? { ...t, ...p.patch } : t)); });
   }
+  if (state.teams && state.competitions) {
+    const plan = migrateLegacyCompetitions(app.store, state.teams, state.competitions, migratedCompetitions, reportSaveError);
+    plan.competitions.forEach((c) => { if (!state.competitions.some((x) => x.id === c.id)) state.competitions = state.competitions.concat({ id: c.id, ...c.doc }); });
+    plan.teams.forEach((p) => { state.teams = state.teams.map((t) => (t.id === p.id ? { ...t, ...p.patch } : t)); });
+  }
   if (state.view === 'home') render();
 }
 
@@ -57,6 +68,7 @@ export function stopWatching() {
   if (unwatch) { unwatch(); unwatch = null; }
   state.teams = null;
   state.clubs = null;
+  state.competitions = null;
 }
 
 export function goHome() {
@@ -134,10 +146,10 @@ export function onUser(user) {
 export const navigationActions = {
   'go-home': () => goHome(),
   'open-game': ({ id }) => openGame(id),
-  'sun-toggle': () => {
-    setSunMode(!isSunMode());
+  'theme-toggle': () => {
+    toggleTheme();
     render();
-    const btn = document.querySelector('[data-a="sun-toggle"]');
+    const btn = document.querySelector('[data-a="theme-toggle"]');
     if (btn) btn.focus();
   },
   'lock-force': () => { if (state.lockInfo) openGame(state.lockInfo.gameId, true); },

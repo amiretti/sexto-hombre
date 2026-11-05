@@ -16,6 +16,7 @@ export function createDemoStore(storage = globalThis.localStorage) {
     db = db || { games: {}, events: {}, users: {} };
     db.teams = db.teams || {};
     db.clubs = db.clubs || {};
+    db.competitions = db.competitions || {};
     return db;
   };
   const write = (db) => {
@@ -41,6 +42,8 @@ export function createDemoStore(storage = globalThis.localStorage) {
     saveTeam(id, data) { const db = read(); upsert(db.teams, id, data); return commit(db); },
     watchClubs(uid, cb) { return watch(() => cb(sortClubs(ownedList(read().clubs, uid)))); },
     saveClub(id, data) { const db = read(); upsert(db.clubs, id, data); return commit(db); },
+    watchCompetitions(uid, cb) { return watch(() => cb(sortClubs(ownedList(read().competitions, uid)))); },
+    saveCompetition(id, data) { const db = read(); upsert(db.competitions, id, data); return commit(db); },
     async loadGame(id) {
       const db = read(), g = db.games[id];
       if (!g) throw new Error('No se encontró el partido.');

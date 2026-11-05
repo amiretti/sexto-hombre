@@ -2,6 +2,7 @@
 
 import { state } from './state.js';
 import { resolveTeam } from '../domain/club.js';
+import { sortCompetitions } from '../domain/competition.js';
 
 /** Club por id, o null. */
 export function clubById(id) {
@@ -39,4 +40,14 @@ export function hasTeams() {
 /** Hay al menos un club cargado. */
 export function hasClubs() {
   return (state.clubs || []).length > 0;
+}
+
+/** Competición por id (no borrada), o null. */
+export function competitionById(id) {
+  return (state.competitions || []).find((c) => c.id === id && !c.deleted) || null;
+}
+
+/** Competiciones, de la temporada más reciente a la más vieja. */
+export function competitionsList() {
+  return sortCompetitions(state.competitions);
 }

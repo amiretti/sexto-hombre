@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildTeamDocument, activePlayers, seedTeamDraft, knownCompetitions, editableTeamDraft } from '../public/src/domain/team.js';
+import { buildTeamDocument, activePlayers, seedTeamDraft, editableTeamDraft, normalizeCategory, categoryLabel } from '../public/src/domain/team.js';
 import {
-  createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup, selectedVenue, kitOf, chooseKit
+  createGame, applyTeamToSetup, reconcileSelection, toggleCalled, toggleStarter, blankSetup, selectedVenue, kitOf, chooseKit, chooseCompetition
 } from '../public/src/domain/game-setup.js';
 
 const draft = (players, extra = {}) => ({ id: 't1', clubId: 'c1', category: ' Primera ', coach: ' DT ', competition: '', periodMin: '12', players, ...extra });
@@ -10,8 +10,9 @@ const p = (id, num, name = 'X', active = true) => ({ id, num, name, active });
 
 test('buildTeamDocument validation', () => {
   assert.equal(buildTeamDocument(draft([p('a', '1')], { clubId: null })).error, 'Elegí el club del plantel.');
-  assert.equal(buildTeamDocument(draft([p('a', '1')], { category: ' ' })).error, 'Falta la categoría (Primera, U17, Femenino…).');
-  assert.equal(buildTeamDocument(draft([p('a', '1')]), [{ id: 'otro', clubId: 'c1', category: 'primera' }]).error, 'Ese club ya tiene un plantel «Primera».');
+  assert.equal(buildTeamDocument(draft([p('a', '1')], { category: ' ' })).error, 'Elegí la categoría.');
+  assert.equal(buildTeamDocument(draft([p('a', '1')]), [{ id: 'otro', clubId: 'c1', category: 'primera' }]).error, 'Ese club ya tiene un plantel Primera Masculino.');
+  assert.equal(buildTeamDocument(draft([p('a', '1')], { branch: 'f' }), [{ id: 'otro', clubId: 'c1', category: 'Primera', branch: 'm' }]).error, undefined);
   assert.equal(buildTeamDocument(draft([p('a', '1')]), [{ id: 'otro', clubId: 'c2', category: 'Primera' }, { id: 't1', clubId: 'c1', category: 'Primera' }]).error, undefined);
   assert.equal(buildTeamDocument(draft([{ id: 'a', num: '', name: '' }])).error, 'Cargá al menos un jugador.');
   assert.equal(buildTeamDocument(draft([p('a', 'x')])).error, 'Cada jugador necesita un número (0 a 99).');
@@ -22,7 +23,7 @@ test('buildTeamDocument validation', () => {
 test('buildTeamDocument output', () => {
   const { doc } = buildTeamDocument(draft([p('a', ' 7 ', ' Ana '), { id: 'b', num: '', name: '' }], { isNew: true }), [], 99);
   assert.deepEqual(doc, {
-    clubId: 'c1', category: 'Primera', coach: 'DT', competition: '', periodMin: '12', createdAt: 99,
+    clubId: 'c1', category: 'Primera', branch: 'm', coach: 'DT', competition: '', periodMin: '12', createdAt: 99,
     players: [{ id: 'a', num: '7', name: 'Ana', active: true }]
   });
 });
@@ -34,10 +35,10 @@ test('team helpers', () => {
   assert.equal(seedTeamDraft(null, true, 'c1').clubId, 'c1');
   assert.equal(seedTeamDraft(null, false).seeded, undefined);
   assert.equal(seedTeamDraft({ lastSetup: { team: 'Viejo', players: [{ num: '3', name: 'Z' }] } }, true).category, 'Primera');
+  assert.deepEqual(editableTeamDraft({ id: 't', category: 'U17 Femenino', players: [] }).branch, 'f');
   const saved = { id: 't', players: [] };
   editableTeamDraft(saved).players.push(1);
   assert.equal(saved.players.length, 0);
-  assert.deepEqual(knownCompetitions([{ competition: 'B' }], [{ competition: 'A' }, { competition: 'B' }, {}]), ['A', 'B']);
 });
 
 const team = {
@@ -153,6 +154,42 @@ test('createGame keeps club and category', () => {
   ['c', 'd', 'e'].forEach((id) => { s.sel[id].starter = true; });
   const { game } = createGame(s, t);
   assert.equal(game.team, 'Unión');
-  assert.equal(game.category, 'U17');
+  assert.equal(game.category, 'U17 Masculino');
+  assert.equal(game.branch, 'm');
+  assert.equal(game.competition, '');
+  assert.equal(game.competitionId, null);
   assert.equal(game.clubId, 'c1');
+});
+
+test('categories: free text of older versions is read as category + branch', () => {
+  const n = (category, branch) => normalizeCategory({ category, branch });
+  assert.deepEqual(n('U17 Femenino'), { category: 'U17', branch: 'f' });
+  assert.deepEqual(n('primera'), { category: 'Primera', branch: 'm' });
+  assert.deepEqual(n('Fem U15'), { category: 'U15', branch: 'f' });
+  assert.deepEqual(n('Maxi mixto'), { category: 'Maxi', branch: 'x' });
+  assert.deepEqual(n('Femenino'), { category: 'Primera', branch: 'f' });
+  assert.deepEqual(n('Primera 2'), { category: 'Primera 2', branch: 'm' }); // fuera de la lista: se conserva
+  assert.deepEqual(n('U17', 'f'), { category: 'U17', branch: 'f' });
+  assert.equal(categoryLabel({ category: 'U17', branch: 'f' }), 'U17 Femenino');
+  assert.equal(categoryLabel({ category: 'U17', branch: 'f' }, true), 'U17 Fem.');
+  assert.equal(categoryLabel({}), '');
+});
+
+test('competition: last used is proposed with its period length; amistoso keeps the team length', () => {
+  const comps = [{ id: 'k1', name: 'Liga', season: '2026', periodMin: '12' }];
+  const t = { ...team, lastCompetitionId: 'k1' };
+  const s = blankSetup();
+  applyTeamToSetup(s, t, comps);
+  assert.equal(s.competitionId, 'k1');
+  assert.equal(s.periodMin, '12');
+  chooseCompetition(s, null, t);
+  assert.equal(s.competitionId, null);
+  assert.equal(s.periodMin, '8');
+  applyTeamToSetup(s, { ...t, lastCompetitionId: 'gone' }, comps);
+  assert.equal(s.competitionId, null);
+  s.opponent = 'Norte';
+  ['c', 'd', 'e'].forEach((id) => { s.sel[id].starter = true; });
+  const { game } = createGame(s, t, 1, comps[0]);
+  assert.equal(game.competitionId, 'k1');
+  assert.equal(game.competition, 'Liga 2026');
 });

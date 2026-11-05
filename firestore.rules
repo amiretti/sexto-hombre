@@ -2,7 +2,7 @@ rules_version = '2';
 
 // Fase 0 · uso interno
 // - Solo entran cuentas de Google cuyo correo está en la colección allowlist (un documento por correo, en minúsculas).
-// - Cada partido, club y plantel es de quien lo creó (ownerUid). Las jugadas heredan el permiso del partido.
+// - Cada partido, club, plantel y competición es de quien lo creó (ownerUid). Las jugadas heredan el permiso del partido.
 // - Nada se borra físicamente: los partidos y las jugadas se marcan con deleted: true.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -36,6 +36,15 @@ service cloud.firestore {
     }
 
     match /clubs/{clubId} {
+      allow read: if allowed() && resource.data.ownerUid == request.auth.uid;
+      allow create: if allowed() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if allowed()
+        && resource.data.ownerUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /competitions/{competitionId} {
       allow read: if allowed() && resource.data.ownerUid == request.auth.uid;
       allow create: if allowed() && request.resource.data.ownerUid == request.auth.uid;
       allow update: if allowed()

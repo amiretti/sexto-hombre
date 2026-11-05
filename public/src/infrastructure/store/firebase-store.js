@@ -105,6 +105,12 @@ export async function createFirebaseStore(config) {
     saveClub(id, data) {
       return pending.track(F.setDoc(F.doc(db, 'clubs', id), owned(data), { merge: true }));
     },
+    watchCompetitions(uid, cb) {
+      return watchOwned('competitions', uid, (list) => cb(sortClubs(list)), (err) => cb(null, err));
+    },
+    saveCompetition(id, data) {
+      return pending.track(F.setDoc(F.doc(db, 'competitions', id), owned(data), { merge: true }));
+    },
     async loadGame(id) {
       const gs = await once(F.doc(db, 'games', id));
       if (!gs.exists()) throw new Error('No se encontró el partido.');

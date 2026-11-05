@@ -2,14 +2,14 @@
 
 import { esc, plural } from '../../shared/html.js';
 import { venuesOf } from '../../domain/club.js';
-import { isSunMode } from '../../infrastructure/platform/theme.js';
+import { themeSwitchHTML } from '../components/theme-switch.js';
 import { formatDate } from '../../shared/ids.js';
 import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, safeColor } from '../../shared/colors.js';
 import { state, ui, isDemo } from '../state.js';
 import { TOAST_HTML } from '../toast.js';
 import { brandLine } from '../components/brand.js';
 import { teamCardHTML } from '../components/team-card.js';
-import { teamsOfClub } from '../selectors.js';
+import { teamsOfClub, competitionsList } from '../selectors.js';
 
 function statusChip(game) {
   return game.status === 'final' ? '<span class="chip">Final</span>' : '<span class="chip live">En juego</span>';
@@ -65,9 +65,18 @@ function clubsSectionHTML() {
     clubs.slice().sort((a, b) => String(a.name).localeCompare(String(b.name), 'es')).map(clubBlockHTML).join('') + '</section>';
 }
 
+function competitionsSectionHTML() {
+  if (state.competitions === null || !(state.clubs || []).length) return '';
+  const list = competitionsList();
+  const cards = list.map((c) => '<button class="tcard" data-a="edit-competition" data-id="' + esc(c.id) + '"><span class="tinfo"><b>' + esc(c.name) + '</b><span>' +
+    esc([c.season, 'cuartos de ' + (c.periodMin || '10') + ' min'].filter(Boolean).join(' · ')) + '</span></span><span class="tgo">Editar ›</span></button>').join('');
+  return '<section class="tsec"><div class="roster-head"><h2>Competiciones</h2><button class="btn ghost" data-a="new-competition">+ Competición</button></div>' +
+    (list.length ? '<div class="tpick">' + cards + '</div>' : '<p class="lead">Cargá las ligas o torneos que jugás: se eligen al crear cada partido y proponen la duración del cuarto.</p>') + '</section>';
+}
+
 function userHTML(u) {
   return '<div class="user">' + (u.photo ? '<img src="' + esc(u.photo) + '" alt="" referrerpolicy="no-referrer">' : '') + '<span>' + esc(u.name) + '</span>' +
-    '<button class="btn ghost" data-a="sun-toggle" aria-pressed="' + isSunMode() + '" title="Alto contraste para usar al sol">☀ Modo sol</button>' +
+    themeSwitchHTML() +
     (isDemo() ? '' : '<button class="btn ghost" data-a="logout">Salir</button>') + '</div>';
 }
 
@@ -77,5 +86,5 @@ export function homeHTML() {
     (isDemo() ? '<p class="note">Modo demo: los datos quedan solo en este dispositivo. Configurá Firebase para guardar en la nube con tu cuenta de Google.</p>' : '') +
     (state.gamesErr ? '<p class="err">' + esc(state.gamesErr) + '</p>' : '') +
     '<div class="row"><button class="btn primary big" data-a="new-setup"' + (state.teams === null || state.clubs === null ? ' disabled' : '') + '>+ Nuevo partido</button></div>' +
-    clubsSectionHTML() + '<h2 class="hsec">Partidos</h2>' + gamesListHTML() + TOAST_HTML + '</div>';
+    clubsSectionHTML() + competitionsSectionHTML() + '<h2 class="hsec">Partidos</h2>' + gamesListHTML() + TOAST_HTML + '</div>';
 }

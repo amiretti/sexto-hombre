@@ -7,8 +7,9 @@ import { venuesOf, teamLabel } from '../../domain/club.js';
 import { calledPlayers, kitOf } from '../../domain/game-setup.js';
 import { state, ui } from '../state.js';
 import { TOAST_HTML } from '../toast.js';
-import { teamById, resolvedTeams } from '../selectors.js';
-import { textField, colorField, competitionField, periodLengthField } from '../components/fields.js';
+import { teamById, resolvedTeams, competitionsList } from '../selectors.js';
+import { textField, colorField, periodLengthField } from '../components/fields.js';
+import { competitionLabel } from '../../domain/competition.js';
 import { teamCardHTML } from '../components/team-card.js';
 
 const HEADER = '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="go-home">‹ Mis partidos</button></p><h1>Nuevo partido</h1></div></header>';
@@ -66,6 +67,15 @@ function clashChipHTML(s, t) {
   return '<span class="chip warn">Los colores de los equipos son muy parecidos' + (alt ? ' <button class="linkback small" data-a="kit" data-v="alt">Usar la alternativa</button>' : '') + '</span>';
 }
 
+/** Competición del partido (o amistoso), con acceso a crear una nueva sin salir de la previa. */
+function competitionFieldHTML(s) {
+  const list = competitionsList();
+  const options = '<option value="">Amistoso / sin competición</option>' +
+    list.map((c) => '<option value="' + esc(c.id) + '"' + (c.id === s.competitionId ? ' selected' : '') + '>' + esc(competitionLabel(c)) + '</option>').join('');
+  return '<div class="field"><span class="flabel"><label for="f-comp">Competición</label><button class="linkback small" data-a="new-competition">+ Nueva</button></span>' +
+    '<select id="f-comp" data-f="competitionId">' + options + '</select></div>';
+}
+
 function attackFieldHTML(attack) {
   return '<div class="field"><span class="flabel" id="attack-l">En el 1er tiempo atacamos hacia</span><div class="seg" role="radiogroup" aria-labelledby="attack-l">' +
     radio('attack', 'left', attack === 'left', '← Izquierda') + radio('attack', 'right', attack === 'right', 'Derecha →') + '</div></div>';
@@ -78,7 +88,7 @@ function matchCardHTML(s, t) {
     colorField('f-team', 'Mi equipo', null, teamLabel(t), 'teamColor', s.teamColor || DEFAULT_TEAM_COLOR, 'de mi equipo', teams.length > 1 ? '<button class="linkback small" data-a="change-team">Cambiar plantel</button>' : '') + kitFieldHTML(s, t) +
     colorField('f-opp', 'Rival', 'opponent', s.opponent, 'oppColor', s.oppColor || DEFAULT_OPPONENT_COLOR, 'del rival') +
     venueFieldHTML(venue) + stadiumFieldHTML(s, t) + attackFieldHTML(s.attack === 'left' ? 'left' : 'right') +
-    textField('f-coach', 'Entrenador (DT)', 'coach', s.coach) + competitionField(s.competition) +
+    competitionFieldHTML(s) + textField('f-coach', 'Entrenador (DT)', 'coach', s.coach) +
     '<div class="field"><label for="f-date">Fecha</label><input id="f-date" type="date" data-f="date" value="' + esc(s.date) + '"></div>' + periodLengthField(s.periodMin) +
     '</div></section>';
 }

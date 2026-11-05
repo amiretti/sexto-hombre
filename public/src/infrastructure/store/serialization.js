@@ -22,7 +22,7 @@ export function sortGames(list) {
   return list.filter((g) => !g.deleted).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 }
 
-/** Clubes visibles, por nombre. */
+/** Clubes (o competiciones) visibles, por nombre. */
 export function sortClubs(list) {
   return list.filter((c) => !c.deleted).sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es'));
 }

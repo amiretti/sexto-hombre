@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   buildClubDocument, editableClubDraft, seedClubDraft, venuesOf, toggleDefaultVenue, resolveTeam, teamLabel, planClubMigration
 } from '../public/src/domain/club.js';
-import { migrateLegacyTeams } from '../public/src/application/club-migration.js';
+import { migrateLegacyTeams } from '../public/src/application/legacy-migration.js';
 
 const club = (extra = {}) => ({ id: 'c1', name: ' Unión ', color: '#111111', altColor: '#ffffff', venues: [], ...extra });
 const v = (id, name, location) => ({ id, name, location });
@@ -54,7 +54,7 @@ test('resolveTeam takes name, colors and venues from the club', () => {
   assert.equal(t.color, '#111111');
   assert.equal(t.altColor, '#ffffff');
   assert.equal(t.defaultVenueId, 'v1');
-  assert.equal(teamLabel(t), 'Unión · U17');
+  assert.equal(teamLabel(t), 'Unión · U17 Masc.');
   // sin club (antes de migrar): sus propios datos
   const legacy = resolveTeam({ id: 't2', name: 'Viejo', color: '#c3372c' }, null);
   assert.equal(legacy.name, 'Viejo');

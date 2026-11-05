@@ -2,11 +2,11 @@
 
 import { esc, plural } from '../../shared/html.js';
 import { DEFAULT_TEAM_COLOR, safeColor } from '../../shared/colors.js';
-import { activePlayers, MAX_PLAYERS_PER_TEAM, CATEGORY_SUGGESTIONS } from '../../domain/team.js';
+import { activePlayers, MAX_PLAYERS_PER_TEAM, CATEGORIES, BRANCHES, normalizeCategory, categoryLabel } from '../../domain/team.js';
 import { state, ui } from '../state.js';
 import { TOAST_HTML } from '../toast.js';
 import { hasTeams, clubById } from '../selectors.js';
-import { textField, competitionField, periodLengthField } from '../components/fields.js';
+import { textField, periodLengthField } from '../components/fields.js';
 
 function playerRowHTML(p) {
   const on = p.active !== false;
@@ -21,7 +21,7 @@ function headerHTML(t) {
   const note = t.seeded === 'last' ? '<p class="note">Lo armamos con el plantel de tu último partido. Revisalo y guardalo.</p>'
     : t.seeded === 'example' ? '<p class="note">Cargamos un plantel de ejemplo. <button data-a="team-clear">Vaciar y cargar el mío</button></p>' : '';
   const club = clubById(t.clubId);
-  const title = t.isNew ? 'Nuevo plantel' : [club && club.name, t.category].filter(Boolean).join(' · ') || 'Plantel';
+  const title = t.isNew ? 'Nuevo plantel' : [club && club.name, categoryLabel(t)].filter(Boolean).join(' · ') || 'Plantel';
   return '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="team-cancel">‹ ' + back + '</button></p><h1>' +
     esc(title) + '</h1></div>' + note + '</header>';
 }
@@ -37,16 +37,25 @@ function clubFieldHTML(t) {
     clubs.map((c) => '<option value="' + esc(c.id) + '"' + (c.id === t.clubId ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('') + '</select></div>';
 }
 
-function categoryFieldHTML(value) {
-  return '<div class="field"><label for="f-cat">Categoría</label><input id="f-cat" data-f="category" list="cat-list" value="' + esc(value || '') +
-    '" placeholder="Ej.: Primera, U17, Femenino" autocomplete="off"><datalist id="cat-list">' + CATEGORY_SUGGESTIONS.map((c) => '<option value="' + esc(c) + '"></option>').join('') + '</datalist></div>';
+/** Categoría de la lista de la app (si venía otra de versiones anteriores, se ofrece también). */
+function categoryFieldHTML(t) {
+  const { category } = normalizeCategory(t);
+  const list = CATEGORIES.includes(category) || !category ? CATEGORIES : CATEGORIES.concat(category);
+  return '<div class="field"><label for="f-cat">Categoría</label><select id="f-cat" data-f="category">' +
+    list.map((c) => '<option value="' + esc(c) + '"' + (c === category ? ' selected' : '') + '>' + esc(c) + '</option>').join('') + '</select></div>';
+}
+
+function branchFieldHTML(t) {
+  const { branch } = normalizeCategory(t);
+  return '<div class="field"><span class="flabel" id="branch-l">Rama</span><div class="seg seg3" role="radiogroup" aria-labelledby="branch-l">' +
+    Object.keys(BRANCHES).map((k) => '<button role="radio" data-a="team-branch" data-v="' + k + '" aria-checked="' + (k === branch) + '" tabindex="' + (k === branch ? 0 : -1) + '">' + BRANCHES[k].label + '</button>').join('') +
+    '</div></div>';
 }
 
 function teamInfoCardHTML(t) {
   return '<section class="card"><h2>Plantel</h2><div class="setup-grid">' +
-    clubFieldHTML(t) + categoryFieldHTML(t.category) + textField('f-coach', 'Entrenador (DT)', 'coach', t.coach) +
-    competitionField(t.competition) + periodLengthField(t.periodMin) +
-    '</div><p class="lead hint">El DT, la competición y la duración se proponen en cada partido nuevo; ahí los podés cambiar. Los colores y los estadios son del club.</p></section>';
+    clubFieldHTML(t) + categoryFieldHTML(t) + branchFieldHTML(t) + textField('f-coach', 'Entrenador (DT)', 'coach', t.coach) + periodLengthField(t.periodMin) +
+    '</div><p class="lead hint">El DT y la duración se proponen en cada partido nuevo; ahí los podés cambiar. Los colores y los estadios son del club; la competición se elige en cada partido.</p></section>';
 }
 
 function rosterCardHTML(t) {
