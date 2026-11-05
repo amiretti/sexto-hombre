@@ -114,6 +114,61 @@ function drawFoulsAndLegend(doc, r, W) {
   doc.text(LEGEND, MARGIN, y, { maxWidth: W - 2 * MARGIN });
 }
 
+const GOOD = [22, 131, 74], COURT_LINE = [120, 128, 140];
+
+/** Página con los tiros de campo en media cancha (aro arriba) y la tabla por zona. */
+function drawShotChartPage(doc, r, W) {
+  const sc = r.shotChart;
+  if (!sc || !sc.att) return;
+  doc.addPage();
+  drawHeader(doc, r, W);
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
+  doc.text('Mapa de tiros  ·  ' + (r.teamLabel || r.team), MARGIN, MARGIN + 17);
+  const s = 0.1, ox = MARGIN, oy = MARGIN + 24; // 1 cm de cancha = 0,1 mm
+  const P = (x, y) => [ox + (1500 - y) * s, oy + x * s];
+  const seg = (a, b) => { const p = P(...a), q = P(...b); doc.line(p[0], p[1], q[0], q[1]); };
+  doc.setDrawColor(...COURT_LINE); doc.setLineWidth(0.4);
+  doc.rect(ox, oy, 1500 * s, 1400 * s);
+  doc.rect(...P(0, 995), 490 * s, 580 * s);
+  const arc = (cx, cy, rad, from, to) => {
+    let prev = null;
+    for (let a = from; a <= to + 0.001; a += (to - from) / 40) {
+      const pt = [cx + rad * Math.cos(a * Math.PI / 180), cy + rad * Math.sin(a * Math.PI / 180)];
+      if (prev) seg(prev, pt);
+      prev = pt;
+    }
+  };
+  seg([0, 90], [299, 90]); seg([0, 1410], [299, 1410]);
+  const a3 = Math.asin(660 / 675) * 180 / Math.PI;
+  arc(157.5, 750, 675, -a3, a3);
+  arc(580, 750, 180, -90, 90);
+  arc(1400, 750, 180, 90, 270);
+  doc.setDrawColor(...INK); doc.setLineWidth(0.8); seg([120, 660], [120, 840]);
+  doc.setDrawColor(...BAD); doc.setLineWidth(0.5); doc.circle(...P(157.5, 750), 22.5 * s);
+  sc.shots.forEach((sh) => {
+    const [x, y] = P(Math.min(sh.x, 1400), sh.y);
+    if (sh.made) { doc.setFillColor(...GOOD); doc.circle(x, y, 1.6, 'F'); }
+    else { doc.setDrawColor(...BAD); doc.setLineWidth(0.6); doc.line(x - 1.4, y - 1.4, x + 1.4, y + 1.4); doc.line(x - 1.4, y + 1.4, x + 1.4, y - 1.4); }
+  });
+  const ly = oy + 1400 * s + 6;
+  doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...MUTED);
+  doc.setFillColor(...GOOD); doc.circle(ox + 2, ly - 1, 1.4, 'F'); doc.text('Convertido', ox + 5, ly);
+  doc.setDrawColor(...BAD); doc.line(ox + 27, ly - 2.2, ox + 29.4, ly + 0.2); doc.line(ox + 27, ly + 0.2, ox + 29.4, ly - 2.2); doc.text('Errado', ox + 32, ly);
+  if (sc.unlocated) doc.text((sc.unlocated === 1 ? '1 tiro sin ubicación (cuenta' : sc.unlocated + ' tiros sin ubicación (cuentan') + ' en el total).', ox + 50, ly);
+  const tx = ox + 1500 * s + 12;
+  doc.autoTable({
+    startY: oy, head: [['Zona', 'Conv./Int.', 'Acierto', 'De los tiros']],
+    body: sc.zones.map((z) => [z.label, z.cell, z.pct, z.share]),
+    foot: [['Total', sc.total, '', '']],
+    theme: 'striped', margin: { left: tx, right: MARGIN },
+    styles: { font: 'helvetica', fontSize: 9, halign: 'center', cellPadding: 1.7, textColor: INK },
+    headStyles: { fillColor: HEAD, textColor: WHITE, fontStyle: 'bold' },
+    footStyles: { fillColor: FOOT_FILL, textColor: INK, fontStyle: 'bold' },
+    alternateRowStyles: { fillColor: ZEBRA },
+    columnStyles: { 0: { halign: 'left' } }
+  });
+}
+
 function drawPageFooters(doc, r, W) {
   const pages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
@@ -141,6 +196,7 @@ export function buildPdf(r) {
   drawPeriodsTable(doc, r, W, L, R, y);
   drawBoxScore(doc, r);
   drawFoulsAndLegend(doc, r, W);
+  drawShotChartPage(doc, r, W);
   drawPageFooters(doc, r, W);
 
   const filename = `Planilla_${slug(L.name)}-vs-${slug(R.name)}_${r.date || 'partido'}.pdf`;

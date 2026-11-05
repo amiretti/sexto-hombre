@@ -69,6 +69,8 @@ export function stopWatching() {
   state.teams = null;
   state.clubs = null;
   state.competitions = null;
+  state.reports = null;
+  state.reportGames = null;
 }
 
 export function goHome() {

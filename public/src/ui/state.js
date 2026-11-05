@@ -13,7 +13,7 @@ export const app = {
 
 /** Estado de la app (qué pantalla, quién, qué datos). */
 export const state = {
-  view: 'boot', // boot | login | denied | home | setup | club | team | competition | loading | locked | game
+  view: 'boot', // boot | login | denied | home | setup | club | team | competition | reports | loading | locked | game
   user: null,
   profile: null,
   games: null,  // null = cargando
@@ -24,6 +24,8 @@ export const state = {
   competitions: null, // null = cargando
   competitionEdit: null,
   teamEdit: null,
+  reports: null,     // filtros del informe: {teamId, playerId, competitionId, from, to, tab, mode, stat}
+  reportGames: null, // partidos del informe con sus jugadas (null = juntándolos)
   setup: null,
   lockInfo: null, // partido abierto en otro dispositivo: {gameId, holder, team, opponent}
   pending: 0
@@ -64,11 +66,12 @@ export function isDemo() {
   return !!app.store && app.store.mode === 'demo';
 }
 
-/** Formulario activo (plantel o previa), para los inputs con data-f. */
+/** Formulario activo (club, competición, plantel, previa o filtros del informe), para los inputs con data-f. */
 export function activeForm() {
   if (state.view === 'club') return state.clubEdit;
   if (state.view === 'competition') return state.competitionEdit;
   if (state.view === 'team') return state.teamEdit;
   if (state.view === 'setup') return state.setup;
+  if (state.view === 'reports') return state.reports;
   return null;
 }

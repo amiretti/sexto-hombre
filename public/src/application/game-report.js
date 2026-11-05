@@ -7,6 +7,7 @@ import { REGULAR_PERIODS, periodShort, periodLong, remainingMs, formatSeconds, o
 import {
   playerStats, ourScore, opponentScore, pointsByPeriod, isEnded, teamFouls, staffFouls, teamTotals, timeoutsByWindow
 } from '../domain/stats.js';
+import { buildShotChart } from '../domain/shot-chart.js';
 
 function pctSuffix(made, att) {
   return att ? ' (' + Math.round(made * 100 / att) + '%)' : '';
@@ -30,6 +31,17 @@ function statusText(game, now) {
     return 'Final' + (ot ? ' tras ' + ot + ' suplementario' + (ot > 1 ? 's' : '') : '');
   }
   return 'En juego · ' + periodLong(game.period) + ' · ' + formatSeconds(remainingMs(game.clock, now) / 1000) + ' por jugar';
+}
+
+/** Tiros de campo del partido en media cancha y por zona (para la página del mapa). */
+function shotChartReport(game) {
+  const c = buildShotChart([game]);
+  return {
+    shots: c.shots.map((s) => ({ x: s.x, y: s.y, made: s.made })),
+    zones: c.zones.filter((z) => z.att).map((z) => ({ label: z.label, cell: z.made + '/' + z.att, pct: Math.round(z.pct * 100) + '%', share: Math.round(z.share * 100) + '%' })),
+    total: c.total.made + '/' + c.total.att + (c.total.att ? ' (' + Math.round(c.total.made * 100 / c.total.att) + '%)' : ''),
+    att: c.total.att, unlocated: c.unlocated
+  };
 }
 
 /**
@@ -67,6 +79,7 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
     timeoutsText: timeoutsText(game),
     staffText: 'DT ' + st.c + ' técnica' + (st.c === 1 ? '' : 's') + ' · Banca ' + st.b + (st.out ? ' · DT descalificado' : ''),
     generatedAt: now.toLocaleDateString('es-AR') + ' ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
-    generatedBy
+    generatedBy,
+    shotChart: shotChartReport(game)
   };
 }
