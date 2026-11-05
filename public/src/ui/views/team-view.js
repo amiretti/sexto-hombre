@@ -17,7 +17,7 @@ function playerRowHTML(p) {
 }
 
 function headerHTML(t) {
-  const back = ui.after === 'setup' && hasTeams() ? 'Volver al partido' : 'Mis partidos';
+  const back = ui.after === 'setup' && hasTeams() ? 'Volver al partido' : 'Mi club';
   const note = t.seeded === 'last' ? '<p class="note">Lo armamos con el plantel de tu último partido. Revisalo y guardalo.</p>'
     : t.seeded === 'example' ? '<p class="note">Cargamos un plantel de ejemplo. <button data-a="team-clear">Vaciar y cargar el mío</button></p>' : '';
   const club = clubById(t.clubId);
