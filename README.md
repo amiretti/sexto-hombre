@@ -27,7 +27,8 @@ _La planilla del cuerpo técnico._
 - **Tiempos muertos y pedidos de revisión** con un toque: detienen el reloj en el acto. Lleva la cuenta de tiempos muertos de cada equipo según FIBA (2 en el primer tiempo, 3 en el segundo, 1 por suplementario).
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
 - **Tablero tipo estadio:** tanteador y reloj con dígitos de 7 segmentos (DSEG7), que siguen el modo claro u oscuro. La hoja «Partido» (botón con engranaje) agrupa la planilla, los ajustes (tema y chicharra) y el cierre del partido.
-- **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
+- **Minutos jugados:** mientras el jugador está en cancha suma tiempo de reloj; cuando sale, deja de sumar. Se calcula con el quinteto inicial, los cambios y el reloj, así que también aparece en los partidos ya jugados. Se ve en la planilla, en el PDF, en el CSV y al hacer cambios.
+- **Planilla en vivo** por jugador, con minutos, totales y porcentajes. Se exporta a CSV (historial y planilla).
 - **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico, y una segunda página con el mapa de tiros del partido (convertidos y errados en media cancha, con la tabla por zona). Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
 
 ### Fuera del partido
@@ -40,7 +41,7 @@ _La planilla del cuerpo técnico._
 - **Estadios:** cada club guarda sus canchas (nombre y ubicación). Podés marcar una por defecto, que se propone en cada partido de local y se cambia si hace falta; queda en la lista de partidos y en la planilla.
 - **Informes:** por plantel, con filtros de jugador (o todo el equipo), competición y fechas.
   - *Mapa de tiros:* todos los tiros de campo llevados a una misma media cancha (se tiene en cuenta hacia dónde se atacaba en cada cuarto) y agrupados en 12 zonas. Se colorea por **volumen** (desde dónde se tira más) o por **acierto**: «normal» es un punto por tiro (50% en dobles, 33% en triples) y en rojo queda donde más se erra para lo que vale el tiro. Debajo, la tabla por zona.
-  - *Progreso:* gráfico de línea partido a partido de puntos, rebotes, asistencias, robos, tapones, pérdidas, faltas cometidas y recibidas, triples y porcentajes de tiro, con el promedio y la tabla de valores.
+  - *Progreso:* gráfico de línea partido a partido de puntos, minutos jugados (por jugador), rebotes, asistencias, robos, tapones, pérdidas, faltas cometidas y recibidas, triples y porcentajes de tiro, con el promedio y la tabla de valores.
   - *Exportar:* a **PDF** (resumen por partido con promedios y récord, más el mapa de tiros) o a **Excel** (.xlsx, con las hojas «Por partido» y «Tiros por zona»), según los filtros aplicados. En celular se abre el menú de compartir.
 
 ### En general
@@ -169,7 +170,7 @@ firebase.json            Hosting + Firestore
 npm test          # Node 22 o más nuevo, sin npm install
 ```
 
-Son 107 tests. Cubren el dominio (reloj, cancha, dirección de ataque, estadísticas, exclusiones, faltas de equipo, cambios, edición de jugadas, clubes, competiciones, mapa de tiros, progreso, resumen de la temporada, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el bloqueo por dispositivo, el reporte, la exportación de informes (incluido el ZIP del .xlsx), el CSV y el store demo.
+Son 116 tests. Cubren el dominio (reloj, cancha, dirección de ataque, estadísticas, minutos jugados, exclusiones, faltas de equipo, cambios, edición de jugadas, clubes, competiciones, mapa de tiros, progreso, resumen de la temporada, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el bloqueo por dispositivo, el reporte, la exportación de informes (incluido el ZIP del .xlsx), el CSV y el store demo.
 
 **Al agregar un módulo en `src/`**, sumalo a `MODULES` en `public/sw.js` y subí `VERSION`. Si no, la app instalada no lo va a tener sin señal.
 
@@ -232,7 +233,8 @@ Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos 
 - **Un dispositivo por partido.** El partido se carga desde un solo dispositivo (o pestaña) a la vez: si está abierto en otro, la app avisa y ofrece «Abrir acá igual», que hace que el otro deje de guardar. El bloqueo se renueva cada 30 s y vence solo a los 90 s si el dispositivo se apaga. No hay sincronización en vivo entre dispositivos.
 - **El tanteador del rival es manual.** El pase a suplementario depende de que esté bien cargado.
 - **Las reglas de Firestore no se probaron contra el emulador.** Antes de un uso real conviene verificar que un correo fuera de la lista no ve nada y que un usuario habilitado no puede leer los partidos de otro.
-- **Informes sin minutos jugados.** La app no registra los minutos de cada jugador, así que el progreso muestra totales por partido (no promedios por minuto). Los tiros cargados sin ubicación cuentan en los totales pero no en las zonas.
+- **Los minutos dependen del reloj.** Si el reloj no se usa, cada cuarto terminado cuenta completo para los que estaban en cancha. El progreso muestra totales por partido (no promedios por minuto).
+- **Tiros sin ubicación:** cuentan en los totales pero no en las zonas del mapa.
 - **Los informes leen cada partido con sus jugadas.** La primera vez se piden al servidor (o a la caché del dispositivo); después quedan en memoria mientras el partido no cambie.
 - La interfaz está solo en español (Argentina).
 

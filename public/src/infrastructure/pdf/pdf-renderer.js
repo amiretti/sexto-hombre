@@ -8,9 +8,9 @@ import { hexToRgb, isLightRgb } from '../../shared/colors.js';
 const INK = [20, 25, 34], MUTED = [88, 98, 114], RULE = [210, 215, 223], HEAD = [16, 20, 26], ZEBRA = [244, 246, 249], BAD = [195, 55, 44];
 const WHITE = [255, 255, 255], FOOT_FILL = [228, 232, 238], FALLBACK_COLOR = [140, 140, 140];
 const MARGIN = 12;
-const LEGEND = 'T2/T3/TL: convertidos/intentos (%).  RO/RD/RT: rebotes ofensivos, defensivos y totales.  AS: asistencias.  RB: robos.  TP: tapones.  PE: pérdidas.  FC: faltas cometidas.  FR: faltas recibidas.';
-const BOX_HEAD = ['Nº', 'Jugador', 'PTS', 'T2', 'T3', 'TL', 'RO', 'RD', 'RT', 'AS', 'RB', 'TP', 'PE', 'FC', 'FR'];
-const BOX_KEYS = ['pts', 't2', 't3', 'tl', 'ro', 'rd', 'rt', 'as', 'rb', 'tp', 'pe', 'fc', 'fr'];
+const LEGEND = 'MIN: minutos jugados.  T2/T3/TL: convertidos/intentos (%).  RO/RD/RT: rebotes ofensivos, defensivos y totales.  AS: asistencias.  RB: robos.  TP: tapones.  PE: pérdidas.  FC: faltas cometidas.  FR: faltas recibidas.';
+const BOX_HEAD = ['Nº', 'Jugador', 'MIN', 'PTS', 'T2', 'T3', 'TL', 'RO', 'RD', 'RT', 'AS', 'RB', 'TP', 'PE', 'FC', 'FR'];
+const BOX_KEYS = ['min', 'pts', 't2', 't3', 'tl', 'ro', 'rd', 'rt', 'as', 'rb', 'tp', 'pe', 'fc', 'fr'];
 
 export function slug(s) {
   return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'equipo';
@@ -90,7 +90,7 @@ function drawBoxScore(doc, r) {
     headStyles: { fillColor: HEAD, textColor: WHITE, fontStyle: 'bold' },
     footStyles: { fillColor: FOOT_FILL, textColor: INK, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: ZEBRA },
-    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 11 }, 1: { halign: 'left', cellWidth: 62 }, 2: { fontStyle: 'bold' } },
+    columnStyles: { 0: { fontStyle: 'bold', cellWidth: 11 }, 1: { halign: 'left', cellWidth: 56 }, 3: { fontStyle: 'bold' } },
     didParseCell: (d) => {
       if (d.section === 'body' && r.rows[d.row.index] && r.rows[d.row.index].outWhy && d.column.index === 1) d.cell.styles.textColor = BAD;
     }

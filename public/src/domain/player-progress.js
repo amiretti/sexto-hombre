@@ -1,13 +1,16 @@
 // Progreso partido a partido: una estadística por partido, de un jugador o de todo el equipo.
 
 import { playerStats, teamTotals } from './stats.js';
+import { formatMinutes } from './playing-time.js';
 
 /**
  * Estadísticas que se pueden seguir. `pct` = porcentaje (sin intentos el partido no suma punto).
  * `get(s)` recibe la planilla del jugador (playerStats) o los totales del equipo (teamTotals).
+ * `playerOnly` = no tiene sentido para el equipo (los minutos del equipo son siempre los del partido × 5).
  */
 export const PROGRESS_STATS = [
   { id: 'pts', label: 'Puntos', get: (s) => s.pts },
+  { id: 'min', label: 'Minutos jugados', playerOnly: true, get: (s) => Math.round(s.sec / 6) / 10, detail: (s) => formatMinutes(s.sec) },
   { id: 'reb', label: 'Rebotes', get: (s) => s.ro + s.rd },
   { id: 'ast', label: 'Asistencias', get: (s) => s.ast },
   { id: 'stl', label: 'Robos', get: (s) => s.stl },
@@ -50,9 +53,10 @@ export function playerSeries(games, playerId, statId) {
   for (const game of chronological(games)) {
     if (playerId && !(game.roster || []).some((p) => p.id === playerId)) continue;
     const s = playerId ? playerStats(game, playerId) : teamTotals(game);
+    const skip = stat.playerOnly && !playerId;
     points.push({
       gameId: game.id, date: game.date || '', opponent: game.opponent || '',
-      value: stat.get(s), detail: stat.detail ? stat.detail(s) : ''
+      value: skip ? null : stat.get(s), detail: skip || !stat.detail ? '' : stat.detail(s)
     });
   }
   const values = points.map((p) => p.value).filter((v) => v != null);

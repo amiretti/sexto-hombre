@@ -7,6 +7,7 @@ import { isBuzzerEnabled } from '../../../infrastructure/platform/buzzer.js';
 import { EVENT_LABELS, hasSubtype, subtypeKinds, isTeamEvent, EDITABLE_EVENT_TYPES, STAFF_EVENT_TYPES, isStaff } from '../../../domain/catalog.js';
 import { periodShort, periodLong, remainingMs, formatSeconds, overtimeCount } from '../../../domain/clock.js';
 import { zoneName } from '../../../domain/court.js';
+import { formatMinutes } from '../../../domain/playing-time.js';
 import {
   playerStats, ourScore, opponentScore, teamFouls, staffFouls, eventPoints, eventsNewestFirst, teamTotals, requiredOnCourt, percent
 } from '../../../domain/stats.js';
@@ -79,22 +80,22 @@ function foulsCell(s) {
 function boxRow(G, p) {
   const s = playerStats(G, p.id);
   return '<tr class="' + (s.out ? 'out' : '') + '"><td class="n">' + esc(p.num) + '</td><td class="l">' + esc(p.name || '—') + (G.onCourt.includes(p.id) ? ' <span class="oncourt" title="En cancha"><span class="visually-hidden">en cancha</span></span>' : '') + (s.out ? ' <span class="chip bad">' + s.outWhy + '</span>' : '') + '</td>' +
-    '<td class="p">' + s.pts + '</td><td>' + s.m2 + '/' + s.a2 + '</td><td>' + s.m3 + '/' + s.a3 + '</td><td>' + s.ftm + '/' + s.fta + '</td><td>' + s.ro + '</td><td>' + s.rd + '</td><td>' + (s.ro + s.rd) + '</td>' +
+    '<td class="min">' + formatMinutes(s.sec) + '</td><td class="p">' + s.pts + '</td><td>' + s.m2 + '/' + s.a2 + '</td><td>' + s.m3 + '/' + s.a3 + '</td><td>' + s.ftm + '/' + s.fta + '</td><td>' + s.ro + '</td><td>' + s.rd + '</td><td>' + (s.ro + s.rd) + '</td>' +
     '<td>' + s.ast + '</td><td>' + s.stl + '</td><td>' + s.blk + '</td><td>' + s.tov + '</td><td>' + foulsCell(s) + '</td><td>' + s.fd + '</td></tr>';
 }
 
 function boxFooter(T) {
-  return '<tfoot><tr><td></td><td class="l">Equipo</td><td class="p">' + T.pts + '</td><td>' + T.m2 + '/' + T.a2 + ' <small>' + percent(T.m2, T.a2) + '</small></td><td>' + T.m3 + '/' + T.a3 + ' <small>' + percent(T.m3, T.a3) + '</small></td><td>' + T.ftm + '/' + T.fta + ' <small>' + percent(T.ftm, T.fta) + '</small></td>' +
+  return '<tfoot><tr><td></td><td class="l">Equipo</td><td class="min">' + formatMinutes(T.sec) + '</td><td class="p">' + T.pts + '</td><td>' + T.m2 + '/' + T.a2 + ' <small>' + percent(T.m2, T.a2) + '</small></td><td>' + T.m3 + '/' + T.a3 + ' <small>' + percent(T.m3, T.a3) + '</small></td><td>' + T.ftm + '/' + T.fta + ' <small>' + percent(T.ftm, T.fta) + '</small></td>' +
     '<td>' + T.ro + '</td><td>' + T.rd + '</td><td>' + (T.ro + T.rd) + '</td><td>' + T.ast + '</td><td>' + T.stl + '</td><td>' + T.blk + '</td><td>' + T.tov + '</td><td>' + T.fouls + '</td><td>' + T.fd + '</td></tr></tfoot>';
 }
 
 function boxSheet(G) {
   const tf = [1, 2, 3, 4].map((p) => periodShort(p) + ': ' + teamFouls(G, p)).join(' · ');
   return sheet('Planilla · ' + esc(G.team) + ' ' + ourScore(G) + ' – ' + opponentScore(G) + ' ' + esc(G.opponent), '<button class="btn share" data-a="share">Compartir PDF</button><button class="btn" data-a="csv-box">Copiar CSV</button>',
-    '<p class="swipe-hint">Deslizá la tabla para ver todas las columnas →</p><div class="tablewrap" tabindex="0" role="region" aria-label="Planilla por jugador"><table class="box"><caption class="visually-hidden">Planilla por jugador</caption><thead><tr><th scope="col"><abbr title="Número">Nº</abbr></th><th scope="col" class="l">Jugador</th><th scope="col"><abbr title="Puntos">PTS</abbr></th><th scope="col"><abbr title="Dobles convertidos/intentados">T2</abbr></th><th scope="col"><abbr title="Triples convertidos/intentados">T3</abbr></th><th scope="col"><abbr title="Tiros libres convertidos/intentados">TL</abbr></th><th scope="col"><abbr title="Rebotes ofensivos">RO</abbr></th><th scope="col"><abbr title="Rebotes defensivos">RD</abbr></th><th scope="col"><abbr title="Rebotes totales">RT</abbr></th><th scope="col"><abbr title="Asistencias">AS</abbr></th><th scope="col"><abbr title="Robos">RB</abbr></th><th scope="col"><abbr title="Tapones">TP</abbr></th><th scope="col"><abbr title="Pérdidas">PE</abbr></th><th scope="col"><abbr title="Faltas cometidas">FC</abbr></th><th scope="col"><abbr title="Faltas recibidas">FR</abbr></th></tr></thead><tbody>' +
+    '<p class="swipe-hint">Deslizá la tabla para ver todas las columnas →</p><div class="tablewrap" tabindex="0" role="region" aria-label="Planilla por jugador"><table class="box"><caption class="visually-hidden">Planilla por jugador</caption><thead><tr><th scope="col"><abbr title="Número">Nº</abbr></th><th scope="col" class="l">Jugador</th><th scope="col"><abbr title="Minutos jugados">MIN</abbr></th><th scope="col"><abbr title="Puntos">PTS</abbr></th><th scope="col"><abbr title="Dobles convertidos/intentados">T2</abbr></th><th scope="col"><abbr title="Triples convertidos/intentados">T3</abbr></th><th scope="col"><abbr title="Tiros libres convertidos/intentados">TL</abbr></th><th scope="col"><abbr title="Rebotes ofensivos">RO</abbr></th><th scope="col"><abbr title="Rebotes defensivos">RD</abbr></th><th scope="col"><abbr title="Rebotes totales">RT</abbr></th><th scope="col"><abbr title="Asistencias">AS</abbr></th><th scope="col"><abbr title="Robos">RB</abbr></th><th scope="col"><abbr title="Tapones">TP</abbr></th><th scope="col"><abbr title="Pérdidas">PE</abbr></th><th scope="col"><abbr title="Faltas cometidas">FC</abbr></th><th scope="col"><abbr title="Faltas recibidas">FR</abbr></th></tr></thead><tbody>' +
     G.roster.map((p) => boxRow(G, p)).join('') + '</tbody>' + boxFooter(teamTotals(G)) + '</table></div>' +
     '<div class="staffline"><span class="chip">Faltas de equipo · ' + tf + '</span><span class="chip' + (staffFouls(G).out ? ' bad' : '') + '">' + staffSummary(G) + '</span></div>' +
-    '<p class="lead" style="font-size:.8rem">T2/T3/TL: convertidos/intentos · RO/RD/RT: rebotes · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas.</p>');
+    '<p class="lead" style="font-size:.8rem">MIN minutos jugados · T2/T3/TL: convertidos/intentos · RO/RD/RT: rebotes · AS asistencias · RB robos · TP tapones · PE pérdidas · FC faltas cometidas · FR faltas recibidas.</p>');
 }
 
 /* ---------- cambios, reloj, menú ---------- */
@@ -109,7 +110,7 @@ function subsSheet(G) {
     const state = side === 'court' ? (on ? 'Sigue' : 'Sale') : (on ? 'Entra' : '');
     const label = (side === 'court' ? (on ? 'Sacar a ' : 'Dejar en cancha a ') : (on ? 'No hacer entrar a ' : 'Hacer entrar a ')) + '#' + p.num + ' ' + (p.name || '');
     return '<button class="stog ' + side + (state ? ' ' + state.toLowerCase() : '') + '" data-a="sub-tog" data-id="' + esc(p.id) + '" aria-pressed="' + on + '" aria-label="' + esc(label) + '"' + (s.out && !on ? ' disabled' : '') + '>' +
-      '<span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + s.fouls + (s.fouls === 1 ? ' falta' : ' faltas') + (s.out ? ' · ' + s.outWhy : '') + '</small></span>' +
+      '<span class="pnum">' + esc(p.num) + '</span><span>' + esc(p.name || 'Jugador') + '<br><small>' + formatMinutes(s.sec) + ' min · ' + s.fouls + (s.fouls === 1 ? ' falta' : ' faltas') + (s.out ? ' · ' + s.outWhy : '') + '</small></span>' +
       (state ? '<span class="stag">' + state + '</span>' : '') + '</button>';
   };
   const outs = onCourt.filter((p) => !sel.includes(p.id)), ins = bench.filter((p) => sel.includes(p.id));

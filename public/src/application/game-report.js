@@ -8,6 +8,7 @@ import {
   playerStats, ourScore, opponentScore, pointsByPeriod, isEnded, teamFouls, staffFouls, teamTotals, timeoutsByWindow
 } from '../domain/stats.js';
 import { buildShotChart } from '../domain/shot-chart.js';
+import { formatMinutes } from '../domain/playing-time.js';
 
 function pctSuffix(made, att) {
   return att ? ' (' + Math.round(made * 100 / att) + '%)' : '';
@@ -53,7 +54,7 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
   const rows = game.roster.map((p) => {
     const s = playerStats(game, p.id);
     return {
-      num: p.num, name: p.name || '—', outWhy: s.outWhy, pts: s.pts,
+      num: p.num, name: p.name || '—', outWhy: s.outWhy, min: formatMinutes(s.sec), pts: s.pts,
       t2: s.m2 + '/' + s.a2, t3: s.m3 + '/' + s.a3, tl: s.ftm + '/' + s.fta,
       ro: s.ro, rd: s.rd, rt: s.ro + s.rd, as: s.ast, rb: s.stl, tp: s.blk, pe: s.tov, fc: foulsCell(s), fr: s.fd
     };
@@ -71,7 +72,7 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
     periods: pointsByPeriod(game).map((x) => ({ label: periodShort(x.p), us: x.us, them: x.them })),
     rows,
     totals: {
-      pts: T.pts, t2: T.m2 + '/' + T.a2 + pctSuffix(T.m2, T.a2), t3: T.m3 + '/' + T.a3 + pctSuffix(T.m3, T.a3),
+      min: formatMinutes(T.sec), pts: T.pts, t2: T.m2 + '/' + T.a2 + pctSuffix(T.m2, T.a2), t3: T.m3 + '/' + T.a3 + pctSuffix(T.m3, T.a3),
       tl: T.ftm + '/' + T.fta + pctSuffix(T.ftm, T.fta), ro: T.ro, rd: T.rd, rt: T.ro + T.rd,
       as: T.ast, rb: T.stl, tp: T.blk, pe: T.tov, fc: T.fouls, fr: T.fd
     },
