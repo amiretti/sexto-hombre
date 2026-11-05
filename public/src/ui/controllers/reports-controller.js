@@ -1,9 +1,17 @@
 // Controlador de «Informes»: filtros, pestañas y lectura de los partidos.
 
-import { app, state, resetUi } from '../state.js';
+import { app, state, resetUi, isDemo } from '../state.js';
 import { render } from '../render.js';
 import { onKeydown } from '../events.js';
-import { resolvedTeams } from '../selectors.js';
+import { resolvedTeams, competitionById } from '../selectors.js';
+import { toast } from '../toast.js';
+import { teamLabel } from '../../domain/club.js';
+import { playersInGames } from '../../domain/player-progress.js';
+import { formatDate } from '../../shared/ids.js';
+import { buildReportExport, reportSheets } from '../../application/report-export.js';
+import { buildReportPdf } from '../../infrastructure/pdf/report-pdf.js';
+import { buildXlsx, XLSX_TYPE } from '../../infrastructure/xlsx/xlsx-writer.js';
+import { shareFile } from '../../infrastructure/pdf/share.js';
 import { onFieldChange } from './form-controller.js';
 import { filterReportGames, createReportLoader } from '../../application/report-games.js';
 
@@ -79,7 +87,47 @@ function tabKeys(event) {
 }
 onKeydown(tabKeys);
 
+/** Filtros del informe en una línea legible (para el encabezado del archivo). */
+function filtersText(f) {
+  const comp = f.competitionId === 'none' ? 'Amistosos / sin competición' : f.competitionId ? ((competitionById(f.competitionId) || {}).name || '') : '';
+  const range = f.from || f.to ? (f.from ? 'desde ' + formatDate(f.from) : '') + (f.from && f.to ? ' ' : '') + (f.to ? 'hasta ' + formatDate(f.to) : '') : '';
+  return [comp, range].filter(Boolean).join(' · ');
+}
+
+function exportData() {
+  const f = state.reports, games = state.reportGames || [];
+  const team = resolvedTeams().find((t) => t.id === f.teamId);
+  const player = f.playerId ? playersInGames(games).find((p) => p.id === f.playerId) : null;
+  return buildReportExport(games, f, {
+    teamLabel: team ? teamLabel(team) : 'Equipo',
+    playerLabel: player ? (player.num !== '' && player.num != null ? '#' + player.num + ' ' : '') + (player.name || 'Sin nombre') : '',
+    filtersText: filtersText(f),
+    generatedBy: isDemo() || !state.user ? '' : state.user.name
+  });
+}
+
+/** Arma el archivo dentro del mismo toque (lo pide navigator.share) y lo comparte o descarga. */
+function exportReport(kind) {
+  if (!(state.reportGames || []).length) return;
+  let file;
+  try {
+    const r = exportData();
+    file = kind === 'xlsx'
+      ? { blob: new Blob([buildXlsx(reportSheets(r))], { type: XLSX_TYPE }), filename: r.fileBase + '.xlsx', title: r.title, type: XLSX_TYPE }
+      : { ...buildReportPdf(r), type: 'application/pdf' };
+  } catch (e) {
+    console.error(e);
+    toast('No se pudo generar el archivo: ' + (e.message || e), true);
+    return;
+  }
+  shareFile(file).then((res) => {
+    if (res === 'downloaded') toast('Se descargó ' + file.filename + '.');
+    else if (res === 'shared') toast('Informe compartido');
+  });
+}
+
 export const reportsActions = {
+  'rep-export': ({ data }) => exportReport(data.v === 'xlsx' ? 'xlsx' : 'pdf'),
   'open-reports': () => openReports(),
   'rep-tab': ({ data }) => selectTab(data.v),
   'rep-mode': ({ data }) => {
