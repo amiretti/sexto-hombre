@@ -43,8 +43,10 @@ export function render() {
   const root = $('#app');
   if (state.view === 'home') setPageTitle(HOME_TABS.find((t) => t.id === homeTab()).title);
   else if (TITLES[state.view]) setPageTitle(TITLES[state.view]);
+  // Un aviso visible sobrevive al redibujo (p. ej. «Partido borrado · Deshacer» cuando llega la lista nueva).
+  const old = $('#toast'), keep = old && !old.hidden ? old : null;
   const screen = SCREENS[state.view];
-  if (screen) { root.innerHTML = screen(); return; }
-  root.innerHTML = gameShellHTML(isBasicSheet(currentGame()));
-  renderGame();
+  root.innerHTML = screen ? screen() : gameShellHTML(isBasicSheet(currentGame()));
+  if (keep) { const fresh = $('#toast'); if (fresh) fresh.replaceWith(keep); }
+  if (!screen) renderGame();
 }

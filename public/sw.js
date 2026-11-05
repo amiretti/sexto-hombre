@@ -2,7 +2,7 @@
 // - Archivos propios: primero la red (para tomar actualizaciones), si no hay red, la copia guardada.
 // - Firebase SDK (CDN): la copia guardada y se actualiza en segundo plano. Las fuentes las sirve la app (fonts/).
 // - Firestore, login y el resto de las APIs de Google no pasan por acá.
-const VERSION = 'sexto-hombre-v30';
+const VERSION = 'sexto-hombre-v31';
 // Módulos de la app (src/). Al agregar o quitar un archivo, actualizar esta lista y VERSION.
 const MODULES = [
   'src/application/csv-export.js', 'src/application/game-lock.js', 'src/application/game-report.js', 'src/application/game-session.js', 'src/application/legacy-migration.js', 'src/application/report-export.js', 'src/application/report-games.js', 'src/domain/catalog.js', 'src/domain/club.js', 'src/domain/competition.js', 'src/domain/player-progress.js', 'src/domain/playing-time.js', 'src/domain/shot-chart.js',
@@ -11,7 +11,7 @@ const MODULES = [
   'src/infrastructure/pdf/pdf-renderer.js', 'src/infrastructure/pdf/share.js', 'src/infrastructure/platform/buzzer.js', 'src/infrastructure/platform/device-id.js', 'src/infrastructure/platform/device.js', 'src/infrastructure/platform/local-data.js', 'src/infrastructure/platform/setup-draft-storage.js', 'src/infrastructure/platform/theme.js',
   'src/infrastructure/store/demo-store.js', 'src/infrastructure/store/firebase-store.js', 'src/infrastructure/store/index.js', 'src/infrastructure/store/pending-tracker.js',
   'src/infrastructure/store/serialization.js', 'src/shared/colors.js', 'src/shared/html.js', 'src/shared/ids.js',
-  'src/ui/components/brand.js', 'src/ui/components/charts.js', 'src/ui/components/fields.js', 'src/ui/components/team-card.js', 'src/ui/components/theme-switch.js', 'src/ui/controllers/club-controller.js', 'src/ui/controllers/competition-controller.js', 'src/ui/controllers/reports-controller.js', 'src/ui/controllers/form-controller.js',
+  'src/ui/components/brand.js', 'src/ui/components/charts.js', 'src/ui/components/fields.js', 'src/ui/components/swipe-row.js', 'src/ui/components/team-card.js', 'src/ui/components/theme-switch.js', 'src/ui/controllers/club-controller.js', 'src/ui/controllers/competition-controller.js', 'src/ui/controllers/reports-controller.js', 'src/ui/controllers/form-controller.js',
   'src/ui/controllers/game-controller.js', 'src/ui/controllers/home-controller.js', 'src/ui/controllers/setup-controller.js', 'src/ui/controllers/team-controller.js',
   'src/ui/dom.js', 'src/ui/focus.js', 'src/ui/events.js', 'src/ui/navigation.js', 'src/ui/render.js',
   'src/ui/selectors.js', 'src/ui/state.js', 'src/ui/toast.js', 'src/ui/dashboard-loader.js', 'src/ui/views/auth-view.js', 'src/ui/views/club-view.js', 'src/ui/views/competition-view.js', 'src/ui/views/reports-view.js',

@@ -282,7 +282,16 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 .user img{width:34px;height:34px;border-radius:50%}
 .user span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .glist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.gitem{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:6px 8px 6px 6px}
+.gitem{position:relative;border-radius:var(--r);overflow:hidden}
+.gslide{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;background:var(--panel);border:1px solid var(--rule);border-radius:var(--r);padding:6px 8px 6px 6px;touch-action:pan-y;transition:transform .2s ease}
+/* deslizar a la izquierda muestra «Borrar» */
+.gitem.open .gslide{transform:translateX(-96px)}
+.gitem.dragging .gslide{transition:none;user-select:none;-webkit-user-select:none}
+.swipe-act{position:absolute;top:0;right:0;bottom:0;width:104px;padding-left:8px;border:0;border-radius:0 var(--r) var(--r) 0;background:#c3372c;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.gitem:not(.open):not(.dragging) .swipe-act{opacity:0}
+@media (prefers-reduced-motion:reduce){.gslide{transition:none}}
+/* en pantallas táctiles se borra deslizando: el tachito queda solo para mouse y teclado */
+@media (pointer:coarse){.gslide .gdel{display:none}}
 .gopen{border:0;background:none;text-align:left;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"meta state" "teams state";gap:2px 12px;padding:8px 10px;border-radius:8px;min-width:0}
 .gopen:hover{background:var(--bg)}
 .gmeta{grid-area:meta;font-size:.8rem;color:var(--muted)}

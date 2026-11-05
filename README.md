@@ -37,6 +37,7 @@ _La planilla del cuerpo técnico._
 ### Fuera del partido
 
 - **Inicio por secciones:** Inicio, Partidos, Club y Competiciones. En celular el menú va en una barra fija abajo y en tablet o computadora, en pestañas.
+- **Borrar un partido deslizando:** en Partidos, deslizás la tarjeta hacia la izquierda y aparece «Borrar». Al tocarlo el partido se borra y el aviso ofrece **Deshacer**. Con mouse o teclado también está el tachito, que pide un segundo toque.
 - **Resumen de la temporada** en Inicio: partido en curso (para continuarlo), récord G-P con promedio a favor, en contra y diferencia, últimos 5 resultados y líderes del plantel en puntos, rebotes y asistencias por partido.
 - **Clubes y planteles:** el club guarda el nombre, los colores (titular y alternativo) y los estadios; cada club tiene uno o más planteles, cada uno con su categoría (Mini a Maxi) y rama (masculino, femenino o mixto) y sus jugadores. En cada partido elegís el plantel, el rival, los convocados y el quinteto.
 - **Competiciones:** ligas y torneos con temporada y duración del cuarto. Se eligen al crear cada partido (o «Amistoso»), proponen su duración y el plantel recuerda la última que usó. Se crean desde Mis partidos o desde la previa.

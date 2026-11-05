@@ -29,6 +29,7 @@ import { setupActions } from './src/ui/controllers/setup-controller.js';
 import { registerFormHandlers } from './src/ui/controllers/form-controller.js';
 import { gameActions, registerGameHandlers, startClockTicker } from './src/ui/controllers/game-controller.js';
 import { renderSync } from './src/ui/views/game/game-view.js';
+import { registerSwipeRows } from './src/ui/components/swipe-row.js';
 
 // El orden importa: los manejadores de formularios atienden Escape antes que el partido.
 registerActions(navigationActions);
@@ -41,6 +42,7 @@ registerActions(setupActions);
 registerActions(gameActions);
 registerFormHandlers();
 registerGameHandlers();
+registerSwipeRows();
 startEventLoop();
 startClockTicker();
 

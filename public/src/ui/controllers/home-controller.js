@@ -2,7 +2,7 @@
 
 import { app, state, ui } from '../state.js';
 import { render } from '../render.js';
-import { reportSaveError } from '../toast.js';
+import { reportSaveError, toast } from '../toast.js';
 import { persistView, refreshHomeDashboard } from '../navigation.js';
 import { HOME_TABS } from '../views/home-view.js';
 import { editTeam } from './team-controller.js';
@@ -16,6 +16,18 @@ function deleteGame(id) {
     ui.confirm = 'gdel-' + id;
     render();
   }
+}
+
+/** Borrado al deslizar la tarjeta: sin segundo toque, pero el aviso permite deshacerlo. */
+function swipeDeleteGame(id) {
+  ui.confirm = null;
+  app.store.saveGame(id, { deleted: true }).catch(reportSaveError);
+  toast('Partido borrado', false, null, { label: 'Deshacer', a: 'undel-game', id });
+}
+
+function restoreGame(id) {
+  app.store.saveGame(id, { deleted: false }).catch(reportSaveError);
+  toast('Partido recuperado');
 }
 
 /** Cambia de sección del inicio y deja el foco en su título. */
@@ -39,5 +51,7 @@ export const homeActions = {
     if (state.view === 'setup') { persistView(); editTeam(state.setup.teamId, 'setup'); }
     else editTeam(id || null, 'home');
   },
-  'del-game': ({ id }) => deleteGame(id)
+  'del-game': ({ id }) => deleteGame(id),
+  'swipe-del-game': ({ id }) => swipeDeleteGame(id),
+  'undel-game': ({ id }) => restoreGame(id)
 };
