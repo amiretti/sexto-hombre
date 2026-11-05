@@ -181,5 +181,6 @@ export function homeHTML() {
     navHTML(tab) +
     (isDemo() ? '<p class="note">Modo demo: los datos quedan solo en este dispositivo. Configurá Firebase para guardar en la nube con tu cuenta de Google.</p>' : '') +
     (state.gamesErr ? '<p class="err">' + esc(state.gamesErr) + '</p>' : '') +
-    '<main class="hbody" id="home-body">' + tabBodyHTML(tab) + '</main>' + TOAST_HTML + '</div>';
+    // El <main> es #app (index.html): el cuerpo del inicio va en un div para no duplicar el landmark.
+    '<div class="hbody" id="home-body">' + tabBodyHTML(tab) + '</div>' + TOAST_HTML + '</div>';
 }
