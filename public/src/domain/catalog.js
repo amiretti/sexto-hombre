@@ -18,7 +18,7 @@ export const PERSONAL_FOUL_KINDS = {
 };
 
 export const FOUL_DRAWN_KINDS = {
-  none: 'Sin tiro', shot2: 'En tiro de 2 · 2 libres', shot3: 'En tiro de 3 · 3 libres', and1: 'Encestó igual · gol + 1 libre'
+  none: 'Sin tiro', bonus: 'Sin tiro · rival en penalización · 2 libres', shot2: 'En tiro de 2 · 2 libres', shot3: 'En tiro de 3 · 3 libres', and1: 'Encestó igual · gol + 1 libre'
 };
 
 /** Subtipos por tipo de jugada y el valor por defecto de cada uno. */
@@ -45,7 +45,7 @@ export function subtypeLabel(type, sub) {
 }
 
 /** Libres que corresponden a una falta en situación de tiro ('none' = 0). */
-export const FREE_THROWS_FOR = { none: 0, shot2: 2, shot3: 3, and1: 1 };
+export const FREE_THROWS_FOR = { none: 0, bonus: 2, shot2: 2, shot3: 3, and1: 1 };
 
 /** Tipos que se pueden elegir al editar una jugada de un jugador. */
 export const EDITABLE_EVENT_TYPES = ['2M', '2X', '3M', '3X', 'FT', 'RO', 'RD', 'AST', 'STL', 'BLK', 'TOV', 'PF', 'FD', 'TF', 'UF', 'DF'];

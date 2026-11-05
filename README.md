@@ -18,6 +18,7 @@ _La planilla del cuerpo técnico._
 - **Sabe hacia dónde atacás.** En la previa elegís el aro del primer tiempo; se invierte solo en el 3° cuarto y un indicador sobre la cancha lo muestra (se toca para corregirlo). Si tocás en campo rival aparecen primero las acciones de ataque; en campo propio, las de defensa.
 - **Asistencia al toque:** después de cada doble o triple convertido pregunta si hubo asistencia y muestra a los compañeros en cancha.
 - **Falta recibida en tiro:** pregunta si fue en tiro, sugiere 2 o 3 libres según la ubicación y abre directo la carga de libres. El 2+1 / 3+1 registra también el canasto.
+- **Faltas del rival y penalización:** cada falta recibida suma una falta de equipo del rival en el cuarto (los suplementarios cuentan con el 4°) y el tablero las muestra junto a las nuestras. Con el rival en penalización (4 o más), una falta recibida sin tiro propone directo los 2 libres; si fue en ataque del rival, se carga sin libres.
 - **Reloj de juego** con cuartos configurables (6, 8, 10 o 12 minutos), suplementarios de 5 minutos, ajuste manual y pase de período.
 - **Chicharra** al terminar cada período, como en el estadio (sintetizada, funciona sin señal; se silencia desde el menú del partido).
 - **Reloj que no se olvida:** si se carga una acción con la pelota viva (tiro, rebote, asistencia, robo, tapón) y el reloj estaba detenido, lo pone a correr y ofrece sincronizarlo con el tablero; las jugadas cargadas mientras estaba detenido se corrigen solas. Faltas, libres, violaciones y tiempos muertos no lo arrancan.
@@ -231,6 +232,7 @@ Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos 
 
 - **Un dispositivo por partido.** El partido se carga desde un solo dispositivo (o pestaña) a la vez: si está abierto en otro, la app avisa y ofrece «Abrir acá igual», que hace que el otro deje de guardar. El bloqueo se renueva cada 30 s y vence solo a los 90 s si el dispositivo se apaga. No hay sincronización en vivo entre dispositivos.
 - **El tanteador del rival es manual.** El pase a suplementario depende de que esté bien cargado.
+- **Las faltas del rival salen de las faltas recibidas.** Si una falta del rival no se carga como falta recibida (o es una técnica de un jugador rival), no suma para la penalización.
 - **Las reglas de Firestore no se probaron contra el emulador.** Antes de un uso real conviene verificar que un correo fuera de la lista no ve nada y que un usuario habilitado no puede leer los partidos de otro.
 - **Informes sin minutos jugados.** La app no registra los minutos de cada jugador, así que el progreso muestra totales por partido (no promedios por minuto). Los tiros cargados sin ubicación cuentan en los totales pero no en las zonas.
 - **Los informes leen cada partido con sus jugadas.** La primera vez se piden al servidor (o a la caché del dispositivo); después quedan en memoria mientras el partido no cambie.

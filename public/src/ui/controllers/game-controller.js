@@ -3,7 +3,7 @@
 import { EVENT_LABELS, FREE_THROWS_FOR, isLiveBallAction } from '../../domain/catalog.js';
 import { periodLengthSec, periodLong, toggleClock, adjustClock, remainingMs, runClockFrom, formatSeconds } from '../../domain/clock.js';
 import { clampToCourt, flipAttackingSide, attackingSide, SHOT_ZONES, zonePoint } from '../../domain/court.js';
-import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes } from '../../domain/stats.js';
+import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes, opponentTeamFouls, PENALTY_FOULS } from '../../domain/stats.js';
 import { whoLabel } from '../../domain/describe.js';
 import {
   captureMoment, lastLoggedEvent, adjustOpponentScore, applySubstitution, applyForcedSubstitution, substitutionEvent,
@@ -143,13 +143,16 @@ function recordFoulDrawn(kind) {
   }
   const r = session().recordPlay(moment, { type: 'FD', sub, who });
   if (r.error) { toast(r.error, true); return; }
+  // Con la 4ª falta del rival en el cuarto, la próxima va con libres.
+  const rivalFouls = opponentTeamFouls(currentGame(), moment.period);
+  const note = rivalFouls === PENALTY_FOULS ? ' · 4 faltas del rival: la próxima va con libres' : '';
   const shots = FREE_THROWS_FOR[sub] || 0;
-  if (!shots) { resetPlayFlow(); renderGame(); toast(r.message, r.warn, r.event.id); return; }
+  if (!shots) { resetPlayFlow(); renderGame(); toast(r.message + note, r.warn || !!note, r.event.id); return; }
   ui.pending = { ...moment, x: null, y: null };
   ui.ft = { att: shots, res: Array(shots).fill(null), afterFoul: true };
   ui.step = 'ft';
   renderGame();
-  toast(r.message + '. Cargá ' + (shots === 1 ? 'el libre' : 'los libres') + '.', false, r.event.id);
+  toast(r.message + note + '. Cargá ' + (shots === 1 ? 'el libre' : 'los libres') + '.', !!note, r.event.id);
 }
 
 /* ---------- reloj ---------- */

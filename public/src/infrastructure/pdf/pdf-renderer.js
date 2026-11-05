@@ -104,6 +104,11 @@ function drawFoulsAndLegend(doc, r, W) {
   doc.setFont('helvetica', 'normal'); doc.text(r.teamFoulsText, MARGIN + 29, y);
   doc.setFont('helvetica', 'bold'); doc.text('Cuerpo técnico:', W / 2, y);
   doc.setFont('helvetica', 'normal'); doc.text(r.staffText, W / 2 + 27, y);
+  if (r.oppFoulsText) {
+    y += 5;
+    doc.setFont('helvetica', 'bold'); doc.text('Faltas del rival:', MARGIN, y);
+    doc.setFont('helvetica', 'normal'); doc.text(r.oppFoulsText, MARGIN + 29, y);
+  }
   if (r.timeoutsText) {
     y += 5;
     doc.setFont('helvetica', 'bold'); doc.text('Tiempos muertos:', MARGIN, y);

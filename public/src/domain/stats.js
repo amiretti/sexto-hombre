@@ -86,6 +86,18 @@ export function teamFouls(game, period) {
   return game.events.filter((e) => isFoul(e.type) && Math.min(e.period, REGULAR_PERIODS) === key && !isStaff(e.who)).length;
 }
 
+/**
+ * Faltas de equipo del rival en el período: cada falta recibida por un jugador nuestro es una falta del rival.
+ * Los suplementarios cuentan como el 4° cuarto.
+ */
+export function opponentTeamFouls(game, period) {
+  const key = Math.min(period, REGULAR_PERIODS);
+  return game.events.filter((e) => e.type === 'FD' && Math.min(e.period, REGULAR_PERIODS) === key).length;
+}
+
+/** Con 4 faltas de equipo en el período, cada falta personal siguiente da 2 libres (FIBA). */
+export const PENALTY_FOULS = 4;
+
 /** Faltas del cuerpo técnico: c (técnicas DT), b (técnicas banca), d (descalificantes). */
 export function staffFouls(game) {
   let c = 0, b = 0, d = 0;

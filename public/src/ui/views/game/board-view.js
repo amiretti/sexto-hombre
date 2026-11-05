@@ -3,7 +3,7 @@
 import { esc } from '../../../shared/html.js';
 import { DEFAULT_TEAM_COLOR, DEFAULT_OPPONENT_COLOR, safeColor } from '../../../shared/colors.js';
 import { remainingMs, formatSeconds, periodShort, periodLong } from '../../../domain/clock.js';
-import { ourScore, opponentScore, teamFouls, isEnded } from '../../../domain/stats.js';
+import { ourScore, opponentScore, teamFouls, opponentTeamFouls, PENALTY_FOULS, isEnded } from '../../../domain/stats.js';
 import { $ } from '../../dom.js';
 import { currentGame, ui } from '../../state.js';
 
@@ -27,9 +27,14 @@ function foulDots(tf) {
 }
 
 function penaltyTag(tf) {
-  if (tf >= 5) return '<span class="pen-tag">Penalización</span>';
-  if (tf === 4) return '<span class="pen-tag">Próxima: libres</span>';
+  if (tf > PENALTY_FOULS) return '<span class="pen-tag">Penalización</span>';
+  if (tf === PENALTY_FOULS) return '<span class="pen-tag">Próxima: libres</span>';
   return '';
+}
+
+/** «Faltas eq.» con los puntitos y el aviso de penalización. */
+function foulsLine(tf, whose) {
+  return '<span class="sub tfline">Faltas eq. <span class="tfdots' + (tf >= PENALTY_FOULS ? ' pen' : '') + '" role="img" aria-label="' + tf + (tf === 1 ? ' falta' : ' faltas') + ' de equipo ' + whose + '">' + foulDots(tf) + '</span>' + penaltyTag(tf) + '</span>';
 }
 
 function clockControls(G, r, ended) {
@@ -41,7 +46,7 @@ function clockControls(G, r, ended) {
 function ourSide(G, pos) {
   const tf = teamFouls(G, G.period);
   return '<div class="side ' + pos + '"><span class="score"><span class="digits">' + ourScore(G) + '</span></span><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.teamColor, DEFAULT_TEAM_COLOR)) + '"></span>' + teamName(G.team) + '</span>' +
-    '<span class="sub">Faltas eq. <span class="tfdots' + (tf >= 4 ? ' pen' : '') + '" role="img" aria-label="' + tf + (tf === 1 ? ' falta' : ' faltas') + ' de equipo">' + foulDots(tf) + '</span>' + penaltyTag(tf) + '</span></div>';
+    foulsLine(tf, 'nuestras') + '</div>';
 }
 
 function opponentButtons() {
@@ -51,7 +56,7 @@ function opponentButtons() {
 
 function theirSide(G, pos) {
   return '<div class="side ' + pos + '"><span class="tname"><span class="cbar" style="background:' + esc(safeColor(G.oppColor, DEFAULT_OPPONENT_COLOR)) + '"></span>' + teamName(G.opponent) + '</span><span class="score"><span class="digits">' + opponentScore(G) + '</span></span>' +
-    '<span class="sub oppctl">' + opponentButtons() + '</span></div>';
+    foulsLine(opponentTeamFouls(G, G.period), 'del rival') + '<span class="sub oppctl">' + opponentButtons() + '</span></div>';
 }
 
 /** Chip «el reloj estaba detenido»: se ofrece sincronizar con el tablero; se cierra solo. */
