@@ -39,12 +39,15 @@ function gameItemHTML(game) {
   const us = [game.team, safeColor(game.teamColor, DEFAULT_TEAM_COLOR), Number(sm.us) || 0];
   const them = [game.opponent, safeColor(game.oppColor, DEFAULT_OPPONENT_COLOR), Number(sm.them) || 0];
   const [left, right] = game.venue === 'away' ? [them, us] : [us, them];
-  return '<li class="gitem"><button class="gopen" data-a="open-game" data-id="' + esc(game.id) + '">' +
+  const name = game.team + ' vs ' + game.opponent;
+  return '<li class="gitem" data-swipe><div class="gslide"><button class="gopen" data-a="open-game" data-id="' + esc(game.id) + '">' +
     '<span class="gmeta">' + esc(formatDate(game.date)) + (game.category ? ' · ' + esc(game.category) : '') + (game.competition ? ' · ' + esc(game.competition) : '') + (game.stadium && game.stadium.name ? ' · ' + esc(game.stadium.name) : '') + (game.sheet === 'basic' ? ' · Planilla básica' : '') + '</span>' +
     '<span class="gteams">' + sideHTML(...left, false) + '<span class="gsep">–</span>' + sideHTML(...right, true) + '</span>' +
     '<span class="gstate">' + statusChip(game) + '<span class="gcta">' + (game.status === 'final' ? 'Ver ›' : 'Continuar ›') + '</span></span></button>' +
     // Borrar queda chico y apartado, y pide confirmación (segundo toque).
-    '<button class="gdel' + (armed ? ' armed' : '') + '" data-a="del-game" data-id="' + esc(game.id) + '" aria-label="' + esc((armed ? 'Confirmar: borrar el partido ' : 'Borrar el partido ') + game.team + ' vs ' + game.opponent) + '">' + (armed ? '¿Borrar? Tocá de nuevo' : '🗑') + '</button></li>';
+    '<button class="gdel' + (armed ? ' armed' : '') + '" data-a="del-game" data-id="' + esc(game.id) + '" aria-label="' + esc((armed ? 'Confirmar: borrar el partido ' : 'Borrar el partido ') + game.team + ' vs ' + game.opponent) + '">' + (armed ? '¿Borrar? Tocá de nuevo' : '🗑') + '</button></div>' +
+    // Deslizando la tarjeta a la izquierda aparece «Borrar» (borra al tocarlo; el aviso ofrece deshacer).
+    '<button class="swipe-act" data-a="swipe-del-game" data-id="' + esc(game.id) + '" aria-label="' + esc('Borrar el partido ' + name) + '">Borrar</button></li>';
 }
 
 function gamesListHTML() {

@@ -42,7 +42,7 @@ export function toast(text, warn = false, undoEventId = null, action = null) {
   el.className = 'toast' + (warn ? ' warn' : '');
   el.setAttribute('aria-live', warn ? 'assertive' : 'polite');
   el.innerHTML = '<span>' + esc(text) + '</span>' +
-    (action ? '<button data-a="' + esc(action.a) + '"' + (action.o ? ' data-o="' + esc(action.o) + '"' : '') + '>' + esc(action.label) + '</button>' : '') +
+    (action ? '<button data-a="' + esc(action.a) + '"' + (action.o ? ' data-o="' + esc(action.o) + '"' : '') + (action.id ? ' data-id="' + esc(action.id) + '"' : '') + '>' + esc(action.label) + '</button>' : '') +
     (undoEventId ? '<button data-a="undo-id" data-id="' + esc(undoEventId) + '">Deshacer</button>' : '') +
     '<button class="toast-x" type="button" aria-label="Cerrar aviso">×</button>';
   el.hidden = false;
