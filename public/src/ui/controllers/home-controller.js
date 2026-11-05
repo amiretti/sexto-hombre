@@ -1,9 +1,10 @@
-// Controlador de «Mis partidos».
+// Controlador del inicio: secciones, partidos y planteles.
 
 import { app, state, ui } from '../state.js';
 import { render } from '../render.js';
 import { reportSaveError } from '../toast.js';
-import { persistView } from '../navigation.js';
+import { persistView, refreshHomeDashboard } from '../navigation.js';
+import { HOME_TABS } from '../views/home-view.js';
 import { editTeam } from './team-controller.js';
 import { newSetup } from './setup-controller.js';
 
@@ -17,7 +18,20 @@ function deleteGame(id) {
   }
 }
 
+/** Cambia de sección del inicio y deja el foco en su título. */
+function selectHomeTab(tab) {
+  if (!HOME_TABS.some((t) => t.id === tab)) return;
+  state.homeTab = tab;
+  ui.confirm = null;
+  refreshHomeDashboard();
+  render();
+  window.scrollTo(0, 0);
+  const h1 = document.getElementById('home-h1');
+  if (h1) h1.focus({ preventScroll: true });
+}
+
 export const homeActions = {
+  'home-tab': ({ data }) => selectHomeTab(data.v),
   'new-setup': () => newSetup(),
   'new-team': ({ id }) => editTeam(null, 'home', id || null),
   // También se usa desde la previa: ahí edita el plantel elegido y vuelve a la previa.

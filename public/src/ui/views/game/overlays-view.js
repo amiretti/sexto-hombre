@@ -178,7 +178,7 @@ function menuSheet(G) {
     ? '<p class="mdone"><span class="chip ok">Partido finalizado</span> Podés seguir corrigiendo jugadas.</p>'
     : '<button class="btn danger block' + (armed ? ' armed' : '') + '" data-a="finish">' + (armed ? 'Tocá de nuevo para finalizar' : 'Finalizar partido') + '</button>' +
       '<p class="mhint">Usalo si el partido no terminó con el reloj (por ejemplo, si no lo usaste). Después podés seguir corrigiendo jugadas.</p>') +
-    '<button class="btn block" data-a="go-home">← Volver a mis partidos</button>');
+    '<button class="btn block" data-a="go-home">← Volver al inicio</button>');
   const note = '<p class="mnote">' + (isDemo() ? 'Modo demo: el partido se guarda solo en este dispositivo.' : 'Cada jugada se guarda en tu cuenta. Sin señal queda en el dispositivo y se envía sola cuando vuelve la conexión.') + '</p>';
   return sheet('Partido', '', head + planilla + ajustes + partido + note, true);
 }
