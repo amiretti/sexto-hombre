@@ -4,13 +4,15 @@ _La planilla del cuerpo técnico._
 
 **Sexto Hombre** es una app web (PWA) para que el asistente del entrenador cargue un partido de básquet **jugada por jugada desde una tablet**, en el banco y sin depender de la señal. Al final del partido genera la planilla en PDF y la comparte por WhatsApp.
 
-> Estado: **Fase 0 (MVP)**, en construcción.
+> Estado: **Fase 0 (MVP) terminada** (noviembre 2026). Cubre el partido completo, la planilla compartible, la organización del club y los informes de la temporada. Lo que todavía no hace está en [Límites conocidos](#límites-conocidos-fase-0).
 
 ![Pantalla del partido: cancha con los tiros marcados, tanteador, reloj y últimas jugadas](docs/screenshots/partido.png)
 
 ---
 
 ## Qué hace
+
+### Durante el partido
 
 - **Cancha interactiva.** Tocás dónde ocurrió la jugada, elegís el jugador y la acción. El tiempo de reloj se toma al tocar. La app sugiere doble o triple según la zona.
 - **Sabe hacia dónde atacás.** En la previa elegís el aro del primer tiempo; se invierte solo en el 3° cuarto y un indicador sobre la cancha lo muestra (se toca para corregirlo). Si tocás en campo rival aparecen primero las acciones de ataque; en campo propio, las de defensa.
@@ -24,8 +26,14 @@ _La planilla del cuerpo técnico._
 - **Cambios** con registro de quién entra y quién sale.
 - **Tiempos muertos y pedidos de revisión** con un toque: detienen el reloj en el acto. Lleva la cuenta de tiempos muertos de cada equipo según FIBA (2 en el primer tiempo, 3 en el segundo, 1 por suplementario).
 - **Historial editable:** corregir o borrar cualquier jugada, y deshacer la última.
+- **Tablero tipo estadio:** tanteador y reloj con dígitos de 7 segmentos (DSEG7), que siguen el modo claro u oscuro. La hoja «Partido» (botón con engranaje) agrupa la planilla, los ajustes (tema y chicharra) y el cierre del partido.
 - **Planilla en vivo** por jugador, con totales y porcentajes. Se exporta a CSV (historial y planilla).
 - **PDF para compartir:** clubes y colores, tanteador, parciales por cuarto, planilla por jugador, faltas de equipo y del cuerpo técnico, y una segunda página con el mapa de tiros del partido (convertidos y errados en media cancha, con la tabla por zona). Se abre el menú de compartir del sistema para mandarlo por WhatsApp.
+
+### Fuera del partido
+
+- **Inicio por secciones:** Inicio, Partidos, Club y Competiciones. En celular el menú va en una barra fija abajo y en tablet o computadora, en pestañas.
+- **Resumen de la temporada** en Inicio: partido en curso (para continuarlo), récord G-P con promedio a favor, en contra y diferencia, últimos 5 resultados y líderes del plantel en puntos, rebotes y asistencias por partido.
 - **Clubes y planteles:** el club guarda el nombre, los colores (titular y alternativo) y los estadios; cada club tiene uno o más planteles, cada uno con su categoría (Mini a Maxi) y rama (masculino, femenino o mixto) y sus jugadores. En cada partido elegís el plantel, el rival, los convocados y el quinteto.
 - **Competiciones:** ligas y torneos con temporada y duración del cuarto. Se eligen al crear cada partido (o «Amistoso»), proponen su duración y el plantel recuerda la última que usó. Se crean desde Mis partidos o desde la previa.
 - **Camiseta:** se propone la titular del club; si se parece al color del rival, pasás a la alternativa con un toque.
@@ -33,12 +41,20 @@ _La planilla del cuerpo técnico._
 - **Informes:** por plantel, con filtros de jugador (o todo el equipo), competición y fechas.
   - *Mapa de tiros:* todos los tiros de campo llevados a una misma media cancha (se tiene en cuenta hacia dónde se atacaba en cada cuarto) y agrupados en 12 zonas. Se colorea por **volumen** (desde dónde se tira más) o por **acierto**: «normal» es un punto por tiro (50% en dobles, 33% en triples) y en rojo queda donde más se erra para lo que vale el tiro. Debajo, la tabla por zona.
   - *Progreso:* gráfico de línea partido a partido de puntos, rebotes, asistencias, robos, tapones, pérdidas, faltas cometidas y recibidas, triples y porcentajes de tiro, con el promedio y la tabla de valores.
+  - *Exportar:* a **PDF** (resumen por partido con promedios y récord, más el mapa de tiros) o a **Excel** (.xlsx, con las hojas «Por partido» y «Tiros por zona»), según los filtros aplicados. En celular se abre el menú de compartir.
+
+### En general
+
 - **Funciona sin señal:** cada jugada se guarda en el dispositivo al instante y se sincroniza cuando vuelve la conexión.
 - **Modo claro y oscuro:** interruptor con sol y luna en el inicio y en el menú del partido. Mientras no elijas, sigue al sistema; lo que elijas queda guardado en el dispositivo.
 - **Accesible:** se puede usar con teclado y lector de pantalla (WCAG 2.2 AA; axe-core sin violaciones en modo claro y oscuro).
 - **Login con Google** y acceso restringido por lista blanca de correos.
 
 ## Capturas
+
+Datos de ejemplo del modo demo.
+
+### Tablet y computadora
 
 <table>
   <tr>
@@ -47,7 +63,32 @@ _La planilla del cuerpo técnico._
   </tr>
   <tr>
     <td width="50%"><img src="docs/screenshots/historial.png" alt="Historial de jugadas con opciones para editar y borrar"><br><sub><b>Historial editable.</b> Se corrige o se borra cualquier jugada.</sub></td>
-    <td width="50%"><img src="docs/screenshots/previa.png" alt="Previa del partido: rival, colores, convocados y quinteto titular"><br><sub><b>Previa del partido.</b> Rival, colores, convocados y quinteto.</sub></td>
+    <td width="50%"><img src="docs/screenshots/menu-partido.png" alt="Hoja Partido con planilla, ajustes de tema y chicharra, y finalizar partido"><br><sub><b>Hoja «Partido».</b> Planilla, tema, chicharra y cierre del partido.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/previa.png" alt="Previa del partido: rival, camiseta, estadio, competición, convocados y quinteto titular"><br><sub><b>Previa del partido.</b> Rival, camiseta, estadio, competición, convocados y quinteto.</sub></td>
+    <td width="50%"><img src="docs/screenshots/inicio.png" alt="Inicio con el partido en curso, el récord de la temporada y los últimos resultados"><br><sub><b>Inicio.</b> Partido en curso, récord de la temporada y últimos resultados.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/informes-tiros.png" alt="Informe con el mapa de tiros por zonas coloreado por acierto"><br><sub><b>Mapa de tiros</b> por zonas, coloreado por acierto o por volumen.</sub></td>
+    <td width="50%"><img src="docs/screenshots/informes-progreso.png" alt="Gráfico de línea de los puntos de una jugadora partido a partido, con el promedio"><br><sub><b>Progreso</b> partido a partido, con el promedio.</sub></td>
+  </tr>
+</table>
+
+### Celular
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/m-inicio.png" alt="Inicio en el celular con el menú de secciones abajo"><br><sub><b>Inicio</b> con el menú de secciones abajo.</sub></td>
+    <td width="33%"><img src="docs/screenshots/m-accion.png" alt="Hoja de carga de la acción en el celular"><br><sub><b>Cargar una jugada</b> desde la hoja de abajo.</sub></td>
+    <td width="33%"><img src="docs/screenshots/m-informes.png" alt="Mapa de tiros y tabla por zona en el celular"><br><sub><b>Informes</b> en pantalla chica.</sub></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/m-partido.png" alt="Partido en el celular en horizontal, modo claro"><br><sub><b>En horizontal,</b> la cancha y el panel lado a lado.</sub></td>
+    <td width="50%"><img src="docs/screenshots/m-partido-oscuro.png" alt="Partido en el celular en horizontal, modo oscuro"><br><sub><b>Modo oscuro.</b></sub></td>
   </tr>
 </table>
 
@@ -71,7 +112,9 @@ Cualquier servidor estático sirve; por ejemplo, `npx serve public`.
 
 - **JavaScript sin framework ni build.** Son ES modules nativos y Firebase Hosting sirve `public/` tal cual.
 - **Firebase**: Authentication (Google) y Firestore con caché persistente offline. El SDK 10.12.2 se carga desde gstatic.
-- **jsPDF 2.5.1 + jsPDF-AutoTable 3.8.2** para la planilla. Están incluidos en `public/vendor/`.
+- **jsPDF 2.5.1 + jsPDF-AutoTable 3.8.2** para la planilla y los informes. Están incluidos en `public/vendor/`.
+- **Excel sin librerías:** el .xlsx se arma en el navegador como un ZIP de XML (SpreadsheetML).
+- **Gráficos en SVG propio** (mapa de tiros y líneas de progreso), sin librerías de gráficos.
 - **Service worker** propio para abrir la app sin señal.
 - **Tests** con el runner nativo de Node (`node:test`), sin dependencias.
 
@@ -92,9 +135,9 @@ flowchart LR
 | Capa | Qué contiene | Depende de |
 |---|---|---|
 | `shared/` | ids y fechas, escape de HTML, colores | nada |
-| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, zonas del mapa de tiros, estadísticas y exclusiones, progreso por partido, club, plantel, competición, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
-| `application/` | sesión del partido (registrar jugadas, consecuencias, guardado con debounce), reporte para el PDF, partidos de los informes, exportación CSV | `domain` y el **puerto** `store` |
-| `infrastructure/` | `store/` (Firebase o demo con la misma interfaz), `pdf/` (render y Web Share), `platform/` (wake lock, portapapeles, service worker, borrador local) | `shared` |
+| `domain/` | catálogo de jugadas, reloj y períodos, geometría de la cancha, zonas del mapa de tiros, estadísticas y exclusiones, progreso por partido, resumen de la temporada, club, plantel, competición, previa y reglas del partido. **Funciones puras, sin DOM.** | `shared` |
+| `application/` | sesión del partido (registrar jugadas, consecuencias, guardado con debounce), bloqueo del partido a un dispositivo, reporte para el PDF, partidos de los informes y su exportación, exportación CSV, migración de datos viejos | `domain` y el **puerto** `store` |
+| `infrastructure/` | `store/` (Firebase o demo con la misma interfaz), `pdf/` (render y Web Share), `xlsx/` (escritor de Excel), `platform/` (wake lock, portapapeles, service worker, borrador local) | `shared` |
 | `ui/` | estado, router de pantallas, despachador único de eventos, vistas (HTML) y controladores (acciones `data-a`) | todo lo anterior |
 
 ```
@@ -126,7 +169,7 @@ firebase.json            Hosting + Firestore
 npm test          # Node 22 o más nuevo, sin npm install
 ```
 
-Los tests cubren el dominio (reloj, cancha, estadísticas, exclusiones, faltas de equipo, cambios, edición de jugadas, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el reporte, el CSV y el store demo.
+Son 107 tests. Cubren el dominio (reloj, cancha, dirección de ataque, estadísticas, exclusiones, faltas de equipo, cambios, edición de jugadas, clubes, competiciones, mapa de tiros, progreso, resumen de la temporada, validaciones) y la capa de aplicación: la sesión del partido con un store falso y timers simulados, el bloqueo por dispositivo, el reporte, la exportación de informes (incluido el ZIP del .xlsx), el CSV y el store demo.
 
 **Al agregar un módulo en `src/`**, sumalo a `MODULES` en `public/sw.js` y subí `VERSION`. Si no, la app instalada no lo va a tener sin señal.
 
@@ -195,7 +238,7 @@ Al tocar «Salir» se borran del dispositivo la caché de Firestore y los datos 
 
 ## Créditos
 
-- Tipografías [Saira Condensed](https://fonts.google.com/specimen/Saira+Condensed) e [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans), bajo licencia SIL Open Font License (ver `public/fonts/`).
+- Tipografías [Saira Condensed](https://fonts.google.com/specimen/Saira+Condensed), [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans) y [DSEG7](https://github.com/keshikan/DSEG), bajo licencia SIL Open Font License (ver `public/fonts/`).
 - [jsPDF](https://github.com/parallax/jsPDF) y [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable), bajo licencia MIT (ver `public/vendor/`).
 
 ## Licencia
