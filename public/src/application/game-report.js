@@ -84,6 +84,7 @@ export function buildGameReport(game, { generatedBy = '', now = new Date() } = {
     staffText: 'DT ' + st.c + ' técnica' + (st.c === 1 ? '' : 's') + ' · Banca ' + st.b + (st.out ? ' · DT descalificado' : ''),
     generatedAt: now.toLocaleDateString('es-AR') + ' ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }),
     generatedBy,
+    notes: String(game.notes || ''),
     // Planilla básica: sin ubicaciones, el PDF no lleva la página del mapa de tiros.
     basic: isBasicSheet(game),
     shotChart: isBasicSheet(game) ? null : shotChartReport(game)

@@ -193,6 +193,22 @@ export function setClockManually(game, period, minutes, seconds) {
 }
 
 /** Finaliza el partido. Muta `game`. */
+/** Largo máximo de las observaciones del partido. */
+export const NOTES_MAX = 2000;
+
+/** Observaciones tal como se guardan: sin espacios de más en los bordes, saltos de línea \n y hasta NOTES_MAX caracteres. */
+export function normalizeNotes(text) {
+  return String(text == null ? '' : text).replace(/\r\n?/g, '\n').trim().slice(0, NOTES_MAX);
+}
+
+/** Guarda las observaciones en el partido. Devuelve true si cambiaron. Muta `game`. */
+export function setGameNotes(game, text) {
+  const notes = normalizeNotes(text);
+  if ((game.notes || '') === notes) return false;
+  game.notes = notes;
+  return true;
+}
+
 export function finishGame(game, now = Date.now()) {
   pauseClock(game.clock, now);
   game.status = 'final';

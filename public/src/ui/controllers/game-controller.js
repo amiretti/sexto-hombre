@@ -7,7 +7,7 @@ import { ourScore, opponentScore, requiredOnCourt, inLastTwoMinutes, opponentTea
 import { whoLabel } from '../../domain/describe.js';
 import {
   captureMoment, lastLoggedEvent, adjustOpponentScore, applySubstitution, applyForcedSubstitution, substitutionEvent,
-  applyLateSubstitution, substitutionEventAt, advancePeriod, setClockManually, finishGame, tickClock, newEditDraft, normalizeEditDraft, applyEditDraft
+  applyLateSubstitution, substitutionEventAt, advancePeriod, setClockManually, finishGame, setGameNotes, tickClock, newEditDraft, normalizeEditDraft, applyEditDraft
 } from '../../domain/game.js';
 import { buildGameReport } from '../../application/game-report.js';
 import { historyCsv, boxScoreCsv } from '../../application/csv-export.js';
@@ -224,7 +224,16 @@ export function startClockTicker() {
 
 /* ---------- overlays ---------- */
 
+/** Si hay un campo de observaciones abierto, guarda lo escrito. Devuelve true si cambió. */
+function saveNotesFromForm() {
+  const el = document.getElementById('g-notes');
+  if (!el || !setGameNotes(currentGame(), el.value)) return false;
+  session().persistNow();
+  return true;
+}
+
 function closeOverlay() {
+  if (saveNotesFromForm()) toast('Observaciones guardadas');
   ui.overlay = null; ui.confirm = null; ui.draft = null; ui.csv = null;
   renderGame();
 }
@@ -484,6 +493,8 @@ const handlers = {
     ui.confirm = null; ui.overlay = 'final';
     renderGame();
   },
+  'notes-save': () => closeOverlay(),
+  'notes-share': () => { saveNotesFromForm(); sharePlanilla(true); },
   'csv': () => copyCsv(historyCsv(currentGame())),
   'csv-box': () => copyCsv(boxScoreCsv(currentGame()))
 };
@@ -532,7 +543,7 @@ function onGameKey(event) {
   if (event.code === 'Space' && !ui.overlay && !onControl) { event.preventDefault(); toggleGameClock(); }
   if (event.key === 'Escape') {
     if (ui.overlay === 'forced') return true;
-    if (ui.overlay) { ui.overlay = null; ui.draft = null; renderOverlay(); }
+    if (ui.overlay) { if (saveNotesFromForm()) toast('Observaciones guardadas'); ui.overlay = null; ui.draft = null; renderOverlay(); }
     else if (ui.step !== 'loc') { resetPlayFlow(); renderPanel(); renderDots(); }
   }
   return true;
