@@ -222,7 +222,7 @@ export function buildPdf(r) {
   drawPeriodsTable(doc, r, W, L, R, y);
   drawBoxScore(doc, r);
   drawFoulsAndLegend(doc, r, W);
-  drawShotChartPage(doc, r, W);
+  if (r.shotChart) drawShotChartPage(doc, r, W);
   drawPageFooters(doc, r, W);
 
   const filename = `Planilla_${slug(L.name)}-vs-${slug(R.name)}_${r.date || 'partido'}.pdf`;

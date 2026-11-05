@@ -5,6 +5,7 @@
 // Mirando al aro, y > 750 queda a la izquierda del tirador.
 
 import { COURT_WIDTH, COURT_HEIGHT, attackingSide, isThreePointer } from './court.js';
+import { isBasicSheet } from './catalog.js';
 
 export const HALF_LENGTH = COURT_WIDTH / 2;
 export const HOOP = { x: 157.5, y: 750 };
@@ -84,6 +85,7 @@ export function buildShotChart(games, { playerId = null } = {}) {
   const shots = [];
   let att = 0, made = 0, unlocated = 0;
   for (const game of games) {
+    if (isBasicSheet(game)) continue; // planilla básica: sin ubicación, no entra en el mapa
     for (const e of game.events || []) {
       const info = shotInfo(e);
       if (!info || (playerId && e.who !== playerId)) continue;

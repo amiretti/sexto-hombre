@@ -10,6 +10,7 @@ import { TOAST_HTML } from '../toast.js';
 import { teamById, resolvedTeams, competitionsList } from '../selectors.js';
 import { textField, colorField, periodLengthField } from '../components/fields.js';
 import { competitionLabel } from '../../domain/competition.js';
+import { SHEET_KINDS } from '../../domain/catalog.js';
 import { teamCardHTML } from '../components/team-card.js';
 
 const HEADER = '<header class="setup-head"><div><p class="eyebrow"><button class="linkback" data-a="go-home">‹ Volver</button></p><h1>Nuevo partido</h1></div></header>';
@@ -81,13 +82,21 @@ function attackFieldHTML(attack) {
     radio('attack', 'left', attack === 'left', '← Izquierda') + radio('attack', 'right', attack === 'right', 'Derecha →') + '</div></div>';
 }
 
+/** Tipo de planilla: se elige acá y no cambia durante el partido. */
+function sheetCardHTML(s) {
+  const cur = s.sheet === 'basic' ? 'basic' : 'full';
+  return '<section class="card"><h2 id="sheet-l">Tipo de planilla</h2><div class="vpick sheetpick" role="radiogroup" aria-labelledby="sheet-l">' +
+    Object.keys(SHEET_KINDS).map((k) => '<button role="radio" data-a="sheet" data-v="' + k + '" aria-checked="' + (k === cur) + '" tabindex="' + (k === cur ? 0 : -1) + '"><b>' + SHEET_KINDS[k].label + '</b><span>' + SHEET_KINDS[k].detail + '</span></button>').join('') +
+    '</div><p class="lead sheet-note">Las dos llevan el reloj, los cambios, los minutos jugados, las faltas de equipo y la planilla en PDF. No se puede cambiar una vez empezado el partido.</p></section>';
+}
+
 function matchCardHTML(s, t) {
   const teams = state.teams || [];
   const venue = s.venue === 'away' ? 'away' : 'home';
   return '<section class="card"><div class="roster-head"><h2>Partido</h2>' + clashChipHTML(s, t) + '</div><div class="setup-grid">' +
     colorField('f-team', 'Mi equipo', null, teamLabel(t), 'teamColor', s.teamColor || DEFAULT_TEAM_COLOR, 'de mi equipo', teams.length > 1 ? '<button class="linkback small" data-a="change-team">Cambiar plantel</button>' : '') + kitFieldHTML(s, t) +
     colorField('f-opp', 'Rival', 'opponent', s.opponent, 'oppColor', s.oppColor || DEFAULT_OPPONENT_COLOR, 'del rival') +
-    venueFieldHTML(venue) + stadiumFieldHTML(s, t) + attackFieldHTML(s.attack === 'left' ? 'left' : 'right') +
+    venueFieldHTML(venue) + stadiumFieldHTML(s, t) + (s.sheet === 'basic' ? '' : attackFieldHTML(s.attack === 'left' ? 'left' : 'right')) +
     competitionFieldHTML(s) + textField('f-coach', 'Entrenador (DT)', 'coach', s.coach) +
     '<div class="field"><label for="f-date">Fecha</label><input id="f-date" type="date" data-f="date" value="' + esc(s.date) + '"></div>' + periodLengthField(s.periodMin) +
     '</div></section>';
@@ -121,6 +130,6 @@ function startFooterHTML(s, t) {
 export function setupHTML() {
   const s = state.setup, t = teamById(s.teamId);
   if (!t) return teamPickerHTML();
-  return '<div class="setup">' + HEADER + matchCardHTML(s, t) + rosterCardHTML(s, t) +
+  return '<div class="setup">' + HEADER + sheetCardHTML(s) + matchCardHTML(s, t) + rosterCardHTML(s, t) +
     startFooterHTML(s, t) + TOAST_HTML + '</div>';
 }

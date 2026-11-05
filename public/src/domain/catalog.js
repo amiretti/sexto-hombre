@@ -9,7 +9,7 @@ export const EVENT_LABELS = {
 
 export const TURNOVER_KINDS = {
   pase: 'Mal pase', manejo: 'Pérdida de balón', pasos: 'Pasos / caminata', doble: 'Doble dribling', fuera: 'Pelota afuera',
-  '3s': '3 segundos', '5s': '5 segundos', '8s': '8 segundos', '24s': '24 segundos', atras: 'Campo atrás', otra: 'Otra'
+  '3s': '3 segundos', '5s': '5 segundos', '8s': '8 segundos', '24s': '24 segundos', atras: 'Campo atrás', otra: 'Otra', gen: 'Sin detalle'
 };
 
 /**
@@ -20,11 +20,44 @@ export const TEAM_TURNOVER_KINDS = { '24s': '24 segundos', '8s': '8 segundos' };
 
 export const PERSONAL_FOUL_KINDS = {
   none: 'Sin tiro', shot2: 'En tiro de 2 · 2 libres', shot3: 'En tiro de 3 · 3 libres',
-  and1: 'Encestó igual · gol + 1 libre', off: 'Falta ofensiva'
+  and1: 'Encestó igual · gol + 1 libre', off: 'Falta ofensiva', gen: 'Sin detalle'
 };
 
 export const FOUL_DRAWN_KINDS = {
   none: 'Sin tiro', bonus: 'Sin tiro · rival en penalización · 2 libres', shot2: 'En tiro de 2 · 2 libres', shot3: 'En tiro de 3 · 3 libres', and1: 'Encestó igual · gol + 1 libre'
+};
+
+/**
+ * Tipo de planilla, elegido al crear el partido. Los partidos viejos (sin `sheet`) son avanzados.
+ * La básica carga las mismas jugadas, sin cancha (sin ubicación) y sin el detalle de faltas y pérdidas.
+ */
+export const SHEET_KINDS = {
+  full: { label: 'Avanzada', detail: 'Cancha con la ubicación de cada jugada, mapa de tiros y el detalle de faltas y pérdidas.' },
+  basic: { label: 'Básica', detail: 'Solo botones, sin cancha ni mapa de tiros: tiros, rebotes, tapones, robos, pérdidas, faltas y cambios.' }
+};
+
+export function isBasicSheet(game) {
+  return !!game && game.sheet === 'basic';
+}
+
+/**
+ * Botonera de la planilla básica: código del botón → jugada que registra (después de elegir al jugador).
+ * FD no está: la falta recibida pregunta antes cuántos libres hubo.
+ */
+export const BASIC_ACTIONS = {
+  '1M': { label: 'Simple convertido', action: { type: 'FT', att: 1, made: 1 } },
+  '1X': { label: 'Simple errado', action: { type: 'FT', att: 1, made: 0 } },
+  '2M': { label: 'Doble convertido', action: { type: '2M' } },
+  '2X': { label: 'Doble errado', action: { type: '2X' } },
+  '3M': { label: 'Triple convertido', action: { type: '3M' } },
+  '3X': { label: 'Triple errado', action: { type: '3X' } },
+  'RO': { label: 'Rebote ofensivo', action: { type: 'RO' } },
+  'RD': { label: 'Rebote defensivo', action: { type: 'RD' } },
+  'BLK': { label: 'Tapón', action: { type: 'BLK' } },
+  'STL': { label: 'Robo', action: { type: 'STL' } },
+  'TOV': { label: 'Pérdida', action: { type: 'TOV', sub: 'gen' } },
+  'PF': { label: 'Falta cometida', action: { type: 'PF', sub: 'gen' } },
+  'FD': { label: 'Falta recibida', action: null }
 };
 
 /** Subtipos por tipo de jugada y el valor por defecto de cada uno. */

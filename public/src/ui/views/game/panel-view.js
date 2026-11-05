@@ -1,9 +1,10 @@
 // Panel lateral: los pasos para cargar una jugada (ubicación → jugador → acción).
+// Planilla básica: sin cancha, botonera → jugador.
 
 import { repositionToast } from '../../toast.js';
 import { esc } from '../../../shared/html.js';
 import { rerenderKeepingFocus, firstFocusable } from '../../focus.js';
-import { EVENT_LABELS, TURNOVER_KINDS, TEAM_TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
+import { EVENT_LABELS, TURNOVER_KINDS, TEAM_TURNOVER_KINDS, isTeamEvent, isBasicSheet, BASIC_ACTIONS } from '../../../domain/catalog.js';
 import { periodShort, formatSeconds, remainingMs } from '../../../domain/clock.js';
 import { isThreePointer, zoneName, attackingSide, courtHalf, SHOT_ZONES } from '../../../domain/court.js';
 import { playerStats, playerFoulTypes, staffFouls, eventPoints, requiredOnCourt, timeoutsLeft, inLastTwoMinutes, opponentTeamFouls, PENALTY_FOULS } from '../../../domain/stats.js';
@@ -12,6 +13,13 @@ import { $ } from '../../dom.js';
 import { ui, currentGame } from '../../state.js';
 
 const STEP_NAMES = ['Ubicación', 'Jugador', 'Acción'];
+const BASIC_STEP_NAMES = ['Acción', 'Jugador'];
+const basic = () => isBasicSheet(currentGame());
+
+/** Nombres de los pasos y número del paso actual según el tipo de planilla (en la básica: botonera = 1, el resto = 2). */
+function stepInfo(n) {
+  return basic() ? { names: BASIC_STEP_NAMES, n: n === 1 ? 1 : 2 } : { names: STEP_NAMES, n };
+}
 const STEP_NUMBER = { loc: 1, player: 2, bench: 2, action: 3, foul: 3, fdrawn: 3, tov: 3, ft: 3, staff: 3 };
 let announcedStep = null;
 
@@ -22,11 +30,13 @@ function announceStep() {
   const key = ui.step + (ui.assistFor ? '+asistencia' : '');
   if (!el || !n || key === announcedStep) return;
   announcedStep = key;
-  el.textContent = ui.assistFor ? '¿Hubo asistencia? Paso 1 de 3: Ubicación' : 'Paso ' + n + ' de 3: ' + STEP_NAMES[n - 1];
+  const s = stepInfo(n), total = s.names.length;
+  el.textContent = (ui.assistFor ? '¿Hubo asistencia? ' : '') + 'Paso ' + s.n + ' de ' + total + ': ' + s.names[s.n - 1];
 }
 
-function stepsBar(n) {
-  return '<div class="steps">' + STEP_NAMES.map((x, i) => '<span class="' + (i + 1 === n ? 'on' : i + 1 < n ? 'done' : '') + '"' + (i + 1 === n ? ' aria-current="step"' : '') + '>' + (i + 1) + ' · ' + x + '</span>').join('') + '</div>';
+function stepsBar(step) {
+  const { names, n } = stepInfo(step);
+  return '<div class="steps">' + names.map((x, i) => '<span class="' + (i + 1 === n ? 'on' : i + 1 < n ? 'done' : '') + '"' + (i + 1 === n ? ' aria-current="step"' : '') + '>' + (i + 1) + ' · ' + x + '</span>').join('') + '</div>';
 }
 
 /** "DT: 1 C · Banca: 0 B". */
@@ -38,6 +48,7 @@ export function staffSummary(game) {
 function whenText() {
   const p = ui.pending;
   if (!p) return '';
+  if (basic()) return periodShort(p.period) + ' · ' + formatSeconds(p.t) + (ui.basic && BASIC_ACTIONS[ui.basic] ? ' <small>· ' + BASIC_ACTIONS[ui.basic].label + '</small>' : '');
   const z = zoneName(p.x, p.y);
   return periodShort(p.period) + ' · ' + formatSeconds(p.t) + (z ? ' <small>· ' + z + '</small>' : ' <small>· sin ubicación</small>');
 }
@@ -108,14 +119,31 @@ function zonePicker() {
     SHOT_ZONES.map((z) => '<button class="abtn" data-a="zone" data-z="' + z.id + '">' + esc(z.label) + '</button>').join('') + '</div></details>';
 }
 
-function locationStep(G) {
+function recentList(G) {
   const rec = G.events.slice(-5).reverse();
+  return '<div class="ptitle"><h3>Últimas jugadas</h3>' + (rec.length ? '<button class="btn ghost" data-a="undo">Deshacer última</button>' : '') + '</div>' +
+    (rec.length ? '<ul class="recent">' + rec.map((e) => recentRow(G, e)).join('') + '</ul>' : '<p class="empty">Todavía no hay jugadas. Arrancá el reloj tocándolo y cargá la primera.</p>');
+}
+
+/** Planilla básica: la botonera reemplaza a la cancha. Se toca la acción y después el jugador. */
+function basicBoardStep(G) {
+  const b = (k, label, sub, cls = '') => '<button class="abtn' + cls + '" data-a="bact" data-k="' + k + '" aria-label="' + esc(BASIC_ACTIONS[k].label) + '">' + label + (sub ? '<small>' + sub + '</small>' : '') + '</button>';
+  return assistBar(G) + stepsBar(1) +
+    '<div class="agroup"><h3>Tiros</h3><div class="agrid three bshots">' +
+      b('1M', 'Simple', 'convertido', ' make') + b('2M', 'Doble', 'convertido', ' make') + b('3M', 'Triple', 'convertido', ' make') +
+      b('1X', 'Simple', 'errado', ' miss') + b('2X', 'Doble', 'errado', ' miss') + b('3X', 'Triple', 'errado', ' miss') + '</div></div>' +
+    '<div class="agroup"><h3>Otras acciones</h3><div class="agrid bmore">' +
+      b('RO', 'Rebote', 'en ataque') + b('RD', 'Rebote', 'en defensa') + b('BLK', 'Tapón') + b('STL', 'Robo') +
+      b('TOV', 'Pérdida') + b('PF', 'Falta', 'cometida', ' foul') + b('FD', 'Falta', 'recibida') + '</div></div>' +
+    stoppageButtons(G) + recentList(G);
+}
+
+function locationStep(G) {
+  if (isBasicSheet(G)) return basicBoardStep(G);
   return assistBar(G) + stepsBar(1) + '<p class="lead">Tocá la cancha donde fue la jugada. El tiempo se toma en ese momento.</p>' +
     '<div class="quick"><button class="abtn" data-a="noloc">Sin ubicación<small>libres, técnicas</small></button><button class="abtn tech" data-a="staff">Técnica DT / banca<small>' + staffSummary(G) + '</small></button></div>' +
     zonePicker() +
-    stoppageButtons(G) +
-    '<div class="ptitle"><h3>Últimas jugadas</h3>' + (rec.length ? '<button class="btn ghost" data-a="undo">Deshacer última</button>' : '') + '</div>' +
-    (rec.length ? '<ul class="recent">' + rec.map((e) => recentRow(G, e)).join('') + '</ul>' : '<p class="empty">Todavía no hay jugadas. Arrancá el reloj tocándolo y marcá la primera en la cancha.</p>');
+    stoppageButtons(G) + recentList(G);
 }
 
 function playerStep(G) {
@@ -123,7 +151,7 @@ function playerStep(G) {
   return stepsBar(2) + titleBar(whenText(), 'cancel', 'Cancelar') +
     '<h3>En cancha</h3><div class="pgrid five">' + G.onCourt.map((id) => playerCard(G, id)).join('') + '</div>' +
     (bench.length ? '<h3>Banca</h3><div class="pgrid bench">' + bench.map((id) => playerCard(G, id)).join('') + '</div>' : '') +
-    '<p class="lead" style="font-size:.82rem">¿Ubicación equivocada? Tocá de nuevo la cancha para moverla.</p>';
+    (isBasicSheet(G) ? '' : '<p class="lead" style="font-size:.82rem">¿Ubicación equivocada? Tocá de nuevo la cancha para moverla.</p>');
 }
 
 /** ¿La ubicación tocada sugiere un tiro de 3? null si no hay ubicación. Usa el aro que atacamos si se sabe. */
@@ -173,8 +201,21 @@ function actionStep(G) {
     groups + technicalGroup();
 }
 
+/** Planilla básica: falta recibida, ¿cuántos libres? Con el rival en penalización se sugieren 2. */
+function basicFoulDrawnStep(G) {
+  const rf = opponentTeamFouls(G, ui.pending.period), pen = rf >= PENALTY_FOULS;
+  const opt = (kind, n, sub, cls = '') => '<button class="abtn' + cls + '" data-a="fd-kind" data-s="' + kind + '">' + (n ? n + (n === 1 ? ' libre' : ' libres') : 'Sin libres') + '<small>' + sub + '</small></button>';
+  return stepsBar(2) + titleBar(esc(whoLabel(G, ui.player)) + ' · Falta recibida', 'back', '‹ Jugador') +
+    (pen ? '<p class="lead pen-note" role="note">El rival lleva ' + rf + ' faltas en el cuarto: está en penalización.</p>' : '') +
+    '<p class="lead">¿Cuántos tiros libres?</p><div class="agroup"><div class="agrid">' +
+    opt('none', 0, pen ? 'falta en ataque del rival' : 'sin tiro') + opt('and1', 1, 'encestó igual') +
+    opt(pen ? 'bonus' : 'shot2', 2, pen ? 'penalización o tiro de 2' : 'tiro de 2 errado', pen ? ' sugg' : '') + opt('shot3', 3, 'tiro de 3 errado') +
+    '</div></div><p class="lead" style="font-size:.82rem">Si encestó igual, cargá también el gol con la botonera.</p>';
+}
+
 /** Falta recibida: ¿fue en tiro? Sugiere 2 o 3 libres según la ubicación. */
 function foulDrawnStep(G) {
+  if (isBasicSheet(G)) return basicFoulDrawnStep(G);
   const three = suggestsThree(G, ui.pending);
   const opt = (kind, label, sub, isThree, cls = '') =>
     '<button class="abtn' + cls + (isThree === undefined ? '' : hintClass(three, isThree)) + '" data-a="fd-kind" data-s="' + kind + '">' + label + '<small>' + sub + '</small></button>';
@@ -204,7 +245,7 @@ function foulStep(G) {
 
 function turnoverStep(G) {
   return stepsBar(3) + titleBar(esc(whoLabel(G, ui.player)) + ' · Pérdida', 'back-action', '‹ Acciones') +
-    '<div class="agrid">' + Object.keys(TURNOVER_KINDS).filter((k) => !TEAM_TURNOVER_KINDS[k]).map((k) => '<button class="abtn" data-a="act" data-t="TOV" data-s="' + k + '">' + TURNOVER_KINDS[k] + '</button>').join('') + '</div>';
+    '<div class="agrid">' + Object.keys(TURNOVER_KINDS).filter((k) => !TEAM_TURNOVER_KINDS[k] && k !== 'gen').map((k) => '<button class="abtn" data-a="act" data-t="TOV" data-s="' + k + '">' + TURNOVER_KINDS[k] + '</button>').join('') + '</div>';
 }
 
 function freeThrowStep(G) {
