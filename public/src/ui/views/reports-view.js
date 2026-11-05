@@ -72,10 +72,13 @@ function shotsPanelHTML(games, f) {
 }
 
 function progressPanelHTML(games, f) {
-  const series = playerSeries(games, f.playerId || null, f.stat);
+  // Los minutos son por jugador: para todo el equipo no se ofrecen.
+  const offered = PROGRESS_STATS.filter((s) => f.playerId || !s.playerOnly);
+  const statId = offered.some((s) => s.id === f.stat) ? f.stat : 'pts';
+  const series = playerSeries(games, f.playerId || null, statId);
   const stat = series.stat;
   const select = '<div class="field rstat"><label for="f-rstat">Estadística</label><select id="f-rstat" data-f="stat">' +
-    PROGRESS_STATS.map((s) => option(s.id, s.label, s.id === stat.id)).join('') + '</select></div>';
+    offered.map((s) => option(s.id, s.label, s.id === stat.id)).join('') + '</select></div>';
   if (!series.points.length) return select + '<p class="lead">El jugador no fue convocado en los partidos de estos filtros.</p>';
   const rows = series.points.slice().reverse().map((p) => '<tr><th scope="row">' + esc(formatDate(p.date)) + '</th><td>' + esc(p.opponent) + '</td><td>' +
     (p.value == null ? '—' : decimal(p.value) + (stat.pct ? '%' : '')) + (p.detail ? ' <span class="muted">(' + esc(p.detail) + ')</span>' : '') + '</td></tr>').join('');

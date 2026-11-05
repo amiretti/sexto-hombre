@@ -3,6 +3,7 @@
 import { EVENT_LABELS } from '../domain/catalog.js';
 import { periodShort, formatSeconds } from '../domain/clock.js';
 import { zoneName } from '../domain/court.js';
+import { formatMinutes } from '../domain/playing-time.js';
 import { playerStats, eventPoints, eventsChronological } from '../domain/stats.js';
 import { findPlayer, eventDetail, eventActor } from '../domain/describe.js';
 
@@ -33,10 +34,10 @@ export function historyCsv(game) {
 }
 
 export function boxScoreCsv(game) {
-  const rows = [['Numero', 'Jugador', 'PTS', 'T2C', 'T2I', 'T3C', 'T3I', 'TLC', 'TLI', 'RO', 'RD', 'AS', 'RB', 'TP', 'PE', 'FC', 'FR']];
+  const rows = [['Numero', 'Jugador', 'MIN', 'PTS', 'T2C', 'T2I', 'T3C', 'T3I', 'TLC', 'TLI', 'RO', 'RD', 'AS', 'RB', 'TP', 'PE', 'FC', 'FR']];
   game.roster.forEach((p) => {
     const s = playerStats(game, p.id);
-    rows.push([p.num, p.name, s.pts, s.m2, s.a2, s.m3, s.a3, s.ftm, s.fta, s.ro, s.rd, s.ast, s.stl, s.blk, s.tov, s.fouls, s.fd]);
+    rows.push([p.num, p.name, formatMinutes(s.sec), s.pts, s.m2, s.a2, s.m3, s.a3, s.ftm, s.fta, s.ro, s.rd, s.ast, s.stl, s.blk, s.tov, s.fouls, s.fd]);
   });
   return toCsv(rows);
 }
