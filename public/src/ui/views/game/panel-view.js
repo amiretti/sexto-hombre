@@ -1,5 +1,6 @@
 // Panel lateral: los pasos para cargar una jugada (ubicación → jugador → acción).
 
+import { repositionToast } from '../../toast.js';
 import { esc } from '../../../shared/html.js';
 import { rerenderKeepingFocus, firstFocusable } from '../../focus.js';
 import { EVENT_LABELS, TURNOVER_KINDS, isTeamEvent } from '../../../domain/catalog.js';
@@ -254,4 +255,5 @@ export function renderPanel() {
   rerenderKeepingFocus(panel, () => { panel.innerHTML = step ? step(currentGame()) : ''; },
     () => firstFocusable(panel.querySelector('.agroup, .pgrid, .assistbar, .quick, .agrid') || panel));
   announceStep();
+  repositionToast();
 }

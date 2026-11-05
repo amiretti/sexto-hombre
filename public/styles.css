@@ -626,3 +626,8 @@ textarea.csv{width:100%;min-height:160px;font-family:ui-monospace,Menlo,monospac
 /* Dígitos de 7 segmentos para tanteador y reloj (DSEG7 es más ancha que Saira: se achica respecto del contenedor) */
 .digits,.clock-time{font-family:var(--f-digital);font-weight:700;font-size:.66em;letter-spacing:.02em;line-height:1}
 .side .score{padding-block:.06em}
+
+/* Cerrar aviso */
+.toast .toast-x{background:none;min-width:38px;padding:0;font-size:1.3rem;line-height:1;opacity:.75;margin-left:-6px}
+.toast .toast-x:hover,.toast .toast-x:focus-visible{opacity:1}
+@media (max-width:760px){.toast{padding:6px 6px 6px 14px;gap:10px;font-size:.88rem}.toast>span{flex:1;min-width:0}}
